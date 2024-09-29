@@ -49,7 +49,7 @@ export default {
     methods: {
         async getTrips() {
             try {
-                const response = await axios.get('http://localhost:3000/admin/get-trips');
+                const response = await axios.get('https://fliegertechnology.onrender.com/admin/get-trips');
                 this.trips = response.data;
                 this.filteredTrips = this.trips;
                 console.log(this.trips.driverData);

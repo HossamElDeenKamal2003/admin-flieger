@@ -42,7 +42,7 @@ export default {
     },
     methods: {
         getTracking() {
-            axios.get("http://localhost:3000/admin/get-location").then(response => {
+            axios.get("https://fliegertechnology.onrender.com/admin/get-location").then(response => {
                 this.users = response.data;
             }).catch(error => {
                 console.log(error);
