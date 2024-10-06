@@ -54,7 +54,8 @@ export default {
     data() {
         return {
             drivers: [],
-            searchQuery: ''
+            searchQuery: '',
+            baseUrl: "https://fliegertechnology-production-6024.up.railway.app",
         };
     },
     computed: {
@@ -67,7 +68,7 @@ export default {
     methods: {
         async getDriver() {
             try {
-                const response = await axios.get("https://fliegertechnology.onrender.com/admin/get-drivers");
+                const response = await axios.get(`${ this.baseUrl }/admin/get-drivers`);
                 this.drivers = response.data;
                 console.log(this.drivers);
             } catch (error) {
@@ -76,7 +77,7 @@ export default {
         },
         async increase(id) {
             try {
-                const response = await axios.patch(`https://fliegertechnology.onrender.com/authdriver/patch-block/${id}`);
+                const response = await axios.patch(`${ this.baseUrl }/authdriver/patch-block/${id}`);
                 if (response.status === 200) {
                     const updatedUser = response.data;
                     const userIndex = this.drivers.findIndex(user => user._id === id);
@@ -91,7 +92,7 @@ export default {
         async toggleBlock(id, currentBlockStatus) {
             try {
                 const newBlockStatus = !currentBlockStatus;
-                const response = await axios.patch(`https://fliegertechnology.onrender.com/authdriver/patch-block/${id}`, {
+                const response = await axios.patch(`${ this.baseUrl }/authdriver/patch-block/${id}`, {
                     block: newBlockStatus
                 });
 

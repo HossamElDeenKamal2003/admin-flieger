@@ -43,13 +43,14 @@ export default {
         return {
             trips: [],
             searchQuery: '',
-            filteredTrips: []
+            filteredTrips: [],
+            baseUrl: "https://fliegertechnology-production-6024.up.railway.app"
         };
     },
     methods: {
         async getTrips() {
             try {
-                const response = await axios.get('https://fliegertechnology.onrender.com/admin/get-trips');
+                const response = await axios.get(`${ this.baseUrl }/admin/get-trips`);
                 this.trips = response.data;
                 this.filteredTrips = this.trips;
                 console.log(this.trips.driverData);

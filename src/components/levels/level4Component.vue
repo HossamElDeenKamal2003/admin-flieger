@@ -84,6 +84,7 @@ export default {
                 maxDistance: '',
             },
             prices: [],
+            baseUrl: "https://fliegertechnology-production-6024.up.railway.app",
             editMode: false,
         }
     },
@@ -93,7 +94,7 @@ export default {
     methods: {
         async fetchPrices() {
             try {
-                const response = await axios.get('https://fliegertechnology.onrender.com/prices/level4/getprices');
+                const response = await axios.get(`${ this.baseUrl }/prices/level4/getprices`);
                 this.prices = response.data;
                 console.log(this.prices);
             } catch (error) {
@@ -103,7 +104,7 @@ export default {
         async handleSubmit() {
             if (this.editMode) {
                 try {
-                    const response = await axios.patch('https://fliegertechnology.onrender.com/prices/level4/updateprices', this.form);
+                    const response = await axios.patch(`${ this.baseUrl }/prices/level4/updateprices`, this.form);
                     alert(response.data.message);
                     this.fetchPrices();
                 } catch (error) {
@@ -111,7 +112,7 @@ export default {
                 }
             } else {
                 try {
-                    const response = await axios.post('https://fliegertechnology.onrender.com/prices/level4/putprices', this.form);
+                    const response = await axios.post(`${ this.baseUrl }/prices/level4/putprices`, this.form);
                     alert(response.data.message);
                     this.fetchPrices();
                 } catch (error) {
@@ -143,7 +144,7 @@ export default {
                 this.prices = this.prices.filter(price => price.country !== country);
 
                 // Then make the request to delete the price
-                axios.post('https://fliegertechnology.onrender.com/prices/delete/level4', {
+                axios.post(`${ this.baseUrl }/prices/delete/level4`, {
                     country: country
                 }).then(() => {
                     this.fetchPrices();

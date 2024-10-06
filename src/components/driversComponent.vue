@@ -59,12 +59,13 @@ export default {
             location: [],
             driversLocation: [],
             socket: null,
+            baseUrl: "https://fliegertechnology-production-6024.up.railway.app",
         };
     },
     methods: {
         async increase(id) {
         try {
-            const response = await axios.patch(`https://fliegertechnology.onrender.com/admin/increase/${id}`);
+            const response = await axios.patch(`${ this.baseUrl }/admin/increase/${id}`);
             const updatedUser = response.data;
 
             if (this.drivers && Array.isArray(this.drivers)) {
@@ -88,7 +89,7 @@ export default {
 
         async deleteUser(id) {
             try {
-                const response = await axios.delete(`https://fliegertechnology.onrender.com/authdriver/delete-user/${id}`);
+                const response = await axios.delete(`${ this.baseUrl }/authdriver/delete-user/${id}`);
                 if (response.status === 200) {
                     alert(response.data.message);
                     this.users = this.users.filter(user => user._id !== id);
@@ -102,7 +103,7 @@ export default {
         async toggleBlock(userId, currentBlockStatus) {
             try {
                 const newBlockStatus = !currentBlockStatus;
-                const response = await axios.patch(`https://fliegertechnology.onrender.com/authdriver/patch-block/${userId}`, {
+                const response = await axios.patch(`${ this.baseUrl }/authdriver/patch-block/${userId}`, {
                     block: newBlockStatus
                 });
 
@@ -121,7 +122,7 @@ export default {
 
         async getUsers() {
             try {
-                const response = await axios.get('https://fliegertechnology.onrender.com/admin/get-drivers');
+                const response = await axios.get(`${ this.baseUrl }/admin/get-drivers`);
                 this.users = response.data;
                 console.log(this.users);
             } catch (error) {
@@ -132,7 +133,7 @@ export default {
 
         async getLocations() {
             try {
-                const response = await axios.get("https://fliegertechnology.onrender.com/admin/get-location");
+                const response = await axios.get(`${ this.baseUrl }/admin/get-location`);
                 this.location = response.data;
                 console.log(this.location);
             } catch (error) {

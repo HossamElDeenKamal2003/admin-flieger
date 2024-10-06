@@ -158,6 +158,7 @@ export default {
             prices3: [],
             prices4: [],
             editMode: false,
+            baseUrl: "https://fliegertechnology-production-6024.up.railway.app",
             maxDistance: '', // Field for max distance
             currentMaxDistance: '', // Holds the current max distance value
         };
@@ -175,7 +176,7 @@ export default {
     methods: {
         async fetchPrices() {
             try {
-                const response = await axios.get('https://fliegertechnology.onrender.com/prices/level1/getprices');
+                const response = await axios.get(`${ this.baseUrl }/prices/level1/getprices`);
                 this.prices = response.data;
             } catch (error) {
                 console.error('Error fetching prices:', error);
@@ -184,7 +185,7 @@ export default {
         async handleSubmit() {
             if (this.editMode) {
                 try {
-                    const response = await axios.patch('https://fliegertechnology.onrender.com/prices/level1/updateprices', this.form);
+                    const response = await axios.patch(`${ this.baseUrl }/prices/level1/updateprices`, this.form);
                     alert(response.data.message);
                     this.fetchPrices();
                 } catch (error) {
@@ -192,9 +193,9 @@ export default {
                 }
             } else {
                 try {
-                    const response = await axios.post('https://fliegertechnology.onrender.com/prices/level1/putprices', this.form);
+                    const response = await axios.post(`${ this.baseUrl }/prices/level1/putprices`, this.form);
                     alert(response.data.message);
-                    const response2 = await axios.get('https://fliegertechnology.onrender.com/prices/level1/getprices');
+                    const response2 = await axios.get(`${ this.baseUrl }/prices/level1/getprices`);
                     this.prices = response2.data;
                 } catch (error) {
                     console.error('Error adding price:', error);
@@ -204,7 +205,7 @@ export default {
         },
         async getProperity() {
             try {
-                const response = await axios.get('https://fliegertechnology.onrender.com/admin/get-properties');
+                const response = await axios.get(`${ this.baseUrl }/admin/get-properties`);
                 this.currentProperty = response.data;
             } catch (error) {
                 console.error('Error fetching property:', error);
@@ -217,7 +218,7 @@ export default {
                 this.prices = this.prices.filter(price => price.country !== country);
 
                 // Then make the request to delete the price
-                axios.post('https://fliegertechnology.onrender.com/prices/delete/level1', {
+                axios.post(`${ this.baseUrl }/prices/delete/level1`, {
                     country: country
                 }).then(() => {
                     this.fetchPrices();
@@ -232,7 +233,7 @@ export default {
         deletePrice2(country) {
             console.log(country);
             if (confirm(`Are you sure you want to delete prices for ${country}?`)) {
-                axios.post('https://fliegertechnology.onrender.com/prices/delete/level2', {
+                axios.post(`${ this.baseUrl }/prices/delete/level2`, {
                     country: country
                 }).then(() => {
                     alert('deleted')
@@ -241,7 +242,7 @@ export default {
         },
         async updateDistance() {
             try {
-                const response = await axios.patch('https://fliegertechnology.onrender.com/book/max-distance', { maxDistance: this.maxDistance });
+                const response = await axios.patch(`${ this.baseUrl }/book/max-distance`, { maxDistance: this.maxDistance });
                 alert(response.data.message);
                 this.fetchMaxDistance();
             } catch (error) {
@@ -250,7 +251,7 @@ export default {
         },
         async fetchMaxDistance() {
             try {
-                const response = await axios.get('https://fliegertechnology.onrender.com/book/get-distance-find-drivers');
+                const response = await axios.get(`${ this.baseUrl }/book/get-distance-find-drivers`);
                 this.currentMaxDistance = response.data.message.maxDistance;
             } catch (error) {
                 console.error('Error fetching max distance:', error);

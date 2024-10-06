@@ -8,6 +8,7 @@ import trackingDriver from "../components/trackingDrivers.vue";
 import tripsComponent from "../components/tripsComponent.vue";
 import settingsPage from "../components/settingsComponent.vue";
 import permissionForm from "../components/permisitionsComponent.vue";
+import pannerComponent from "../components/pannerComponent.vue";
 const routes = [
 {
     path: "/",
@@ -125,6 +126,11 @@ const routes = [
             next('/'); 
         }
     }
+},
+{
+    path: "/panners",
+    name: "pannersPage",
+    component: pannerComponent,
 }
 
 ];
