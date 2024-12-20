@@ -93,7 +93,7 @@ export default {
     methods: {
         async fetchPrices() {
             try {
-                const response = await axios.get('http://62.72.16.49:3000/prices/level2/getprices');
+                const response = await axios.get('https://backend.fego-rides.com/prices/level2/getprices');
                 this.prices = response.data;
                 console.log(this.prices);
             } catch (error) {
@@ -103,7 +103,7 @@ export default {
         async handleSubmit() {
             if (this.editMode) {
                 try {
-                    const response = await axios.patch('http://62.72.16.49:3000/prices/level2/updateprices', this.form);
+                    const response = await axios.patch('https://backend.fego-rides.com/prices/level2/updateprices', this.form);
                     alert(response.data.message);
                     this.fetchPrices();
                 } catch (error) {
@@ -111,7 +111,7 @@ export default {
                 }
             } else {
                 try {
-                    const response = await axios.post('http://62.72.16.49:3000/prices/level2/putprices', this.form);
+                    const response = await axios.post('https://backend.fego-rides.com/prices/level2/putprices', this.form);
                     alert(response.data.message);
                     this.fetchPrices();
                 } catch (error) {
@@ -143,7 +143,7 @@ export default {
                 this.prices = this.prices.filter(price => price.country !== country);
 
                 // Then make the request to delete the price
-                axios.post('http://62.72.16.49:3000/prices/delete/level2', {
+                axios.post('https://backend.fego-rides.com/prices/delete/level2', {
                     country: country
                 }).then(() => {
                     this.fetchPrices();

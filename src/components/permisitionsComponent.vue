@@ -84,7 +84,7 @@ export default {
             formData.append("password", this.dataForm.password);
 
             try {
-                const response = await axios.post('http://62.72.16.49:3000/auth/support_signup', {
+                const response = await axios.post('https://backend.fego-rides.com/auth/support_signup', {
                     "username": this.dataForm.username,
                     "email": this.dataForm.email,
                     "phoneNumber": this.dataForm.phone,
@@ -109,7 +109,7 @@ export default {
         },
         async getPersons() {
             try {
-                const response = await axios.get('http://62.72.16.49:3000/auth/get_supports');
+                const response = await axios.get('https://backend.fego-rides.com/auth/get_supports');
                 this.persons = response.data.users;
             } catch (error) {
                 console.log(error);
@@ -117,7 +117,7 @@ export default {
             }
         },
         editPerson(person) {
-            axios.patch('http://62.72.16.49:3000/auth/patchRole', {
+            axios.patch('https://backend.fego-rides.com/auth/patchRole', {
                 userId: person._id,
                 role: person.role
             }).then(response=>{
@@ -127,7 +127,7 @@ export default {
             })
         },
         deletePerson(personId) {
-            axios.delete(`http://62.72.16.49:3000/auth/delete-permission/${personId}`).then(()=>{
+            axios.delete(`https://backend.fego-rides.com/auth/delete-permission/${personId}`).then(()=>{
                 this.getPersons();
                 alert("Person Deleted Successfully");
             }).catch(error=>{

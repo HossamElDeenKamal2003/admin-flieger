@@ -86,7 +86,7 @@ export default {
       };
 
       // Send the request
-      fetch("http://62.72.16.49:3000/admin/signin", requestOptions)
+      fetch("https://backend.fego-rides.com/admin/signin", requestOptions)
         .then(response => {
           if (!response.ok) {
             // Check if the response is JSON
@@ -130,7 +130,7 @@ export default {
       };
 
       // Send the request
-      fetch("http://62.72.16.49:3000/admin/signup", requestOptions)
+      fetch("https://backend.fego-rides.com/admin/signup", requestOptions)
         .then(response => {
           if (!response.ok) {
             // Check if the response is JSON

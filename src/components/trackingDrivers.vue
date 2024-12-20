@@ -42,7 +42,7 @@ export default {
     },
     methods: {
         getTracking() {
-            axios.get("http://62.72.16.49:3000/admin/get-location").then(response => {
+            axios.get("https://backend.fego-rides.com/admin/get-location").then(response => {
                 this.users = response.data;
             }).catch(error => {
                 console.log(error);

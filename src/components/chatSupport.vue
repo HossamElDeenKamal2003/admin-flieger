@@ -37,7 +37,7 @@ export default {
   methods: {
     async fetchactiveChat() {
       try {
-        const response = await axios.get("http://62.72.16.49:3000/getChats");
+        const response = await axios.get("https://backend.fego-rides.com/getChats");
         this.activeChat = response.data.chats;
         console.log(this.activeChat)
       } catch (error) {
@@ -49,7 +49,7 @@ export default {
       if (!this.newMessage.trim()) return;
 
       try {
-        const response = await axios.post("http://62.72.16.49:3000/sendMessage", {
+        const response = await axios.post("https://backend.fego-rides.com/sendMessage", {
           chatId: this.activeChat._id,
           userId: localStorage.getItem('id'),
           sender: "support",
@@ -66,7 +66,7 @@ console.log(localStorage.getItem('id'));
       if (!this.activeChat) return;
 
       try {
-        await axios.post("http://62.72.16.49:3000/endChat", { chatId: this.activeChat._id });
+        await axios.post("https://backend.fego-rides.com/endChat", { chatId: this.activeChat._id });
         this.isChatInProgress = false;
         this.activeChat = null; // Reset active chat
 
@@ -84,7 +84,7 @@ console.log(localStorage.getItem('id'));
   },
   mounted() {
     // Initialize the Socket.IO connection
-    this.socket = io("http://62.72.16.49:3000");
+    this.socket = io("https://backend.fego-rides.com");
 
     // Listen for new messages
     this.socket.on("connect", () => {

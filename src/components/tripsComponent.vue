@@ -49,7 +49,7 @@ export default {
     methods: {
         async getTrips() {
             try {
-                const response = await axios.get('http://62.72.16.49:3000/admin/get-trips');
+                const response = await axios.get('https://backend.fego-rides.com/admin/get-trips');
                 this.trips = response.data;
                 this.filteredTrips = this.trips;
                 console.log(this.trips.driverData);

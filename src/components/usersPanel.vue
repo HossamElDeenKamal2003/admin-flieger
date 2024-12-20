@@ -41,7 +41,7 @@ export default {
     methods: {
         async increase(id) {
             try {
-                const response = await axios.patch(`http://62.72.16.49:3000/auth/increament-alerts/${id}`);
+                const response = await axios.patch(`https://backend.fego-rides.com/auth/increament-alerts/${id}`);
                 if (response.status === 200) {
                     // Assuming the API returns the updated user data
                     const updatedUser = response.data;
@@ -63,7 +63,7 @@ export default {
 
         async deleteUser(id) {
             try {
-                const response = await axios.delete(`http://62.72.16.49:3000/auth/delete-user/${id}`);
+                const response = await axios.delete(`https://backend.fego-rides.com/auth/delete-user/${id}`);
                 if (response.status === 200) {
                     alert(response.data.message);
                     this.users = this.users.filter(user => user._id !== id);
@@ -77,7 +77,7 @@ export default {
         async toggleBlock(userId, currentBlockStatus) {
             try {
                 const newBlockStatus = !currentBlockStatus;
-                const response = await axios.patch(`http://62.72.16.49:3000/auth/block/${userId}`, {
+                const response = await axios.patch(`https://backend.fego-rides.com/auth/block/${userId}`, {
                     block: newBlockStatus
                 });
 
@@ -96,7 +96,7 @@ export default {
 
         async getUsers() {
             try {
-                const response = await axios.get('http://62.72.16.49:3000/admin/get-users');
+                const response = await axios.get('https://backend.fego-rides.com/admin/get-users');
                 this.users = response.data;
             } catch (error) {
                 console.error(error);
