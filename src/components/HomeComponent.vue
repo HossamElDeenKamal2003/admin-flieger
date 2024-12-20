@@ -6,7 +6,7 @@
                 <button @click="toggleNav" class="btn" style="color: white;">Toggle Sidebar</button>
             </header>
             <main>
-                <div class="parent">
+                <div class="parent" style="display: none;">
                     <!-- First H1: Flieger on Site -->
                     <div>
                         <h1 class="flieger">
@@ -259,4 +259,6 @@ main {
 .overlay.active {
     display: block;
 }
+
+
 </style>
