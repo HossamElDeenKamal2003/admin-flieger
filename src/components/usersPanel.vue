@@ -36,13 +36,12 @@ export default {
     data() {
         return {
             users: [],
-            baseUrl: "https://fliegertechnology-production-6024.up.railway.app"
         }
     },
     methods: {
         async increase(id) {
             try {
-                const response = await axios.patch(`${ this.baseUrl }/auth/increament-alerts/${id}`);
+                const response = await axios.patch(`http://62.72.16.49:3000/auth/increament-alerts/${id}`);
                 if (response.status === 200) {
                     // Assuming the API returns the updated user data
                     const updatedUser = response.data;
@@ -64,7 +63,7 @@ export default {
 
         async deleteUser(id) {
             try {
-                const response = await axios.delete(`${ this.baseUrl }/auth/delete-user/${id}`);
+                const response = await axios.delete(`http://62.72.16.49:3000/auth/delete-user/${id}`);
                 if (response.status === 200) {
                     alert(response.data.message);
                     this.users = this.users.filter(user => user._id !== id);
@@ -78,7 +77,7 @@ export default {
         async toggleBlock(userId, currentBlockStatus) {
             try {
                 const newBlockStatus = !currentBlockStatus;
-                const response = await axios.patch(`${ this.baseUrl }/auth/block/${userId}`, {
+                const response = await axios.patch(`http://62.72.16.49:3000/auth/block/${userId}`, {
                     block: newBlockStatus
                 });
 
@@ -97,7 +96,7 @@ export default {
 
         async getUsers() {
             try {
-                const response = await axios.get(`${ this.baseUrl }/admin/get-users`);
+                const response = await axios.get('http://62.72.16.49:3000/admin/get-users');
                 this.users = response.data;
             } catch (error) {
                 console.error(error);

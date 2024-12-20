@@ -8,7 +8,7 @@ import trackingDriver from "../components/trackingDrivers.vue";
 import tripsComponent from "../components/tripsComponent.vue";
 import settingsPage from "../components/settingsComponent.vue";
 import permissionForm from "../components/permisitionsComponent.vue";
-import pannerComponent from "../components/pannerComponent.vue";
+import chatSupport from "../components/chatSupport.vue"
 const routes = [
 {
     path: "/",
@@ -128,9 +128,9 @@ const routes = [
     }
 },
 {
-    path: "/panners",
-    name: "pannersPage",
-    component: pannerComponent,
+    path: "/chatSupport",
+    name: "chatSupport",
+    component: chatSupport
 }
 
 ];

@@ -85,7 +85,6 @@ export default {
             },
             prices: [],
             editMode: false,
-            baseUrl: "https://fliegertechnology-production-6024.up.railway.app",
         }
     },
     created() {
@@ -94,7 +93,7 @@ export default {
     methods: {
         async fetchPrices() {
             try {
-                const response = await axios.get(`${ this.baseUrl }/prices/level2/getprices`);
+                const response = await axios.get('http://62.72.16.49:3000/prices/level2/getprices');
                 this.prices = response.data;
                 console.log(this.prices);
             } catch (error) {
@@ -104,7 +103,7 @@ export default {
         async handleSubmit() {
             if (this.editMode) {
                 try {
-                    const response = await axios.patch(`${ this.baseUrl }/prices/level2/updateprices`, this.form);
+                    const response = await axios.patch('http://62.72.16.49:3000/prices/level2/updateprices', this.form);
                     alert(response.data.message);
                     this.fetchPrices();
                 } catch (error) {
@@ -112,7 +111,7 @@ export default {
                 }
             } else {
                 try {
-                    const response = await axios.post(`${ this.baseUrl }/prices/level2/putprices`, this.form);
+                    const response = await axios.post('http://62.72.16.49:3000/prices/level2/putprices', this.form);
                     alert(response.data.message);
                     this.fetchPrices();
                 } catch (error) {
@@ -144,7 +143,7 @@ export default {
                 this.prices = this.prices.filter(price => price.country !== country);
 
                 // Then make the request to delete the price
-                axios.post(`${ this.baseUrl }/prices/delete/level2`, {
+                axios.post('http://62.72.16.49:3000/prices/delete/level2', {
                     country: country
                 }).then(() => {
                     this.fetchPrices();

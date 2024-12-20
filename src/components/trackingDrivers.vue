@@ -38,12 +38,11 @@ export default {
     data() {
         return {
             users: [],
-            baseUrl: "https://fliegertechnology-production-6024.up.railway.app"
         };
     },
     methods: {
         getTracking() {
-            axios.get(`${ this.baseUrl }/admin/get-location`).then(response => {
+            axios.get("http://62.72.16.49:3000/admin/get-location").then(response => {
                 this.users = response.data;
             }).catch(error => {
                 console.log(error);

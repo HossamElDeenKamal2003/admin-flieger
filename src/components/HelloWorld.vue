@@ -51,7 +51,7 @@
 
 // import axios from 'axios';
 export default {
-  name: 'AuthComponent',
+  name: 'AuthComponent', 
   data() {
     return {
       isSignUp: false,
@@ -62,11 +62,8 @@ export default {
       signUpForm: {
         username: '',
         secretKey: '',
-        password: '',
-
-      },
-      baseUrl: "https://fliegertechnology-production-6024.up.railway.app"
-
+        password: ''
+      }
     };
   },
   methods: {
@@ -89,12 +86,13 @@ export default {
       };
 
       // Send the request
-      fetch(`${this.baseUrl}/admin/signin`, requestOptions)
+      fetch("http://62.72.16.49:3000/admin/signin", requestOptions)
         .then(response => {
           if (!response.ok) {
-            // Return response as text in case it's not JSON
-            return response.text().then(text => {
-              throw new Error(text || 'Network response was not ok');
+            // Check if the response is JSON
+            return response.json().then(err => {
+              // Throw an error with a message from the server
+              throw new Error(err.message || 'Network response was not ok');
             });
           }
           return response.json(); // Parse JSON from the response
@@ -102,8 +100,10 @@ export default {
         .then(data => {
           console.log('data : ', data);
           alert("Login Successful");
+          localStorage.setItem("id", data.user._id);
           localStorage.setItem("username", data.user.username);
           localStorage.setItem("role", data.user.role);
+          console.log(data.username)
           this.$router.push('/home');
         })
         .catch(error => {
@@ -130,7 +130,7 @@ export default {
       };
 
       // Send the request
-      fetch(`${this.baseUrl}/admin/signup`, requestOptions)
+      fetch("http://62.72.16.49:3000/admin/signup", requestOptions)
         .then(response => {
           if (!response.ok) {
             // Check if the response is JSON
@@ -150,8 +150,8 @@ export default {
           alert(error.message);
         });
     },
-    created() {
-
+    created(){
+      
     }
 
   }
@@ -167,11 +167,9 @@ export default {
   margin: 0;
   padding: 0;
 }
-
-.img {
+.img{
   color: rgb(114, 89, 170);
 }
-
 body {
   font-family: 'Open Sans', Helvetica, Arial, sans-serif;
   background: #ffffff;

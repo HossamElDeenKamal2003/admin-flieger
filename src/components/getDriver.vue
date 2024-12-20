@@ -54,8 +54,7 @@ export default {
     data() {
         return {
             drivers: [],
-            searchQuery: '',
-            baseUrl: "https://fliegertechnology-production-6024.up.railway.app",
+            searchQuery: ''
         };
     },
     computed: {
@@ -68,7 +67,7 @@ export default {
     methods: {
         async getDriver() {
             try {
-                const response = await axios.get(`${ this.baseUrl }/admin/get-drivers`);
+                const response = await axios.get("http://62.72.16.49:3000/admin/get-drivers");
                 this.drivers = response.data;
                 console.log(this.drivers);
             } catch (error) {
@@ -77,7 +76,7 @@ export default {
         },
         async increase(id) {
             try {
-                const response = await axios.patch(`${ this.baseUrl }/authdriver/patch-block/${id}`);
+                const response = await axios.patch(`http://62.72.16.49:3000/authdriver/patch-block/${id}`);
                 if (response.status === 200) {
                     const updatedUser = response.data;
                     const userIndex = this.drivers.findIndex(user => user._id === id);
@@ -92,7 +91,7 @@ export default {
         async toggleBlock(id, currentBlockStatus) {
             try {
                 const newBlockStatus = !currentBlockStatus;
-                const response = await axios.patch(`${ this.baseUrl }/authdriver/patch-block/${id}`, {
+                const response = await axios.patch(`http://62.72.16.49:3000/authdriver/patch-block/${id}`, {
                     block: newBlockStatus
                 });
 
@@ -110,7 +109,7 @@ export default {
         },
         async deleteUser(id) {
             try {
-                const response = await axios.delete(`https://fliegertechnology.onrender.com/authdriver/delete-user/${id}`);
+                const response = await axios.delete(`http://62.72.16.49:3000/authdriver/delete-user/${id}`);
                 if (response.status === 200) {
                     alert(response.data.message);
                     this.drivers = this.drivers.filter(user => user._id !== id);
