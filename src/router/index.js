@@ -8,7 +8,8 @@ import trackingDriver from "../components/trackingDrivers.vue";
 import tripsComponent from "../components/tripsComponent.vue";
 import settingsPage from "../components/settingsComponent.vue";
 import permissionForm from "../components/permisitionsComponent.vue";
-import chatSupport from "../components/chatSupport.vue"
+import chatSupport from "../components/chatSupport.vue";
+import DriverSignup from "../components/driverSignup.vue";
 const routes = [
 {
     path: "/",
@@ -131,6 +132,11 @@ const routes = [
     path: "/chatSupport",
     name: "chatSupport",
     component: chatSupport
+},
+{
+    path: "/driver-signup",
+    name: "DriverSignup",
+    component: DriverSignup
 }
 
 ];

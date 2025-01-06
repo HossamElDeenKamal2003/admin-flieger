@@ -49,6 +49,7 @@
                 <a href="/admin/get-trips">All Trips</a>
                 <a href="/admin/settings">Settings</a>
                 <a href="/permission">Permissions</a>
+                <a href="/driver-signup">Driver Signup</a>
                 <a href="/chat">Chat</a>
             </nav>
             <button class="btn btn-primary" @click="logout">Logout</button>
