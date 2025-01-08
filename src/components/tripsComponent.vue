@@ -21,12 +21,47 @@
                             trip.destinationLocation.coordinates }}</p>
                         <p class="card-text"><strong>Vehicle Type:</strong> {{ trip.vehicleType }}</p>
                         <p class="card-text"><strong>Status:</strong> <span :class="statusClass(trip.status)">{{
-                                trip.status }}</span></p>
+                            trip.status }}</span></p>
                         <p class="card-text"><strong>Cost:</strong> {{ trip.cost }} EGP</p>
                         <p class="card-text"><strong>Date:</strong> {{ trip.date }}</p>
-                        <div class="dropdown">
-                            <p class="card-text"><strong>Driver Data</strong> {{ trip.driverData }}</p>
+                        <div class="dropdown" v-if="trip.driverData">
+                            <strong>Driver Data</strong>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p>Id: {{ trip.driverData._id }}</p>
+                                        <p>Name: {{ trip.driverData.username }}</p>
+                                        <p>Email: {{ trip.driverData.email }}</p>
+                                        <p>Phone Number: {{ trip.driverData.phoneNumber }}</p>
+                                    </div>
+                                    <div class="col-md-6 d-grid gap-2">
+                                        <!-- Profile Image -->
+                                        <a :href="trip.driverData.profile_image" target="_blank"
+                                            class="btn btn-primary btn-sm">Profile Image</a>
+                                        <!-- Car Licence Image -->
+                                        <a :href="trip.driverData.licenseImage" target="_blank"
+                                            class="btn btn-primary btn-sm">Car Licence Image</a>
+                                        <!-- Driver Licence Image -->
+                                        <a :href="trip.driverData.driver_licence_image" target="_blank"
+                                            class="btn btn-primary btn-sm">Driver Licence Image</a>
+                                        <!-- National Front -->
+                                        <a :href="trip.driverData.national_front" target="_blank"
+                                            class="btn btn-primary btn-sm">National Front</a>
+                                        <!-- National Back -->
+                                        <a :href="trip.driverData.national_back" target="_blank"
+                                            class="btn btn-primary btn-sm">National Back</a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <div class="driverDataNo" v-else>
+                            <strong>Driver Data</strong>
+                            <p>No Driver Data</p>
+                        </div>
+
+
+
                     </div>
                 </div>
             </div>
@@ -52,7 +87,7 @@ export default {
                 const response = await axios.get('https://backend.fego-rides.com/admin/get-trips');
                 this.trips = response.data;
                 this.filteredTrips = this.trips;
-                console.log(this.trips.driverData);
+                console.log(this.trips);
             } catch (error) {
                 console.log(error);
             }
