@@ -10,7 +10,15 @@ import settingsPage from "../components/settingsComponent.vue";
 import permissionForm from "../components/permisitionsComponent.vue";
 import chatSupport from "../components/chatSupport.vue";
 import DriverSignup from "../components/driverSignup.vue";
+
 const routes = [
+    {
+        path: '/chat',
+        name: 'chat',
+        beforeEnter: () => {
+          window.location.href = '/chat.html';
+        }
+      },
 {
     path: "/",
     name: "auth",

@@ -24,6 +24,7 @@
                             trip.status }}</span></p>
                         <p class="card-text"><strong>Cost:</strong> {{ trip.cost }} EGP</p>
                         <p class="card-text"><strong>Date:</strong> {{ trip.date }}</p>
+
                         <div class="dropdown" v-if="trip.driverData">
                             <strong>Driver Data</strong>
                             <div class="container">
@@ -35,21 +36,21 @@
                                         <p>Phone Number: {{ trip.driverData.phoneNumber }}</p>
                                     </div>
                                     <div class="col-md-6 d-grid gap-2">
-                                        <!-- Profile Image -->
-                                        <a :href="trip.driverData.profile_image" target="_blank"
-                                            class="btn btn-primary btn-sm">Profile Image</a>
-                                        <!-- Car Licence Image -->
-                                        <a :href="trip.driverData.licenseImage" target="_blank"
-                                            class="btn btn-primary btn-sm">Car Licence Image</a>
-                                        <!-- Driver Licence Image -->
-                                        <a :href="trip.driverData.driver_licence_image" target="_blank"
-                                            class="btn btn-primary btn-sm">Driver Licence Image</a>
-                                        <!-- National Front -->
-                                        <a :href="trip.driverData.national_front" target="_blank"
-                                            class="btn btn-primary btn-sm">National Front</a>
-                                        <!-- National Back -->
-                                        <a :href="trip.driverData.national_back" target="_blank"
-                                            class="btn btn-primary btn-sm">National Back</a>
+                                        <button class="btn btn-primary btn-sm"
+                                            @click="openImageModal(trip.driverData.profile_image)">Profile
+                                            Image</button>
+                                        <button class="btn btn-primary btn-sm"
+                                            @click="openImageModal(trip.driverData.licenseImage)">Car Licence
+                                            Image</button>
+                                        <button class="btn btn-primary btn-sm"
+                                            @click="openImageModal(trip.driverData.driver_licence_image)">Driver Licence
+                                            Image</button>
+                                        <button class="btn btn-primary btn-sm"
+                                            @click="openImageModal(trip.driverData.national_front)">National
+                                            Front</button>
+                                        <button class="btn btn-primary btn-sm"
+                                            @click="openImageModal(trip.driverData.national_back)">National
+                                            Back</button>
                                     </div>
                                 </div>
                             </div>
@@ -59,9 +60,21 @@
                             <strong>Driver Data</strong>
                             <p>No Driver Data</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-
-
+        <!-- Modal for Image Display -->
+        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img :src="modalImageSrc" alt="Preview" class="img-fluid" />
                     </div>
                 </div>
             </div>
@@ -69,16 +82,18 @@
     </div>
 </template>
 
+
 <script>
 import axios from 'axios';
-
+import { Modal } from 'bootstrap';
 export default {
     name: 'TripsComponent',
     data() {
         return {
             trips: [],
             searchQuery: '',
-            filteredTrips: []
+            filteredTrips: [],
+            modalImageSrc: '' // Store the image source for the modal
         };
     },
     methods: {
@@ -107,7 +122,15 @@ export default {
                 'text-warning': status === 'pending',
                 'text-secondary': status === 'accepted'
             };
+        },
+        openImageModal(imageUrl) {
+            this.modalImageSrc = imageUrl;
+            const modalElement = document.getElementById('imageModal');
+            const modal = new Modal(modalElement); // Use Modal directly
+            modal.show();
         }
+
+
     },
     created() {
         this.getTrips();
@@ -119,5 +142,10 @@ export default {
 .card {
     border-radius: 10px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-body img {
+    max-height: 500px;
+    object-fit: contain;
 }
 </style>
