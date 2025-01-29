@@ -97,10 +97,28 @@
             </div>
             <button type="submit" class="btn btn-primary">Update Max Distance</button>
         </form>
-
         <!-- Display current max distance -->
         <h3 class="text-center">Current Max Distance</h3>
         <p>Max Distance: {{ currentMaxDistance }}</p>
+
+        <h1 class="text-center">Subscription</h1>
+        <form @submit.prevent="updateSub">
+            <div class="mb-3">
+                <label for="sub" class="form-label">Subscription</label>
+                <input type="number" id="sub" v-model="subs.sub" class="form-control"
+                    placeholder="Enter New Subscription" required />
+            </div>
+            <div class="mb-3">
+                <label for="profit" class="form-label">Profit</label>
+                <input type="number" id="profit" v-model="subs.profit" class="form-control"
+                    placeholder="Enter New Profit" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+        <!-- Display current max distance -->
+        <h3 class="text-center">Current Sub</h3>
+        <p>Subscription : {{ sub }}</p>
+        <p>Profit : {{ profit }}</p>
     </div>
 </template>
 
@@ -160,6 +178,12 @@ export default {
             editMode: false,
             maxDistance: '', // Field for max distance
             currentMaxDistance: '', // Holds the current max distance value
+            sub: 0,
+            profit: 0,
+            subs: {
+                newSub: 0,
+                profit: 0
+            }
         };
     },
     components:{
@@ -171,8 +195,41 @@ export default {
         this.fetchPrices();
         this.getProperity();
         this.fetchMaxDistance();
+        this.fetchSub();
     },
     methods: {
+        async updateSub(){
+            try{
+                axios.patch("https://backend.fego-rides.com/admin/update-subscription", {
+                    subScription: this.subs.sub,
+                    profit: this.subs.profit
+                }).then((response)=>{
+                    if(response.status === 200){
+                        alert("Added Subscription Successfully");
+                        this.sub = this.subs.sub;
+                        this.profit = this.subs.profit
+                    }else{
+                        alert("Error While Adding Subscription");
+                    }
+                }).catch(error=>{
+                    console.log(error);
+                    alert(error.message);
+                })
+            }
+            catch(error){
+                console.log(error.data.message);
+            }
+        },
+        async fetchSub(){
+            try{
+                const response = await axios.get('https://backend.fego-rides.com/admin/get-sub');
+                this.sub = response.data.sub.subScription;
+                this.profit = response.data.sub.profit;
+            }
+            catch(error){
+                console.log(error);
+            }
+        },
         async fetchPrices() {
             try {
                 const response = await axios.get('https://backend.fego-rides.com/prices/level1/getprices');

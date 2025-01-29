@@ -256,7 +256,6 @@
 
         async sendMessage() {
           if (!this.newMessage.trim() && !this.selectedFile) return;
-
           const formData = new FormData();
           formData.append('chatId', this.activeChat._id);
           formData.append('sender', 'support');
