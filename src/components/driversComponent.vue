@@ -38,6 +38,7 @@
                                     <button class="btn btn-info btn-sm" @click="redirectToImage(user.licenseImage)">Car Licence</button>
                                     <button class="btn btn-info btn-sm" @click="redirectToImage(user.driver_licence_image)">Driver Licence</button>
                                 </div>
+                                
                             </div>
                         </div>
                     </div>

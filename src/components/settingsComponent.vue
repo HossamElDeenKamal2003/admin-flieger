@@ -119,6 +119,17 @@
         <h3 class="text-center">Current Sub</h3>
         <p>Subscription : {{ sub }}</p>
         <p>Profit : {{ profit }}</p>
+
+        <h2>Current Distance In Trip</h2>
+        <form @submit.prevent="updatedistanceintrip">
+            <div class="mb-3">
+                <input type="number" id="sub" v-model="this.distance_in_trip" class="form-control"
+                    placeholder="Enter New Subscription" required />
+            </div>
+           <p>{{ this.current_distance_in_trip }}</p>
+            <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+        <!-- Display current max distance -->
     </div>
 </template>
 
@@ -183,7 +194,9 @@ export default {
             subs: {
                 newSub: 0,
                 profit: 0
-            }
+            },
+            distance_in_trip: 0,
+            current_distance_in_trip: 0
         };
     },
     components:{
@@ -196,8 +209,32 @@ export default {
         this.getProperity();
         this.fetchMaxDistance();
         this.fetchSub();
+        this.getDistance_inTrip();
     },
     methods: {
+
+        async getDistance_inTrip(){
+            axios.get('https://backend.fego-rides.com/admin/get-des').then(response=>{
+                this.current_distance_in_trip = response.data.distances[0].distance;
+            }).catch(()=>{
+                alert('Error Fetching Distance In Trip');
+            })
+        },
+
+        async updatedistanceintrip(){
+            axios.patch('https://backend.fego-rides.com/admin/update-dis',{
+                distance: this.distance_in_trip
+            }).then(response=>{
+                if(response.status === 200){
+                    console.log(response.data)
+                    alert('Distance Updated Successfully');
+                    this.getDistance_inTrip();
+                }
+            }).catch(()=>{
+                alert('Error When Updating Distance');
+            })
+        },
+
         async updateSub(){
             try{
                 axios.patch("https://backend.fego-rides.com/admin/update-subscription", {
