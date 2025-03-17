@@ -10,8 +10,14 @@ import settingsPage from "../components/settingsComponent.vue";
 import permissionForm from "../components/permisitionsComponent.vue";
 import chatSupport from "../components/chatSupport.vue";
 import DriverSignup from "../components/driverSignup.vue";
-
+import getreqComponent from "../components/getReq.vue";
+import couponsComponent from "../components/couponsComponent.vue";
 const routes = [
+     {   
+        path: "/get-req",
+        name: "getreqComponent",
+        component: getreqComponent
+    },
     {
         path: '/chat',
         name: 'chat',
@@ -25,7 +31,7 @@ const routes = [
     component: AuthComponent,
 },
 {
-    path: "/home",
+    path: "/home", 
     name: "home",
     component: TxtRotate,
     beforeEnter: (to, from, next) => {
@@ -145,6 +151,11 @@ const routes = [
     path: "/driver-signup",
     name: "DriverSignup",
     component: DriverSignup
+},
+{
+    path: "/coupons",
+    name: "couponsComponent",
+    component: couponsComponent
 }
 
 ];

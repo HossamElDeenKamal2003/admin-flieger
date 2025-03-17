@@ -51,6 +51,8 @@
                 <a href="/permission">Permissions</a>
                 <a href="/driver-signup">Driver Signup</a>
                 <a href="/chat.html">Chat</a>
+                <a href="/coupons">Coupons</a>
+                <a href="/get-req">Withdraw Requests</a>
             </nav>
             <button class="btn btn-primary" @click="logout">Logout</button>
         </aside>
