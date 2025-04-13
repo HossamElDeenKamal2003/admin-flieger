@@ -1,4 +1,3 @@
-<!-- Sidebar.vue -->
 <template>
   <aside class="sidebar" :class="{ 'sidebar-collapsed': isCollapsed }">
     <div class="logo">
@@ -12,7 +11,7 @@
             v-for="item in menuItems"
             :key="item.name"
             :class="{ active: activeMenu === item.name }"
-            @click="setActiveMenu(item.name)"
+            @click="navigateTo(item)"
         >
           <i :class="`icon ${item.icon}`"></i>
           <span v-if="!isCollapsed">{{ item.name }}</span>
@@ -30,20 +29,22 @@ export default {
   data() {
     return {
       menuItems: [
-        { name: 'Overview', icon: 'overview' },
-        { name: 'Trips', icon: 'trips' },
-        { name: 'Users', icon: 'users' },
-        { name: 'Captains', icon: 'captains' },
-        { name: 'Moderators', icon: 'moderators' },
-        { name: 'Settings', icon: 'settings' },
+        { name: 'Overview', icon: 'overview', route: '/home' },
+        { name: 'Trips', icon: 'trips', route: '/admin/get-trips' },
+        { name: 'Users', icon: 'users', route: '/admin/users' },
+        { name: 'Captains', icon: 'captains', route: '/admin/get-trips' },
+        { name: 'Moderators', icon: 'moderators', route: '/moderators' },
+        { name: 'Settings', icon: 'settings', route: '/settings' },
       ],
-      activeMenu: 'Captains',
-      isCollapsed: false
-    }
+      activeMenu: 'Overview', // Default to Overview
+      isCollapsed: false,
+    };
   },
   mounted() {
     this.handleResize();
     window.addEventListener('resize', this.handleResize);
+    // Set active menu based on current route
+    this.setActiveMenuFromRoute();
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
@@ -53,22 +54,29 @@ export default {
       this.isCollapsed = window.innerWidth <= 768;
       this.$emit('toggle', this.isCollapsed);
     },
-    setActiveMenu(menuName) {
-      this.activeMenu = menuName;
-      console.log(`Navigating to ${menuName}`);
+    setActiveMenuFromRoute() {
+      const currentRoute = this.$route.path;
+      const menuItem = this.menuItems.find(item => item.route === currentRoute);
+      if (menuItem) {
+        this.activeMenu = menuItem.name;
+      }
+    },
+    navigateTo(item) {
+      this.activeMenu = item.name;
+      this.$router.push(item.route);
     },
     toggleSidebar() {
       if (window.innerWidth <= 768) {
         this.isCollapsed = !this.isCollapsed;
         this.$emit('toggle', this.isCollapsed);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
-/* Your existing styles remain exactly the same */
+/* Styles remain unchanged */
 .sidebar {
   width: 250px;
   background-color: #6b48ff;
