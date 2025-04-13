@@ -34,8 +34,10 @@
           <span>Moderators</span>
         </div>
         <div class="menu-item">
-          <i class="fas fa-cog"></i>
-          <span>Settings</span>
+          <a href="/admin/settings" style="color: white; text-decoration: none;">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+          </a>
         </div>
       </div>
     </div>

@@ -1,387 +1,467 @@
 <template>
-    <div class="container mt-5">
-        <h1 class="text-center">Settings: Manage Prices</h1>
-        <h1 class="text-center">level one</h1>
-        <!-- Form to add or update prices -->
-        <form @submit.prevent="handleSubmit" class="my-4">
-            <div class="mb-3">
-                <label for="country" class="form-label">Country</label>
-                <input type="text" id="country" v-model="form.country" class="form-control" placeholder="Enter Country"
-                    required />
-            </div>
-            <div class="mb-3">
-                <label for="priceCar" class="form-label">Car Price</label>
-                <input type="number" id="priceCar" v-model="form.priceCar" class="form-control"
-                    placeholder="Enter Car Price" required />
-            </div>
-            <div class="mb-3">
-                <label for="motorocycle" class="form-label">Motorcycle Price</label>
-                <input type="number" id="motorocycle" v-model="form.motorocycle" class="form-control"
-                    placeholder="Enter Motorcycle Price" required />
-            </div>
-            <div class="mb-3">
-                <label for="priceVan" class="form-label">Van Price</label>
-                <input type="number" id="priceVan" v-model="form.priceVan" class="form-control"
-                    placeholder="Enter Van Price" required />
-            </div>
-            <div class="mb-3">
-                <label for="penfits" class="form-label">Penfits</label>
-                <input type="number" id="penfits" v-model="form.penfits" class="form-control"
-                    placeholder="Enter Penfits" required />
-            </div>
-            <div class="mb-3">
-                <label for="comfort" class="form-label">Comfort</label>
-                <input type="number" id="comfort" v-model="form.compfort" class="form-control"
-                    placeholder="Enter Comfort" required />
-            </div>
-            <button type="submit" class="btn btn-primary">{{ editMode ? "Update Price" : "Add Price" }}</button>
-        </form>
-
-        <!-- Display price list -->
-        <h3 class="text-center">Current Prices</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Country</th>
-                    <th>Car Price</th>
-                    <th>Motorcycle Price</th>
-                    <th>Van Price</th>
-                    <th>Penfits</th>
-                    <th>Comfort</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="price in prices" :key="price._id">
-                    <td>{{ price.country }}</td>
-                    <td>{{ price.priceCar }}</td>
-                    <td>{{ price.motorocycle }}</td>
-                    <td>{{ price.priceVan }}</td>
-                    <td>{{ price.penfits }}</td>
-                    <td>{{ price.compfort }}</td>
-                    <td>
-                        <button @click="editPrice(price)" class="btn btn-warning btn-sm">Edit</button>
-                        <button @click="deletePrice(price.country)" class="btn btn-danger btn-sm">Delete</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <leve2Component />
-        <leve3Component />
-        <leve4Component />
-        <h3 class="text-center">Manage Properties (Time & Distance)</h3>
-        <form @submit.prevent="updateProperty">
-            <div class="mb-3">
-                <label for="time" class="form-label">Time</label>
-                <input type="number" id="time" v-model="propertyForm.time" class="form-control" placeholder="Enter Time"
-                    required />
-            </div>
-            <div class="mb-3">
-                <label for="distance" class="form-label">Distance</label>
-                <input type="number" id="distance" v-model="propertyForm.distance" class="form-control"
-                    placeholder="Enter Distance" required />
-            </div>
-            <button type="submit" class="btn btn-primary">Update Property</button>
-        </form>
-
-        <!-- Display current property details -->
-        <h3 class="text-center">Current Properties</h3>
-        <p>Time: {{ currentProperty.time }}</p>
-        <p>Distance: {{ currentProperty.distance }}</p>
-        <h3 class="text-center">Manage Maximum Distance</h3>
-        <form @submit.prevent="updateDistance">
-            <div class="mb-3">
-                <label for="maxDistance" class="form-label">Max Distance</label>
-                <input type="number" id="maxDistance" v-model="maxDistance" class="form-control"
-                    placeholder="Enter Max Distance" required />
-            </div>
-            <button type="submit" class="btn btn-primary">Update Max Distance</button>
-        </form>
-        <!-- Display current max distance -->
-        <h3 class="text-center">Current Max Distance</h3>
-        <p>Max Distance: {{ currentMaxDistance }}</p>
-
-        <h1 class="text-center">Subscription</h1>
-        <form @submit.prevent="updateSub">
-            <div class="mb-3">
-                <label for="sub" class="form-label">Subscription</label>
-                <input type="number" id="sub" v-model="subs.sub" class="form-control"
-                    placeholder="Enter New Subscription" required />
-            </div>
-            <div class="mb-3">
-                <label for="profit" class="form-label">Profit</label>
-                <input type="number" id="profit" v-model="subs.profit" class="form-control"
-                    placeholder="Enter New Profit" required />
-            </div>
-            <button type="submit" class="btn btn-primary">Add</button>
-        </form>
-        <!-- Display current max distance -->
-        <h3 class="text-center">Current Sub</h3>
-        <p>Subscription : {{ sub }}</p>
-        <p>Profit : {{ profit }}</p>
-
-        <h2>Current Distance In Trip</h2>
-        <form @submit.prevent="updatedistanceintrip">
-            <div class="mb-3">
-                <input type="number" id="sub" v-model="this.distance_in_trip" class="form-control"
-                    placeholder="Enter New Subscription" required />
-            </div>
-           <p>{{ this.current_distance_in_trip }}</p>
-            <button type="submit" class="btn btn-primary">Update</button>
-        </form>
-        <!-- Display current max distance -->
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img style="border-radius: 50%" src="@/assets/fego%202.png" alt="Fego Logo" />
+        <span class="logo-text">Fego</span>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+          <li><i class="fas fa-list"></i> Orders</li>
+          <li class="active"><i class="fas fa-route"></i> Trips</li>
+          <li><i class="fas fa-users"></i> Users</li>
+          <li><i class="fas fa-user-tie"></i> Captains</li>
+          <li><i class="fas fa-user-shield"></i> Moderators</li>
+          <li>
+            <i class="fas fa-cog"></i> Settings
+            <ul class="submenu">
+              <li class="active">Trip Settings</li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
     </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="menu-icon">
+          <i class="fas fa-bars"></i>
+        </div>
+        <div class="greeting">
+          Good morning, MR.Fady 👋 <span class="notification">you have 1 new Captain's Request</span>
+        </div>
+        <div class="header-actions">
+          <i class="fas fa-search"></i>
+          <i class="fas fa-bell"></i>
+          <i class="fas fa-sign-out-alt"></i>
+        </div>
+      </header>
+
+      <!-- Trips Setting Section -->
+      <h1 class="section-title">Trips Setting</h1>
+      <div class="settings-grid">
+        <!-- Waiting Time Card -->
+        <div class="setting-card">
+          <label class="card-label">Waiting Time (S)</label>
+          <div class="card-value">
+            {{ propertyForm.time || currentProperty.time || 300 }}
+            <button class="edit-btn" @click="editProperty('time')">
+              <i class="fas fa-pen"></i>
+            </button>
+          </div>
+          <form v-if="editing.time" @submit.prevent="updateProperty('time')" class="edit-form">
+            <input
+                type="number"
+                v-model="propertyForm.time"
+                class="form-control"
+                placeholder="Enter Time"
+                required
+            />
+            <div class="form-actions">
+              <button type="submit" class="save-btn">Save</button>
+              <button type="button" class="cancel-btn" @click="cancelEdit('time')">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Max Distance to Captain See Trip Card -->
+        <div class="setting-card">
+          <label class="card-label">Max. Distance to captain see trip (M)</label>
+          <div class="card-value">
+            {{ maxDistance || currentMaxDistance || 300 }}
+            <button class="edit-btn" @click="editDistance('maxDistance')">
+              <i class="fas fa-pen"></i>
+            </button>
+          </div>
+          <form v-if="editing.maxDistance" @submit.prevent="updateDistance('maxDistance')" class="edit-form">
+            <input
+                type="number"
+                v-model="maxDistance"
+                class="form-control"
+                placeholder="Enter Max Distance"
+                required
+            />
+            <div class="form-actions">
+              <button type="submit" class="save-btn">Save</button>
+              <button type="button" class="cancel-btn" @click="cancelEdit('maxDistance')">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Distance to Captain Make Arrived Card -->
+        <div class="setting-card">
+          <label class="card-label">Distance to captain Make arrived (M)</label>
+          <div class="card-value">
+            {{ distanceInTrip || currentDistanceInTrip || 300 }}
+            <button class="edit-btn" @click="editDistanceInTrip">
+              <i class="fas fa-pen"></i>
+            </button>
+          </div>
+          <form v-if="editing.distanceInTrip" @submit.prevent="updateDistanceInTrip" class="edit-form">
+            <input
+                type="number"
+                v-model="distanceInTrip"
+                class="form-control"
+                placeholder="Enter Distance"
+                required
+            />
+            <div class="form-actions">
+              <button type="submit" class="save-btn">Save</button>
+              <button type="button" class="cancel-btn" @click="cancelEdit('distanceInTrip')">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Max Distance to Captain See Another Offer Card -->
+        <div class="setting-card">
+          <label class="card-label">Max. Distance to captain see another offer (M)</label>
+          <div class="card-value">
+            {{ maxDistanceOffer || currentMaxDistanceOffer || 300 }}
+            <button class="edit-btn" @click="editDistance('maxDistanceOffer')">
+              <i class="fas fa-pen"></i>
+            </button>
+          </div>
+          <form v-if="editing.maxDistanceOffer" @submit.prevent="updateDistance('maxDistanceOffer')" class="edit-form">
+            <input
+                type="number"
+                v-model="maxDistanceOffer"
+                class="form-control"
+                placeholder="Enter Max Distance"
+                required
+            />
+            <div class="form-actions">
+              <button type="submit" class="save-btn">Save</button>
+              <button type="button" class="cancel-btn" @click="cancelEdit('maxDistanceOffer')">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
 import axios from 'axios';
-import leve2Component from "./levels/level2omponent";
-import leve3Component from "./levels/level3component.vue";
-import leve4Component from "./levels/level4Component.vue";
+
 export default {
-    data() {
-        return {
-            form: {
-                country: '',
-                priceCar: '',
-                motorocycle: '',
-                priceVan: '',
-                penfits: '',
-                compfort: '',
-                maxDistance: '',
-            },
-            form2: {
-                country: '',
-                priceCar: '',
-                motorocycle: '',
-                priceVan: '',
-                penfits: '',
-                compfort: '',
-                maxDistance: '',
-            },
-            form3: {
-                country: '',
-                priceCar: '',
-                motorocycle: '',
-                priceVan: '',
-                penfits: '',
-                compfort: '',
-                maxDistance: '',
-            },
-            form4: {
-                country: '',
-                priceCar: '',
-                motorocycle: '',
-                priceVan: '',
-                penfits: '',
-                compfort: '',
-                maxDistance: '',
-            },
-            propertyForm: {
-                time: '',
-                distance: '',
-            },
-            currentProperty: {},
-            prices: [],
-            prices2: [],
-            prices3: [],
-            prices4: [],
-            editMode: false,
-            maxDistance: '', // Field for max distance
-            currentMaxDistance: '', // Holds the current max distance value
-            sub: 0,
-            profit: 0,
-            subs: {
-                newSub: 0,
-                profit: 0
-            },
-            distance_in_trip: 0,
-            current_distance_in_trip: 0
-        };
+  data() {
+    return {
+      propertyForm: {
+        time: '',
+      },
+      currentProperty: {},
+      maxDistance: '',
+      currentMaxDistance: '',
+      maxDistanceOffer: '',
+      currentMaxDistanceOffer: '',
+      distanceInTrip: '',
+      currentDistanceInTrip: '',
+      editing: {
+        time: false,
+        maxDistance: false,
+        maxDistanceOffer: false,
+        distanceInTrip: false,
+      },
+    };
+  },
+  created() {
+    this.fetchProperties();
+    this.fetchDistances();
+    this.fetchDistanceInTrip();
+  },
+  methods: {
+    async fetchProperties() {
+      try {
+        const response = await axios.get('https://backend.fego-rides.com/admin/get-properties');
+        this.currentProperty = response.data;
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+      }
     },
-    components:{
-        leve2Component,
-        leve3Component,
-        leve4Component
+    async fetchDistances() {
+      try {
+        const response = await axios.get('https://backend.fego-rides.com/book/get-distance-find-drivers');
+        this.currentMaxDistance = response.data.message.maxDistance;
+        this.currentMaxDistanceOffer = response.data.message.maxDistance; // Assuming same endpoint for simplicity
+      } catch (error) {
+        console.error('Error fetching distances:', error);
+      }
     },
-    created() {
-        this.fetchPrices();
-        this.getProperity();
-        this.fetchMaxDistance();
-        this.fetchSub();
-        this.getDistance_inTrip();
+    async fetchDistanceInTrip() {
+      try {
+        const response = await axios.get('https://backend.fego-rides.com/admin/get-des');
+        this.currentDistanceInTrip = response.data.distances[0].distance;
+      } catch (error) {
+        alert('Error Fetching Distance In Trip');
+      }
     },
-    methods: {
-
-        async getDistance_inTrip(){
-            axios.get('https://backend.fego-rides.com/admin/get-des').then(response=>{
-                this.current_distance_in_trip = response.data.distances[0].distance;
-            }).catch(()=>{
-                alert('Error Fetching Distance In Trip');
-            })
-        },
-
-        async updatedistanceintrip(){
-            axios.patch('https://backend.fego-rides.com/admin/update-dis',{
-                distance: this.distance_in_trip
-            }).then(response=>{
-                if(response.status === 200){
-                    console.log(response.data)
-                    alert('Distance Updated Successfully');
-                    this.getDistance_inTrip();
-                }
-            }).catch(()=>{
-                alert('Error When Updating Distance');
-            })
-        },
-
-        async updateSub(){
-            try{
-                axios.patch("https://backend.fego-rides.com/admin/update-subscription", {
-                    subScription: this.subs.sub,
-                    profit: this.subs.profit
-                }).then((response)=>{
-                    if(response.status === 200){
-                        alert("Added Subscription Successfully");
-                        this.sub = this.subs.sub;
-                        this.profit = this.subs.profit
-                    }else{
-                        alert("Error While Adding Subscription");
-                    }
-                }).catch(error=>{
-                    console.log(error);
-                    alert(error.message);
-                })
-            }
-            catch(error){
-                console.log(error.data.message);
-            }
-        },
-        async fetchSub(){
-            try{
-                const response = await axios.get('https://backend.fego-rides.com/admin/get-sub');
-                this.sub = response.data.sub.subScription;
-                this.profit = response.data.sub.profit;
-            }
-            catch(error){
-                console.log(error);
-            }
-        },
-        async fetchPrices() {
-            try {
-                const response = await axios.get('https://backend.fego-rides.com/prices/level1/getprices');
-                this.prices = response.data;
-            } catch (error) {
-                console.error('Error fetching prices:', error);
-            }
-        },
-        async handleSubmit() {
-            if (this.editMode) {
-                try {
-                    const response = await axios.patch('https://backend.fego-rides.com/prices/level1/updateprices', this.form);
-                    alert(response.data.message);
-                    this.fetchPrices();
-                } catch (error) {
-                    console.error('Error updating price:', error);
-                }
-            } else {
-                try {
-                    const response = await axios.post('https://backend.fego-rides.com/prices/level1/putprices', this.form);
-                    alert(response.data.message);
-                    const response2 = await axios.get('https://backend.fego-rides.com/prices/level1/getprices');
-                    this.prices = response2.data;
-                } catch (error) {
-                    console.error('Error adding price:', error);
-                }
-            }
-            this.resetForm();
-        },
-        async getProperity() {
-            try {
-                const response = await axios.get('https://backend.fego-rides.com/admin/get-properties');
-                this.currentProperty = response.data;
-            } catch (error) {
-                console.error('Error fetching property:', error);
-            }
-        },
-        deletePrice(country) {
-            console.log(country);
-            if (confirm(`Are you sure you want to delete prices for ${country}?`)) {
-                // Optimistically update the prices array
-                this.prices = this.prices.filter(price => price.country !== country);
-
-                // Then make the request to delete the price
-                axios.post('https://backend.fego-rides.com/prices/delete/level1', {
-                    country: country
-                }).then(() => {
-                    this.fetchPrices();
-                }).catch(error => {
-                    console.log(error);
-                    alert(error.response?.data?.error || 'Error deleting price');
-                    // Revert the optimistic update if there's an error
-                    this.fetchPrices();
-                });
-            }
-        },
-        deletePrice2(country) {
-            console.log(country);
-            if (confirm(`Are you sure you want to delete prices for ${country}?`)) {
-                axios.post('https://backend.fego-rides.com/prices/delete/level2', {
-                    country: country
-                }).then(() => {
-                    alert('deleted')
-                })
-            }
-        },
-        async updateDistance() {
-            try {
-                const response = await axios.patch('https://backend.fego-rides.com/book/max-distance', { maxDistance: this.maxDistance });
-                alert(response.data.message);
-                this.fetchMaxDistance();
-            } catch (error) {
-                console.error('Error updating max distance:', error);
-            }
-        },
-        async fetchMaxDistance() {
-            try {
-                const response = await axios.get('https://backend.fego-rides.com/book/get-distance-find-drivers');
-                this.currentMaxDistance = response.data.message.maxDistance;
-            } catch (error) {
-                console.error('Error fetching max distance:', error);
-            }
-        },
-        editPrice(price) {
-            this.form = { ...price };
-            this.editMode = true;
-        },
-        editPrice2(price) {
-            this.form = { ...price };
-            this.editMode = true;
-        },
-        resetForm() {
-            this.form = {
-                country: '',
-                priceCar: '',
-                motorocycle: '',
-                priceVan: '',
-                maxDistance: '',
-            };
-            this.editMode = false;
-        },
+    async updateProperty(field) {
+      try {
+        const response = await axios.patch('https://backend.fego-rides.com/admin/update-properties', {
+          time: this.propertyForm.time,
+        });
+        console.log(response.data);
+        alert('Waiting Time Updated Successfully');
+        this.fetchProperties();
+        this.editing[field] = false;
+      } catch (error) {
+        console.error('Error updating property:', error);
+        alert('Error Updating Waiting Time');
+      }
     },
+    async updateDistance(field) {
+      try {
+        const distance = field === 'maxDistance' ? this.maxDistance : this.maxDistanceOffer;
+        const response = await axios.patch('https://backend.fego-rides.com/book/max-distance', { maxDistance: distance });
+        console.log(response.data);
+        alert('Distance Updated Successfully');
+        this.fetchDistances();
+        this.editing[field] = false;
+      } catch (error) {
+        console.error('Error updating distance:', error);
+        alert('Error Updating Distance');
+      }
+    },
+    async updateDistanceInTrip() {
+      try {
+        const response = await axios.patch('https://backend.fego-rides.com/admin/update-dis', {
+          distance: this.distanceInTrip,
+        });
+        if (response.status === 200) {
+          alert('Distance Updated Successfully');
+          this.fetchDistanceInTrip();
+          this.editing.distanceInTrip = false;
+        }
+      } catch (error) {
+        alert('Error When Updating Distance');
+      }
+    },
+    editProperty(field) {
+      this.editing[field] = true;
+    },
+    editDistance(field) {
+      this.editing[field] = true;
+    },
+    editDistanceInTrip() {
+      this.editing.distanceInTrip = true;
+    },
+    cancelEdit(field) {
+      this.editing[field] = false;
+      this.propertyForm.time = '';
+      this.maxDistance = '';
+      this.maxDistanceOffer = '';
+      this.distanceInTrip = '';
+    },
+  },
 };
 </script>
 
 <style scoped>
-.container {
-    max-width: 800px;
+/* General Layout */
+.app-container {
+  display: flex;
+  height: 100vh;
+  background-color: #f5f5f5;
+  font-family: 'Inter', sans-serif;
 }
 
-tr {
-    text-align: center;
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background-color: #6b5b95;
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
-td {
-    text-align: center;
+.logo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.logo img {
+  width: 40px;
+  margin-right: 10px;
+}
+
+.logo-text {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar-nav li {
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.sidebar-nav li i {
+  margin-right: 10px;
+}
+
+.sidebar-nav li.active {
+  background-color: #8a7db5;
+  border-radius: 8px;
+  padding-left: 10px;
+}
+
+.submenu {
+  margin-left: 30px;
+  margin-top: 5px;
+}
+
+.submenu li {
+  padding: 8px 0;
+  font-size: 14px;
+  color: #d3d3d3;
+}
+
+.submenu li.active {
+  color: white;
+  background: none;
+  padding-left: 0;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.menu-icon i {
+  font-size: 24px;
+  cursor: pointer;
+  color: #333;
+}
+
+.greeting {
+  font-size: 16px;
+  color: #333;
+}
+
+.greeting .notification {
+  color: #007bff;
+  cursor: pointer;
+}
+
+.header-actions i {
+  font-size: 20px;
+  margin-left: 15px;
+  cursor: pointer;
+  color: #333;
+}
+
+/* Section Title */
+.section-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+/* Settings Grid */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* Setting Card */
+.setting-card {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.card-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+  display: block;
+  line-height: 1.4;
+}
+
+.card-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-btn i {
+  color: #6b5b95;
+  font-size: 16px;
+}
+
+.edit-form {
+  margin-top: 15px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.save-btn,
+.cancel-btn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save-btn {
+  background-color: #6b5b95;
+  color: white;
+}
+
+.cancel-btn {
+  background-color: #e0e0e0;
+  color: #333;
 }
 </style>

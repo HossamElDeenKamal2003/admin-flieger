@@ -278,7 +278,7 @@ export default {
 }
 
 .main-content-expanded {
-  margin-left: 250px;
+  //margin-left: 250px;
 }
 
 .main-content-expanded.sidebar-collapsed {
