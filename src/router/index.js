@@ -12,6 +12,7 @@
     import DriverSignup from "../components/driverSignup.vue";
     import getreqComponent from "../components/getReq.vue";
     import couponsComponent from "../components/couponsComponent.vue";
+    import levelComponent from "../components/levels/levelComponent.vue"
     const routes = [
          {
             path: "/get-req",
@@ -156,7 +157,12 @@
         path: "/coupons",
         name: "couponsComponent",
         component: couponsComponent
-    }
+    },
+        {
+            path: "/levels",
+            name: "levelsComponent",
+            component: levelComponent
+        }
 
     ];
 

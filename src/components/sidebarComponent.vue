@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar" :class="{ 'sidebar-collapsed': isCollapsed }">
+  <aside class="sidebar" :class="{ 'sidebar-collapsed': isCollapsed }" style="background-color: #6b5b95;">
     <div class="logo">
       <img src="../assets/fego%202.png" alt="Fego Logo" />
       <span v-if="!isCollapsed">Fego</span>

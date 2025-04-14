@@ -311,7 +311,7 @@ export default {
 .main-content {
   margin-left: 250px;
   flex: 1;
-  background-color: #f5f7fa;
+  background-color: #6b5b95;
   padding: 20px;
   transition: margin-left 0.3s ease;
 }
