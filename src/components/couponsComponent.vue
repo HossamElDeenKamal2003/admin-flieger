@@ -1,61 +1,90 @@
 <template>
-  <div class="discount-container">
-    <h1>Discount Management</h1>
-
-    <!-- User Message Section -->
-    <div class="message-section">
-      <h2>User Message</h2>
-      <input v-model="userMessage.text" placeholder="Enter user message text" />
-      <input v-model="userMessage.sender" placeholder="Enter sender name" />
-      <button @click="updateUserMessage">Update User Message</button>
-      <p v-if="userMessage.updatedAt">Last Updated: {{ formatDate(userMessage.updatedAt) }}</p>
+  <div class="fego-dashboard">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h1 class="logo">Fego</h1>
+      <nav class="main-menu">
+        <ul>
+          <li v-for="item in menuItems" :key="item" :class="{ active: activeMenu === item }" @click="activeMenu = item">
+            {{ item }}
+          </li>
+        </ul>
+      </nav>
     </div>
 
-    <!-- Driver Message Section -->
-    <div class="message-section">
-      <h2>Driver Message</h2>
-      <input v-model="driverMessage.text" placeholder="Enter driver message text" />
-      <input v-model="driverMessage.sender" placeholder="Enter sender name" />
-      <button @click="updateDriverMessage">Update Driver Message</button>
-      <p v-if="driverMessage.updatedAt">Last Updated: {{ formatDate(driverMessage.updatedAt) }}</p>
-    </div>
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="coupons-management">
+        <h2 class="section-title">Coupons Management</h2>
 
-    <!-- Update Days and Amount Section -->
-    <div class="update-section">
-      <h2>Update Discount Options</h2>
-      <input v-model="updateData.id" placeholder="Enter Discount ID" />
-      <input v-model="updateData.days" type="number" placeholder="Enter days" />
-      <input v-model="updateData.amount" type="number" placeholder="Enter amount" />
-      <button @click="updateDiscountOptions">Update Days and Amount</button>
-    </div>
+        <!-- User Message and Captains Message (Side by Side) -->
+        <div class="messages-row">
+          <!-- User Message -->
+          <div class="message-card">
+            <h3>User Message</h3>
+            <input v-model="userMessage.text" placeholder="Enter User Message Text" />
+            <input v-model="userMessage.sender" placeholder="Enter sender name" />
+            <button @click="updateUserMessage">Confirm</button>
+            <p v-if="userMessage.updatedAt">Last Updated: {{ formatDate(userMessage.updatedAt) }}</p>
+          </div>
 
-    <!-- Update Boolean for User -->
-    <div class="update-section">
-      <h2>Update User Boolean</h2>
-      <label>
-        <input type="checkbox" v-model="userBool" /> Enable User Boolean
-      </label>
-      <button @click="updateUserBoolean">Update User Boolean</button>
-    </div>
+          <!-- Captains Message -->
+          <div class="message-card">
+            <h3>Captains Message</h3>
+            <input v-model="driverMessage.text" placeholder="Enter Captains Message Text" />
+            <input v-model="driverMessage.sender" placeholder="Enter sender name" />
+            <button @click="updateDriverMessage">Confirm</button>
+            <p v-if="driverMessage.updatedAt">Last Updated: {{ formatDate(driverMessage.updatedAt) }}</p>
+          </div>
+        </div>
 
-    <!-- Update Boolean for Driver -->
-    <div class="update-section">
-      <h2>Update Driver Boolean</h2>
-      <label>
-        <input type="checkbox" v-model="driverBool" /> Enable Driver Boolean
-      </label>
-      <button @click="updateDriverBoolean">Update Driver Boolean</button>
-    </div>
+        <!-- Offer Management -->
+        <div class="offer-management-card">
+          <h3>Offer Management</h3>
+          <input v-model="updateData.id" placeholder="Enter Offer ID" />
+          <input v-model="updateData.days" type="number" placeholder="Enter Days" />
+          <input v-model="updateData.amount" type="number" placeholder="Enter Amount" />
+          <button @click="updateDiscountOptions">Confirm</button>
+          <p v-if="offers.length > 0 && offers[0].updatedAt">Last Updated: {{ formatDate(offers[0].updatedAt) }}</p>
+        </div>
 
-    <!-- Display Offers -->
-    <div class="offers-section">
-      <h2>Offers</h2>
-      <ul>
-        <li v-for="offer in offers" :key="offer._id">
-          {{ offer.numberOftrip }} trips - {{ offer.days }} days - {{ offer.amount }}EGP - Active: {{ offer.bool }}
-          <p v-if="offer.messageUser">Last Message Update: {{ formatDate(offer.messageUser.updatedAt) }}</p>
-        </li>
-      </ul>
+        <!-- User Offer Applay and Captain Offer Applay (Side by Side) -->
+        <div class="offer-apply-row">
+          <!-- User Offer Applay -->
+          <div class="offer-apply-card">
+            <h3>User Offer Applay</h3>
+            <label>
+              <input type="checkbox" v-model="userBool" /> Apply User Offer
+            </label>
+            <button @click="updateUserBoolean">Confirm</button>
+          </div>
+
+          <!-- Captain Offer Applay -->
+          <div class="offer-apply-card">
+            <h3>Captain Offer Applay</h3>
+            <label>
+              <input type="checkbox" v-model="driverBool" /> Apply User Offer
+            </label>
+            <button @click="updateDriverBoolean">Confirm</button>
+          </div>
+        </div>
+
+        <!-- Offers -->
+        <div class="offers-section">
+          <h3>Offers</h3>
+          <div class="offer-card" v-for="offer in offers" :key="offer._id">
+            <div class="avatar"></div>
+            <div class="offer-details">
+              <span>
+                {{ offer.type === 'user' ? 'Users' : 'Captains' }}: {{ offer.numberOftrip }} trips - {{ offer.days }} day - {{ offer.amount }}EGP - {{ offer.bool ? 'Active' : 'False' }}
+              </span>
+              <p v-if="offer.messageUser || offer.messageDriver">
+                Last Message updated {{ formatDate(offer.messageUser?.updatedAt || offer.messageDriver?.updatedAt) }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -66,9 +95,20 @@ import axios from 'axios';
 const baseUrl = 'https://backend.fego-rides.com';
 
 export default {
+  name: "CouponsComponent",
   data() {
     return {
-    name: "couponsComponent",
+      activeMenu: 'Coupons',
+      menuItems: [
+        'Dashboard',
+        'Orders',
+        'Trips',
+        'Users',
+        'Captains',
+        'Moderators',
+        'Settings',
+        'Coupons'
+      ],
       userMessage: { text: '', sender: '', updatedAt: null },
       driverMessage: { text: '', sender: '', updatedAt: null },
       updateData: { id: '', days: null, amount: null },
@@ -86,13 +126,32 @@ export default {
         const response = await axios.get(`${baseUrl}/getOffers`);
         this.offers = response.data.discount;
 
-        // Log the response and extract updatedAt for debugging
-        console.log('API Response:', response.data);
-        if (this.offers.length > 0 && this.offers[0].messageUser) {
-          console.log('MessageUser UpdatedAt:', this.offers[0].messageUser.updatedAt);
+        // Populate initial message data if available
+        const userOffer = this.offers.find(offer => offer.type === 'user');
+        const driverOffer = this.offers.find(offer => offer.type === 'driver');
+
+        if (userOffer) {
+          this.userMessage = {
+            text: userOffer.messageUser?.text || '',
+            sender: userOffer.messageUser?.sender || '',
+            updatedAt: userOffer.messageUser?.updatedAt || null
+          };
+          this.userBool = userOffer.bool || false;
         }
+
+        if (driverOffer) {
+          this.driverMessage = {
+            text: driverOffer.messageDriver?.text || '',
+            sender: driverOffer.messageDriver?.sender || '',
+            updatedAt: driverOffer.messageDriver?.updatedAt || null
+          };
+          this.driverBool = driverOffer.bool || false;
+        }
+
+        console.log('API Response:', response.data);
       } catch (error) {
         console.error('Error fetching offers:', error);
+        alert('Failed to fetch offers: ' + (error.response?.data?.message || error.message));
       }
     },
     async updateUserMessage() {
@@ -103,9 +162,10 @@ export default {
         });
         this.userMessage.updatedAt = response.data.updatedMessage.updatedAt;
         alert('User message updated successfully!');
-        this.fetchOffers(); // Refresh offers after update
+        this.fetchOffers();
       } catch (error) {
         console.error('Error updating user message:', error);
+        alert('Error updating user message: ' + (error.response?.data?.message || error.message));
       }
     },
     async updateDriverMessage() {
@@ -115,10 +175,11 @@ export default {
           sender: this.driverMessage.sender
         });
         this.driverMessage.updatedAt = response.data.updatedMessage.updatedAt;
-        alert('Driver message updated successfully!');
-        this.fetchOffers(); // Refresh offers after update
+        alert('Captains message updated successfully!');
+        this.fetchOffers();
       } catch (error) {
-        console.error('Error updating driver message:', error);
+        console.error('Error updating captains message:', error);
+        alert('Error updating captains message: ' + (error.response?.data?.message || error.message));
       }
     },
     async updateDiscountOptions() {
@@ -130,9 +191,10 @@ export default {
         });
         console.log(response);
         alert('Discount options updated successfully!');
-        this.fetchOffers(); // Refresh offers after update
+        this.fetchOffers();
       } catch (error) {
         console.error('Error updating discount options:', error);
+        alert('Error updating discount options: ' + (error.response?.data?.message || error.message));
       }
     },
     async updateUserBoolean() {
@@ -142,10 +204,11 @@ export default {
           type: 'user'
         });
         console.log(response);
-        alert('User boolean updated successfully!');
-        this.fetchOffers(); // Refresh offers after update
+        alert('User offer activation updated successfully!');
+        this.fetchOffers();
       } catch (error) {
         console.error('Error updating user boolean:', error);
+        alert('Error updating user offer activation: ' + (error.response?.data?.message || error.message));
       }
     },
     async updateDriverBoolean() {
@@ -155,60 +218,215 @@ export default {
           type: 'driver'
         });
         console.log(response);
-        alert('Driver boolean updated successfully!');
-        this.fetchOffers(); // Refresh offers after update
+        alert('Captain offer activation updated successfully!');
+        this.fetchOffers();
       } catch (error) {
         console.error('Error updating driver boolean:', error);
+        alert('Error updating captain offer activation: ' + (error.response?.data?.message || error.message));
       }
     },
     formatDate(date) {
-      return new Date(date).toLocaleString();
+      if (!date) return '';
+      const d = new Date(date);
+      return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}, ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
     }
   }
 };
 </script>
 
-<style>
-.discount-container {
-  max-width: 800px;
-  margin: auto;
-  padding: 20px;
-  text-align: center;
+<style scoped>
+.fego-dashboard {
+  display: flex;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
 }
-.message-section, .update-section, .offers-section {
-  margin-bottom: 20px;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-input {
-  display: block;
-  margin: 10px auto;
-  padding: 8px;
-  width: 80%;
-}
-button {
-  padding: 10px 20px;
-  background-color: #4CAF50;
+
+/* Sidebar Styles */
+.sidebar {
+  width: 250px;
+  background-color: #6b5b95;
   color: white;
-  border: none;
-  cursor: pointer;
+  padding: 20px;
 }
-button:hover {
-  background-color: #45a049;
+
+.logo {
+  font-size: 24px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #34495e;
 }
-label {
-  display: block;
-  margin: 10px 0;
-}
-ul {
-  list-style-type: none;
+
+.main-menu ul {
+  list-style: none;
   padding: 0;
 }
-li {
-  margin-bottom: 10px;
+
+.main-menu li {
+  padding: 12px 15px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.main-menu li:hover {
+  background-color: #34495e;
+}
+
+.main-menu li.active {
+  background-color: #3498db;
+}
+
+/* Main Content Styles */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  background-color: #f5f7fa;
+}
+
+.coupons-management {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 2px solid #8e44ad;
+}
+
+.section-title {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 24px;
+}
+
+/* Messages Row */
+.messages-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.message-card {
+  flex: 1;
+  padding: 15px;
+  border: 2px solid #8e44ad;
+  border-radius: 8px;
+  background-color: white;
+}
+
+.message-card h3 {
+  color: #2c3e50;
+  margin-top: 0;
+  font-size: 18px;
+}
+
+/* Offer Management Card */
+.offer-management-card {
+  padding: 15px;
+  border: 2px solid #8e44ad;
+  border-radius: 8px;
+  background-color: white;
+  margin-bottom: 20px;
+}
+
+.offer-management-card h3 {
+  color: #2c3e50;
+  margin-top: 0;
+  font-size: 18px;
+}
+
+/* Offer Apply Row */
+.offer-apply-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.offer-apply-card {
+  flex: 1;
+  padding: 15px;
+  border: 2px solid #8e44ad;
+  border-radius: 8px;
+  background-color: white;
+}
+
+.offer-apply-card h3 {
+  color: #2c3e50;
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.offer-apply-card label {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+}
+
+/* Offers Section */
+.offers-section h3 {
+  color: #2c3e50;
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.offer-card {
+  display: flex;
+  align-items: center;
   padding: 10px;
+  border: 2px solid #8e44ad;
+  border-radius: 8px;
+  background-color: #f5f5ff;
+  margin-bottom: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #ddd;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.offer-details span {
+  color: #2c3e50;
+}
+
+.offer-details p {
+  color: #7f8c8d;
+  margin: 5px 0 0;
+}
+
+/* General Input and Button Styles */
+input {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
   border: 1px solid #ddd;
   border-radius: 8px;
+  background-color: #f5f5ff;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  margin-right: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #8e44ad;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+p {
+  color: #7f8c8d;
+  margin: 10px 0 0;
+  font-size: 14px;
 }
 </style>

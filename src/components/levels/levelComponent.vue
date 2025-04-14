@@ -4,7 +4,7 @@
       <h1 class="logo">Fego</h1>
       <nav class="main-menu">
         <ul>
-          <li v-for="item in menuItems" :key="item" :class="{ active: activeMenu === item }">
+          <li v-for="item in menuItems" :key="item" :class="{ active: activeMenu === item }" @click="activeMenu = item">
             {{ item }}
           </li>
         </ul>
@@ -13,8 +13,8 @@
 
     <div class="main-content">
       <div class="levels-prices">
-        <h2>Levels Prices</h2>
-        <h3>EGYPT</h3>
+        <h2>Egypt Prices</h2>
+        <h3>All Levels</h3>
 
         <table class="prices-table">
           <thead>
@@ -24,35 +24,50 @@
             <th>Level 2</th>
             <th>Level 3</th>
             <th>Level 4</th>
-            <th>Fixed Amount</th>
-            <th>Commission %</th>
+            <th>Penfits</th>
+            <th>Compfort</th>
+            <th>Actions</th>
           </tr>
           </thead>
           <tbody>
-          <tr v-for="(row, index) in vehicleData" :key="index">
-            <td>{{ row.vehicle }}</td>
-            <td>{{ row.level1 }}</td>
-            <td>{{ row.level2 }}</td>
-            <td>{{ row.level3 }}</td>
-            <td>{{ row.level4 }}</td>
-            <td>{{ row.fixedAmount || '-' }}</td>
-            <td>{{ row.commission || '-' }}</td>
+          <tr>
+            <td>Car</td>
+            <td><input type="number" v-model="currentPrices.level1.priceCar" @change="handlePriceChange('level1', 'priceCar')"></td>
+            <td><input type="number" v-model="currentPrices.level2.priceCar" @change="handlePriceChange('level2', 'priceCar')"></td>
+            <td><input type="number" v-model="currentPrices.level3.priceCar" @change="handlePriceChange('level3', 'priceCar')"></td>
+            <td><input type="number" v-model="currentPrices.level4.priceCar" @change="handlePriceChange('level4', 'priceCar')"></td>
+            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('all', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('all', 'compfort')"></td>
+            <td>
+              <button class="save-btn" @click="saveAllPrices">Save All</button>
+            </td>
+          </tr>
+          <tr>
+            <td>Motorcycle</td>
+            <td><input type="number" v-model="currentPrices.level1.motorocycle" @change="handlePriceChange('level1', 'motorocycle')"></td>
+            <td><input type="number" v-model="currentPrices.level2.motorocycle" @change="handlePriceChange('level2', 'motorocycle')"></td>
+            <td><input type="number" v-model="currentPrices.level3.motorocycle" @change="handlePriceChange('level3', 'motorocycle')"></td>
+            <td><input type="number" v-model="currentPrices.level4.motorocycle" @change="handlePriceChange('level4', 'motorocycle')"></td>
+            <td colspan="3"></td>
+          </tr>
+          <tr>
+            <td>Van</td>
+            <td><input type="number" v-model="currentPrices.level1.priceVan" @change="handlePriceChange('level1', 'priceVan')"></td>
+            <td><input type="number" v-model="currentPrices.level2.priceVan" @change="handlePriceChange('level2', 'priceVan')"></td>
+            <td><input type="number" v-model="currentPrices.level3.priceVan" @change="handlePriceChange('level3', 'priceVan')"></td>
+            <td><input type="number" v-model="currentPrices.level4.priceVan" @change="handlePriceChange('level4', 'priceVan')"></td>
+            <td colspan="3"></td>
           </tr>
           </tbody>
         </table>
-
-        <div class="divider"></div>
-
-        <div class="actions">
-          <button class="add-country-btn">Add Country</button>
-          <button class="add-vehicle-btn">+ Add Vehicle</button>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'FegoDashboard',
   data() {
@@ -67,15 +82,112 @@ export default {
         'Moderators',
         'Settings'
       ],
-      vehicleData: [
-        { vehicle: 3000, level1: 300, level2: 1200, level3: 3, level4: 3 },
-        { vehicle: 3000, level1: 300, level2: 3400, level3: 5, level4: 5 },
-        { vehicle: 3000, level1: 300, level2: 5600, level3: 2, level4: 2 },
-        { vehicle: 3000, level1: 300, level2: 5600, level3: 3, level4: 3 }
-      ]
+      currentPrices: {
+        level1: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
+        level2: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
+        level3: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
+        level4: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 }
+      },
+      changes: {}
+    };
+  },
+  created() {
+    this.fetchEgyptPrices();
+  },
+  methods: {
+    async fetchEgyptPrices() {
+      try {
+        const [level1, level2, level3, level4] = await Promise.all([
+          axios.get('https://backend.fego-rides.com/prices/level1/getprices?country=Egypt'),
+          axios.get('https://backend.fego-rides.com/prices/level2/getprices?country=Egypt'),
+          axios.get('https://backend.fego-rides.com/prices/level3/getprices?country=Egypt'),
+          axios.get('https://backend.fego-rides.com/prices/level4/getprices?country=Egypt')
+        ]);
+
+        // Map API response to frontend structure
+        this.currentPrices = {
+          level1: {
+            priceCar: level1.data[0]?.priceCar || 0,
+            motorocycle: level1.data[0]?.motorocycle || 0,
+            priceVan: level1.data[0]?.priceVan || 0,
+            penfits: level1.data[0]?.penfits || 0,
+            compfort: level1.data[0]?.compfort || 0
+          },
+          level2: {
+            priceCar: level2.data[0]?.priceCar || 0,
+            motorocycle: level2.data[0]?.motorocycle || 0,
+            priceVan: level2.data[0]?.priceVan || 0,
+            penfits: level2.data[0]?.penfits || 0,
+            compfort: level2.data[0]?.compfort || 0
+          },
+          level3: {
+            priceCar: level3.data[0]?.priceCar || 0,
+            motorocycle: level3.data[0]?.motorocycle || 0,
+            priceVan: level3.data[0]?.priceVan || 0,
+            penfits: level3.data[0]?.penfits || 0,
+            compfort: level3.data[0]?.compfort || 0
+          },
+          level4: {
+            priceCar: level4.data[0]?.priceCar || 0,
+            motorocycle: level4.data[0]?.motorocycle || 0,
+            priceVan: level4.data[0]?.priceVan || 0,
+            penfits: level4.data[0]?.penfits || 0,
+            compfort: level4.data[0]?.compfort || 0
+          }
+        };
+      } catch (error) {
+        console.error('Error fetching Egypt prices:', error);
+      }
+    },
+    handlePriceChange(level, field) {
+      if (!this.changes[level]) {
+        this.changes[level] = {};
+      }
+      // Store the changed value
+      if (level === 'all') {
+        // For penfits and compfort, apply to all levels
+        this.changes['level1'][field] = this.currentPrices.level1[field];
+        this.changes['level2'][field] = this.currentPrices.level1[field];
+        this.changes['level3'][field] = this.currentPrices.level1[field];
+        this.changes['level4'][field] = this.currentPrices.level1[field];
+      } else {
+        this.changes[level][field] = this.currentPrices[level][field];
+      }
+    },
+    async saveAllPrices() {
+      try {
+        const updates = [];
+
+        // For each level with changes, prepare a PATCH request
+        for (const level in this.changes) {
+          if (level === 'all') continue; // Handled via level-specific updates
+
+          // Ensure all required fields are included
+          const updateData = {
+            country: 'egypt',
+            priceCar: this.currentPrices[level].priceCar || 0,
+            motorocycle: this.currentPrices[level].motorocycle || 0,
+            priceVan: this.currentPrices[level].priceVan || 0,
+            penfits: this.currentPrices[level].penfits || 0,
+            compfort: this.currentPrices[level].compfort || 0
+          };
+
+          updates.push(
+              axios.patch(`https://backend.fego-rides.com/prices/${level}/updateprices`, updateData)
+          );
+        }
+
+        await Promise.all(updates);
+        alert('Prices updated successfully!');
+        this.changes = {};
+        this.fetchEgyptPrices(); // Refresh data
+      } catch (error) {
+        console.error('Error updating prices:', error.response?.data || error.message);
+        alert('Error updating prices: ' + (error.response?.data?.message || error.message));
+      }
     }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -161,31 +273,19 @@ h3 {
   color: #34495e;
 }
 
-.divider {
-  height: 1px;
-  background-color: #ecf0f1;
-  margin: 20px 0;
+.prices-table input {
+  width: 80px;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
-.actions {
-  display: flex;
-  justify-content: space-between;
-}
-
-.add-country-btn, .add-vehicle-btn {
-  padding: 10px 20px;
+.save-btn {
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
-}
-
-.add-country-btn {
-  background-color: #3498db;
-  color: white;
-}
-
-.add-vehicle-btn {
   background-color: #2ecc71;
   color: white;
 }
