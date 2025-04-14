@@ -2,7 +2,10 @@
   <div class="fego-dashboard">
     <!-- Sidebar -->
     <div class="sidebar">
-      <h1 class="logo">Fego</h1>
+      <div class="head">
+        <img src="@/assets/fego%202.png" alt="Fego Logo">
+        <h1 class="logo">Fego</h1>
+      </div>
       <nav class="main-menu">
         <ul>
           <li v-for="item in menuItems" :key="item" :class="{ active: activeMenu === item }" @click="activeMenu = item">
@@ -249,11 +252,27 @@ export default {
   padding: 20px;
 }
 
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.head img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
 .logo {
   font-size: 24px;
-  margin-bottom: 30px;
+  margin: 0;
   padding-bottom: 20px;
   border-bottom: 1px solid #34495e;
+  width: 100%;
+  text-align: center;
 }
 
 .main-menu ul {
