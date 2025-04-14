@@ -65,62 +65,91 @@
             <i class="fas fa-search"></i>
           </div>
         </div>
-        <div class="table-container">
-          <table>
-            <thead>
-            <tr>
-              <th>User</th>
-              <th>Completed Trips</th>
-              <th>Cancelled Trips</th>
-              <th>Wallet</th>
-              <th>Rate</th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="user in filteredUsers" :key="user.id">
-              <td>
-                <div class="user-info">
-                  <img :src="user.image" alt="User" class="user-image" />
-                  <div>
-                    <p class="user-name">{{ user.name }}</p>
-                    <p class="user-phone">{{ user.phone }}</p>
-                  </div>
-                </div>
-              </td>
-              <td>{{ user.completedTrips }}</td>
-              <td>{{ user.cancelledTrips }}</td>
 
-              <td>{{ user.wallet }}</td>
-              <td>
-                <span class="stars">★ {{ user.rating }}</span>
-              </td>
-              <td>
-                <i class="fas fa-trash-alt delete-icon"></i>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+        <!-- Loading, Error, and Table States -->
+        <div v-if="isLoading" class="loading-state">
+          <p>Loading users...</p>
         </div>
-        <div class="users-footer">
-          <p>Total users: {{ users.length }}</p>
-          <div class="pagination">
-            <p>1-2 of {{ users.length }} items</p>
-            <div class="pagination-buttons">
-              <button :disabled="currentPage === 1" @click="currentPage--">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button
-                  v-for="page in totalPages"
-                  :key="page"
-                  :class="{ active: currentPage === page }"
-                  @click="currentPage = page"
-              >
-                {{ page }}
-              </button>
-              <button :disabled="currentPage === totalPages" @click="currentPage++">
-                <i class="fas fa-chevron-right"></i>
-              </button>
+        <div v-else-if="error" class="error-state">
+          <p class="error-message">{{ error }}</p>
+        </div>
+        <div v-else>
+          <div class="table-container">
+            <table>
+              <thead>
+              <tr>
+                <th>User</th>
+                <th>Completed Trips</th>
+                <th>Cancelled Trips</th>
+                <th>Wallet</th>
+                <th>Rate</th>
+                <th>Actions</th>
+                <th>Details</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="user in filteredUsers" :key="user.id">
+                <td>
+                  <div class="user-info">
+                    <img :src="user.image || 'https://via.placeholder.com/40'" alt="User" class="user-image" />
+                    <div>
+                      <p class="user-name">{{ user.name || 'N/A' }}</p>
+                      <p class="user-phone">{{ user.phoneNumber || 'N/A' }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ user.completedTrips || 0 }}</td>
+                <td>{{ user.cancelledTrips || 0 }}</td>
+                <td>{{ user.wallet || '0 EGP' }}</td>
+                <td>
+                  <span class="stars">★ {{ user.rating || '0.0' }}</span>
+                </td>
+                <td>
+                  <i class="fas fa-trash-alt delete-icon" @click="deleteUser(user._id)"></i>
+                </td>
+                <td>
+                  <router-link
+                      v-if="user._id"
+                      :to="{ path: `/user/${user._id}` }"
+                      class="action-open"
+                  >
+                    View Details
+                  </router-link>
+                  <span v-else class="action-open disabled">N/A</span>
+                </td>
+              </tr>
+              <tr v-if="filteredUsers.length === 0">
+                <td colspan="7" class="no-data">No users found</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Footer with Pagination -->
+          <div class="users-footer">
+            <p>Total users: {{ filteredUsersCount }}</p>
+            <div class="pagination">
+              <p>
+                {{ (currentPage - 1) * itemsPerPage + 1 }}-{{
+                  Math.min(currentPage * itemsPerPage, filteredUsersCount)
+                }} of {{ filteredUsersCount }} items
+              </p>
+              <div class="pagination-buttons">
+                <button :disabled="currentPage === 1" @click="currentPage--">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button
+                    v-for="page in totalPages"
+                    :key="page"
+                    :class="{ active: currentPage === page }"
+                    @click="currentPage = page"
+                >
+                  {{ page }}
+                </button>
+                <button :disabled="currentPage === totalPages" @click="currentPage++">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -137,31 +166,33 @@ export default {
   data() {
     return {
       isSidebarExpanded: true,
-      searchQuery: "",
+      searchQuery: '',
       currentPage: 1,
       itemsPerPage: 10,
-      users: [], // Initialize as empty array
+      users: [],
       isLoading: false,
       error: null
     };
   },
   computed: {
     filteredUsers() {
+      if (!this.users) return [];
+      const filtered = this.users.filter((user) =>
+          (user.name || '').toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.users
-          .filter((user) =>
-              user.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-          )
-          .slice(start, end);
+      return filtered.slice(start, end);
+    },
+    filteredUsersCount() {
+      if (!this.users) return 0;
+      return this.users.filter((user) =>
+          (user.name || '').toLowerCase().includes(this.searchQuery.toLowerCase())
+      ).length;
     },
     totalPages() {
-      return Math.ceil(
-          this.users.filter((user) =>
-              user.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-          ).length / this.itemsPerPage
-      );
-    },
+      return Math.ceil(this.filteredUsersCount / this.itemsPerPage) || 1;
+    }
   },
   methods: {
     handleSidebarToggle() {
@@ -171,32 +202,35 @@ export default {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await axios.get('https://backend.fego-rides.com/admin/get-users', {
-          headers: {
-            // Add any required headers like Authorization if needed
-            // 'Authorization': 'Bearer your-token-here'
-          }
-        });
-
-        // Transform API data to match your component's structure
+        const response = await axios.get('https://backend.fego-rides.com/admin/get-users');
+        console.log('API response:', response.data); // For debugging
         this.users = response.data.map(user => ({
-          id: user.id,
-          name: user.username || `${user.firstName} ${user.lastName}`,
-          phone: user.phoneNumber || user.mobile || 'N/A',
+          _id: user._id || null,
+          id: user.id || user._id || null,
+          name: user.username || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A',
+          phoneNumber: user.phoneNumber || user.mobile || 'N/A',
           image: user.profile_image || 'https://via.placeholder.com/40',
           completedTrips: user.completedTrips || 0,
           cancelledTrips: user.cancelledTrips || 0,
           wallet: `${user.wallet || 0} EGP`,
-          rating: user.rate || '0.0',
-
+          rating: user.rate || '0.0'
         }));
-
       } catch (error) {
         console.error('Error fetching users:', error);
         this.error = 'Failed to load users. Please try again later.';
-        // You might want to show an error message to the user
       } finally {
         this.isLoading = false;
+      }
+    },
+    async deleteUser(userId) {
+      if (!confirm('Are you sure you want to delete this user?')) return;
+      try {
+        await axios.delete(`https://backend.fego-rides.com/admin/delete-user/${userId}`);
+        this.users = this.users.filter(user => user._id !== userId);
+        this.$toast.success('User deleted successfully');
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        this.$toast.error('Failed to delete user. Please try again.');
       }
     }
   },
@@ -205,6 +239,7 @@ export default {
   }
 };
 </script>
+
 <style scoped>
 /* Base Styles */
 .dashboard {
@@ -275,10 +310,6 @@ export default {
   background-color: #f5f7fa;
   padding: 24px;
   transition: margin-left 0.3s ease;
-}
-
-.main-content-expanded {
-  //margin-left: 250px;
 }
 
 .main-content-expanded.sidebar-collapsed {
@@ -431,8 +462,39 @@ td {
 
 .delete-icon {
   font-size: 16px;
-  color: #6b7280;
+  color: #ff4d4f;
   cursor: pointer;
+}
+
+.delete-icon:hover {
+  color: #e63946;
+}
+
+.action-open {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.action-open.disabled {
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+/* Loading and Error States */
+.loading-state, .error-state {
+  text-align: center;
+  padding: 20px;
+}
+
+.error-message {
+  color: #ff4d4f;
 }
 
 /* Users Footer */
@@ -518,6 +580,11 @@ td {
 
   .search-bar {
     width: 100%;
+  }
+
+  .users-footer {
+    flex-direction: column;
+    gap: 8px;
   }
 }
 </style>

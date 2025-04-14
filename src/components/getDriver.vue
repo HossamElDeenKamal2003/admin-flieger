@@ -47,18 +47,17 @@
           <thead>
           <tr>
             <th><input type="checkbox" /></th>
-            <th>photo</th>
+            <th>Photo</th>
             <th>Name</th>
             <th>National ID</th>
             <th>City</th>
             <th>Vehicle</th>
-            <th>phone number</th>
-            <th>trips</th>
-            <th>offline trips</th>
+            <th>Phone Number</th>
+            <th>Trips</th>
+            <th>Offline Trips</th>
             <th>State</th>
             <th>Wallet</th>
             <th>Date Of Certain License</th>
-
             <th>Captains Account</th>
           </tr>
           </thead>
@@ -85,10 +84,14 @@
                 </span>
             </td>
             <td>{{ captain.wallet || 0 }}</td>
-            <td>{{ captain.licence_expire_date
-            || 'N/A' }}</td>
+            <td>{{ captain.licence_expire_date || 'N/A' }}</td>
             <td>
-              Enabled
+              <router-link
+                  :to="{ name: 'DriverDetails', params: { driverId: captain._id } }"
+                  class="action-open"
+              >
+                View Details
+              </router-link>
             </td>
           </tr>
           <tr v-if="paginatedCaptains.length === 0">
@@ -126,11 +129,11 @@
           <thead>
           <tr>
             <th><input type="checkbox" /></th>
-            <th>photo</th>
+            <th>Photo</th>
             <th>Name</th>
             <th>National ID</th>
             <th>City</th>
-            <th>phone number</th>
+            <th>Phone Number</th>
             <th>Vehicle</th>
             <th>Model</th>
             <th>Date Of Certain License</th>
@@ -218,7 +221,7 @@ export default {
       newRequestsCount: 0,
       loading: false,
       error: null
-    }
+    };
   },
   computed: {
     filteredCaptains() {
@@ -332,9 +335,8 @@ export default {
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
   }
-}
+};
 </script>
-
 
 <style scoped>
 .dashboard {
@@ -478,6 +480,7 @@ th {
   background-color: #e6f7fa;
   color: #00cfe8;
   margin-right: 5px;
+  text-decoration: none;
 }
 
 .action-disable {

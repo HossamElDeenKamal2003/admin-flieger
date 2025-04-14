@@ -12,7 +12,9 @@
     import DriverSignup from "../components/driverSignup.vue";
     import getreqComponent from "../components/getReq.vue";
     import couponsComponent from "../components/couponsComponent.vue";
-    import levelComponent from "../components/levels/levelComponent.vue"
+    import levelComponent from "../components/levels/levelComponent.vue";
+    import DriverDetails from '@/components/getDriverbyId.vue';
+    import UserDetails from '@/components/userDetails.vue';
     const routes = [
          {
             path: "/get-req",
@@ -162,6 +164,16 @@
             path: "/levels",
             name: "levelsComponent",
             component: levelComponent
+        },
+        {
+            path: '/driver/:driverId',
+            name: 'DriverDetails',
+            component: DriverDetails
+        },
+        {
+            path: '/user/:userId',
+            name: 'UserDetails',
+            component: UserDetails
         }
 
     ];
