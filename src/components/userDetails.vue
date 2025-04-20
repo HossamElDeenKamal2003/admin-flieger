@@ -2,44 +2,8 @@
   <div class="dashboard">
     <!-- Sidebar -->
     <div :class="['sidebar', { 'sidebar-collapsed': !isSidebarExpanded }]">
-      <div class="sidebar-header">
-        <img src="../assets/fego%202.png" alt="Fego Logo" class="logo" />
-        <span>Fego</span>
-      </div>
-      <div class="sidebar-menu">
-        <div class="menu-item">
-          <a href="/home" style="color: white; text-decoration: none;">
-            <i class="fas fa-tachometer-alt"></i>
-            <span>Dashboard</span>
-          </a>
-        </div>
-        <div class="menu-item">
-          <a href="/admin/get-trips" style="color: white; text-decoration: none;">
-            <i class="fas fa-road"></i>
-            <span>Trips</span>
-          </a>
-        </div>
-        <div class="menu-item active">
-          <a href="/admin/users" style="color: white; text-decoration: none;">
-            <i class="fas fa-users"></i>
-            <span>Users</span>
-          </a>
-        </div>
-        <div class="menu-item">
-          <a href="/admin/getdriver" style="color: white; text-decoration: none;">
-            <i class="fas fa-user-shield"></i>
-            <span>Captains</span>
-          </a>
-        </div>
-        <div class="menu-item">
-          <i class="fas fa-users-cog"></i>
-          <span>Moderators</span>
-        </div>
-        <div class="menu-item">
-          <i class="fas fa-cog"></i>
-          <span>Settings</span>
-        </div>
-      </div>
+      <Sidebar />
+
     </div>
 
     <!-- Main Content -->
@@ -171,7 +135,7 @@
 
 <script>
 import axios from 'axios';
-
+import Sidebar from './sidebarComponent.vue';
 export default {
   name: "UserDetails",
   data() {
@@ -193,6 +157,9 @@ export default {
       error: null,
       baseUrl: 'https://backend.fego-rides.com'
     };
+  },
+  components: {
+    Sidebar,
   },
   computed: {
     paginatedTrips() {
@@ -296,7 +263,6 @@ export default {
 /* Sidebar */
 .sidebar {
   width: 250px;
-  background: linear-gradient(180deg, #6b48ff 0%, #4b2ecc 100%);
   transition: width 0.3s ease;
   color: #ffffff;
 }

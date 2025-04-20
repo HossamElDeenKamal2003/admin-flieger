@@ -1,14 +1,7 @@
 <template>
   <div class="fego-dashboard">
     <div class="sidebar">
-      <h1 class="logo">Fego</h1>
-      <nav class="main-menu">
-        <ul>
-          <li v-for="item in menuItems" :key="item" :class="{ active: activeMenu === item }" @click="activeMenu = item">
-            {{ item }}
-          </li>
-        </ul>
-      </nav>
+     <Sidebar />
     </div>
 
     <div class="main-content">
@@ -67,7 +60,7 @@
 
 <script>
 import axios from 'axios';
-
+import Sidebar from "@/components/sidebarComponent.vue";
 export default {
   name: 'FegoDashboard',
   data() {
@@ -90,6 +83,9 @@ export default {
       },
       changes: {}
     };
+  },
+  components: {
+    Sidebar
   },
   created() {
     this.fetchEgyptPrices();

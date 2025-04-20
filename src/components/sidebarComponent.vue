@@ -32,9 +32,10 @@ export default {
         { name: 'Overview', icon: 'overview', route: '/home' },
         { name: 'Trips', icon: 'trips', route: '/admin/get-trips' },
         { name: 'Users', icon: 'users', route: '/admin/users' },
-        { name: 'Captains', icon: 'captains', route: '/admin/get-trips' },
+        { name: 'Captains', icon: 'captains', route: '/admin/getdriver' },
         { name: 'Moderators', icon: 'moderators', route: '/moderators' },
-        { name: 'Settings', icon: 'settings', route: '/settings' },
+        { name: 'Settings', icon: 'settings', route: '/admin/settings' },
+        { name: 'Level', icon: 'settings', route: '/levels' },
       ],
       activeMenu: 'Overview', // Default to Overview
       isCollapsed: false,
@@ -79,7 +80,7 @@ export default {
 /* Styles remain unchanged */
 .sidebar {
   width: 250px;
-  background-color: #6b48ff;
+  background-color: #6b5b95;
   color: white;
   padding: 20px;
   border-radius: 0 20px 20px 0;

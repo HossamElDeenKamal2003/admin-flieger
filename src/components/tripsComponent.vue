@@ -203,7 +203,6 @@ export default {
 /* Sidebar */
 .sidebar {
   width: 250px;
-  background: linear-gradient(180deg, #6b48ff 0%, #4b2ecc 100%);
   transition: width 0.3s ease;
 }
 

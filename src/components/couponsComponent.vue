@@ -2,17 +2,7 @@
   <div class="fego-dashboard">
     <!-- Sidebar -->
     <div class="sidebar">
-      <div class="head">
-        <img src="@/assets/fego%202.png" alt="Fego Logo">
-        <h1 class="logo">Fego</h1>
-      </div>
-      <nav class="main-menu">
-        <ul>
-          <li v-for="item in menuItems" :key="item" :class="{ active: activeMenu === item }" @click="activeMenu = item">
-            {{ item }}
-          </li>
-        </ul>
-      </nav>
+      <sidebarComponent />
     </div>
 
     <!-- Main Content -->
@@ -94,7 +84,7 @@
 
 <script>
 import axios from 'axios';
-
+import sidebarComponent from "@/components/sidebarComponent.vue";
 const baseUrl = 'https://backend.fego-rides.com';
 
 export default {
@@ -119,6 +109,9 @@ export default {
       driverBool: false,
       offers: []
     };
+  },
+  components: {
+    sidebarComponent
   },
   created() {
     this.fetchOffers();

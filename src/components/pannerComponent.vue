@@ -1,5 +1,6 @@
 <template>
   <div class="container mt-4">
+    <Sidebar />
     <div class="mb-3">
       <input type="file" ref="fileInput" class="form-control mb-2" />
       <button @click="addImage" class="btn btn-primary w-100" :disabled="loading">
@@ -25,7 +26,7 @@
 
 <script>
 import axios from 'axios';
-
+import Sidebar from './sidebarComponent.vue';
 export default {
   name: "pannerComponent",
   data() {
@@ -34,6 +35,9 @@ export default {
       baseUrl: "https://fliegertechnology-production-6024.up.railway.app",
       loading: false, // Loading state
     };
+  },
+  components: {
+    Sidebar
   },
   created() {
     this.getPanners();

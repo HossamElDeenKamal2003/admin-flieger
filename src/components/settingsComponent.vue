@@ -1,27 +1,8 @@
 <template>
   <div class="app-container">
     <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="logo">
-        <img style="border-radius: 50%" src="@/assets/fego%202.png" alt="Fego Logo" />
-        <span class="logo-text">Fego</span>
-      </div>
-      <nav class="sidebar-nav">
-        <ul>
-          <li><i class="fas fa-tachometer-alt"></i> Dashboard</li>
-          <li><i class="fas fa-list"></i> Orders</li>
-          <li class="active"><i class="fas fa-route"></i> Trips</li>
-          <li><i class="fas fa-users"></i> Users</li>
-          <li><i class="fas fa-user-tie"></i> Captains</li>
-          <li><i class="fas fa-user-shield"></i> Moderators</li>
-          <li>
-            <i class="fas fa-cog"></i> Settings
-            <ul class="submenu">
-              <li class="active">Trip Settings</li>
-            </ul>
-          </li>
-        </ul>
-      </nav>
+    <div>
+     <Sidebar />
     </div>
 
     <!-- Main Content -->
@@ -146,7 +127,7 @@
 
 <script>
 import axios from 'axios';
-
+import Sidebar from "./sidebarComponent.vue"
 export default {
   data() {
     return {
@@ -167,6 +148,9 @@ export default {
         distanceInTrip: false,
       },
     };
+  },
+  components: {
+    Sidebar
   },
   created() {
     this.fetchProperties();
@@ -272,7 +256,7 @@ export default {
 /* Sidebar */
 .sidebar {
   width: 220px;
-  background-color: #6b5b95;
+  background-color:#6b5b95;
   color: white;
   padding: 20px;
   display: flex;
