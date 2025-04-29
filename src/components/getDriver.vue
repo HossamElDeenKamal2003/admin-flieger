@@ -34,9 +34,8 @@
           <h2>Captains list</h2>
           <div class="table-controls">
             <input type="text" placeholder="Search by Name" v-model="searchQuery" />
-            <select v-model="filter">
-              <option>All Captains</option>
-              <option>Online</option>
+            <select>
+
               <option>Offline</option>
             </select>
           </div>
@@ -80,7 +79,7 @@
             <td>{{ captain.offlineTrips || 0 }}</td>
             <td>
                 <span :class="captain.status === 'Online' ? 'status-online' : 'status-offline'">
-                  {{ captain.status || 'Offline' }}
+                  {{ captain.status || 'offline' }}
                 </span>
             </td>
             <td>{{ captain.wallet || 0 }}</td>
