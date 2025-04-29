@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -33,7 +34,7 @@
         <div class="table-header">
           <h2>Captains list</h2>
           <div class="table-controls">
-            <input type="text" placeholder="Search by Name" v-model="searchQuery" />
+            <input type="text" placeholder="Search by Name, Phone, or National ID" v-model="searchQuery" />
             <select v-model="filter">
               <option value="All Captains">All Captains</option>
               <option value="Online">Online</option>
@@ -80,7 +81,7 @@
             <td>{{ captain.offlineTrips || 0 }}</td>
             <td>
                 <span :class="captain.status === 'Online' ? 'status-online' : 'status-offline'">
-                  {{ captain.status || 'offline' }}
+                  {{ captain.status || 'Offline' }}
                 </span>
             </td>
             <td>{{ captain.wallet || 0 }}</td>
@@ -122,6 +123,9 @@
       <section class="waiting-list">
         <div class="table-header">
           <h2>Captains waiting list</h2>
+          <div class="table-controls">
+            <input type="text" placeholder="Search by Name, Phone, or National ID" v-model="searchWaitingQuery" />
+          </div>
         </div>
 
         <!-- Waiting Table -->
@@ -177,13 +181,13 @@
         <!-- Waiting Table Footer -->
         <div class="table-footer">
           <div>
-            <p>Total Captain Waiting: {{ waitingCaptains.length }}</p>
+            <p>Total Captain Waiting: {{ filteredWaitingCaptains.length }}</p>
             <p>Active Requests: {{ activeWaiting }}</p>
           </div>
           <div class="pagination">
             <span>
-              {{ (currentWaitingPage - 1) * waitingItemsPerPage + 1 }}-{{ Math.min(currentWaitingPage * waitingItemsPerPage, waitingCaptains.length) }}
-              of {{ waitingCaptains.length }} items
+              {{ (currentWaitingPage - 1) * waitingItemsPerPage + 1 }}-{{ Math.min(currentWaitingPage * waitingItemsPerPage, filteredWaitingCaptains.length) }}
+              of {{ filteredWaitingCaptains.length }} items
             </span>
             <button :disabled="currentWaitingPage === 1" @click="currentWaitingPage--">❮</button>
             <button>{{ currentWaitingPage }}</button>
@@ -209,6 +213,7 @@ export default {
       captains: [],
       waitingCaptains: [],
       searchQuery: '',
+      searchWaitingQuery: '',
       adminName: localStorage.getItem('username'),
       filter: 'All Captains',
       currentPage: 1,
@@ -227,13 +232,28 @@ export default {
     filteredCaptains() {
       let filtered = this.captains;
       if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
         filtered = filtered.filter(captain =>
-            captain.username?.toLowerCase().includes(this.searchQuery.toLowerCase())
+            (captain.username?.toLowerCase().includes(query)) ||
+            (captain.phoneNumber?.toLowerCase().includes(query)) ||
+            (captain.id?.toString().toLowerCase().includes(query))
         );
       }
       if (this.filter !== 'All Captains') {
         filtered = filtered.filter(captain =>
             (captain.status || 'Offline').toLowerCase() === this.filter.toLowerCase()
+        );
+      }
+      return filtered;
+    },
+    filteredWaitingCaptains() {
+      let filtered = this.waitingCaptains;
+      if (this.searchWaitingQuery) {
+        const query = this.searchWaitingQuery.toLowerCase();
+        filtered = filtered.filter(captain =>
+            (captain.username?.toLowerCase().includes(query)) ||
+            (captain.phoneNumber?.toLowerCase().includes(query)) ||
+            (captain.id?.toString().toLowerCase().includes(query))
         );
       }
       return filtered;
@@ -246,13 +266,13 @@ export default {
     paginatedWaitingCaptains() {
       const start = (this.currentWaitingPage - 1) * this.waitingItemsPerPage;
       const end = start + this.waitingItemsPerPage;
-      return this.waitingCaptains.slice(start, end);
+      return this.filteredWaitingCaptains.slice(start, end);
     },
     totalPages() {
       return Math.ceil(this.filteredCaptains.length / this.itemsPerPage);
     },
     totalWaitingPages() {
-      return Math.ceil(this.waitingCaptains.length / this.waitingItemsPerPage);
+      return Math.ceil(this.filteredWaitingCaptains.length / this.waitingItemsPerPage);
     }
   },
   methods: {
@@ -325,6 +345,9 @@ export default {
     },
     searchQuery() {
       this.currentPage = 1; // Reset to first page when search changes
+    },
+    searchWaitingQuery() {
+      this.currentWaitingPage = 1; // Reset to first page when waiting search changes
     }
   },
   created() {
@@ -591,3 +614,4 @@ th {
   margin-left: 250px;
 }
 </style>
+```
