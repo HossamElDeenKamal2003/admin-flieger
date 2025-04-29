@@ -27,7 +27,7 @@
         <button :class="{ 'active-tab': activeTab === 'pending' }" @click="activeTab = 'pending'">
           PENDING <span class="count-badge">{{ pendingCount }}</span>
         </button>
-        <button :class="{ 'active-tab': activeTab === 'completed' }" @click="activeTab = 'end'">
+        <button :class="{ 'active-tab': activeTab === 'end' }" @click="activeTab = 'end'">
           COMPLETED <span class="count-badge">{{ completedCount }}</span>
         </button>
         <button
@@ -44,10 +44,22 @@
         </button>
       </div>
 
+      <!-- Table Controls -->
+      <div class="table-controls">
+        <input type="text" v-model="searchUniqueId" placeholder="Search by Trip ID" />
+        <select v-model="vehicleTypeFilter">
+          <option value="">All Vehicles</option>
+          <option value="car">Car</option>
+          <option value="motorcycle">Motorcycle</option>
+          <option value="van">Van</option>
+        </select>
+        <input type="date" v-model="dateFilter" placeholder="Filter by Date" />
+      </div>
+
       <!-- Table -->
       <div class="table-container">
         <div v-if="loading" class="loading">Loading trips...</div>
-        <div v-else-if="filteredTrips.length === 0" class="no-data">No trips available</div>
+        <div v-else-if="paginatedTrips.length === 0" class="no-data">No trips available</div>
         <table v-else>
           <thead>
           <tr>
@@ -63,7 +75,7 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="trip in filteredTrips" :key="trip._id">
+          <tr v-for="trip in paginatedTrips" :key="trip._id">
             <!-- Driver (Image + Name) -->
             <td>
               <div style="display: flex; align-items: center;">
@@ -132,6 +144,17 @@
           </tr>
           </tbody>
         </table>
+
+        <!-- Pagination -->
+        <div class="pagination" v-if="paginatedTrips.length > 0">
+          <span>
+            {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredTrips.length) }}
+            of {{ filteredTrips.length }} items
+          </span>
+          <button :disabled="currentPage === 1" @click="currentPage--">&lt;</button>
+          <button>{{ currentPage }}</button>
+          <button :disabled="currentPage >= totalPages" @click="currentPage++">&gt;</button>
+        </div>
       </div>
     </div>
   </div>
@@ -153,14 +176,54 @@ export default {
       isSidebarExpanded: true,
       baseUrl: "https://backend.fego-rides.com",
       loading: false,
+      searchUniqueId: "",
+      vehicleTypeFilter: "",
+      dateFilter: "",
+      currentPage: 1,
+      itemsPerPage: 10,
     };
   },
   computed: {
     filteredTrips() {
-      if (this.activeTab === "all") {
-        return this.trips;
+      let filtered = this.trips;
+
+      // Filter by status (based on activeTab)
+      if (this.activeTab !== "all") {
+        filtered = filtered.filter((trip) => trip.status === this.activeTab);
       }
-      return this.trips.filter((trip) => trip.status === this.activeTab);
+
+      // Filter by uniqueId
+      if (this.searchUniqueId) {
+        const query = this.searchUniqueId.toLowerCase();
+        filtered = filtered.filter((trip) =>
+            trip.uniqueId?.toLowerCase().includes(query)
+        );
+      }
+
+      // Filter by vehicle type
+      if (this.vehicleTypeFilter) {
+        filtered = filtered.filter(
+            (trip) => trip.vehicleType === this.vehicleTypeFilter
+        );
+      }
+
+      // Filter by date
+      if (this.dateFilter) {
+        filtered = filtered.filter((trip) => {
+          const tripDate = new Date(trip.createdAt).toISOString().split("T")[0];
+          return tripDate === this.dateFilter;
+        });
+      }
+
+      return filtered;
+    },
+    paginatedTrips() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredTrips.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredTrips.length / this.itemsPerPage);
     },
     allCount() {
       return this.trips.length;
@@ -178,6 +241,20 @@ export default {
       return this.trips.filter((trip) => trip.status === "cancelledByCaptain").length;
     },
   },
+  watch: {
+    searchUniqueId() {
+      this.currentPage = 1; // Reset to first page when search changes
+    },
+    vehicleTypeFilter() {
+      this.currentPage = 1; // Reset to first page when vehicle filter changes
+    },
+    dateFilter() {
+      this.currentPage = 1; // Reset to first page when date filter changes
+    },
+    activeTab() {
+      this.currentPage = 1; // Reset to first page when tab changes
+    },
+  },
   created() {
     this.getTrips();
   },
@@ -193,7 +270,6 @@ export default {
           if (trip.moneyFlow?.document?.flow?.[0] && !trip.moneyFlow.flowItem) {
             trip.moneyFlow.flowItem = trip.moneyFlow.document.flow[0];
           }
-          console.log(response.data)
           return trip;
         });
       } catch (error) {
@@ -214,6 +290,251 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Base Styles */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  font-family: "Arial", sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  transition: width 0.3s ease;
+}
+
+.sidebar-collapsed {
+  width: 80px;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  background-color: #ffffff;
+  padding: 24px;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content-expanded {
+  margin-left: 250px;
+}
+
+.main-content-expanded.sidebar-collapsed {
+  margin-left: 80px;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2a44;
+}
+
+header p {
+  font-size: 14px;
+  color: #2563eb;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.header-icons i {
+  font-size: 20px;
+  color: #6b7280;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e7eb;
+  margin-top: 24px;
+}
+
+.tabs button {
+  flex: 1;
+  padding-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000000;
+  text-align: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tabs button.active-tab {
+  color: #000000;
+  border-bottom: 2px solid #2563eb;
+}
+
+.count-badge {
+  display: inline-block;
+  min-width: 20px;
+  height: 20px;
+  line-height: 20px;
+  background-color: #e5e7eb;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  margin-left: 8px;
+  padding: 0 6px;
+  text-align: center;
+}
+
+/* Table Controls */
+.table-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.table-controls input,
+.table-controls select {
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Table */
+.table-container {
+  margin-top: 24px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: #f9fafb;
+  text-transform: uppercase;
+}
+
+td {
+  font-size: 14px;
+  color: #374151;
+  border-top: 1px solid #e5e7eb;
+}
+
+.wallet-non-zero {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #d1fae5;
+  color: #059669;
+  border-radius: 9999px;
+  font-size: 14px;
+}
+
+.wallet-zero {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border-radius: 9999px;
+  font-size: 14px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.pagination span {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.pagination button:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+/* Loading and No Data States */
+.loading,
+.no-data {
+  text-align: center;
+  padding: 24px;
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .sidebar {
+    width: 80px;
+  }
+
+  .main-content-expanded {
+    margin-left: 80px;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-icons {
+    margin-top: 8px;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .tabs button {
+    flex: 1 1 50%;
+    margin-bottom: 8px;
+  }
+
+  .table-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+</style>
+```
 
 <style scoped>
 /* Base Styles */
