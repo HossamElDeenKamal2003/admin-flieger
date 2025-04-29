@@ -34,9 +34,10 @@
           <h2>Captains list</h2>
           <div class="table-controls">
             <input type="text" placeholder="Search by Name" v-model="searchQuery" />
-            <select>
-
-              <option>Offline</option>
+            <select v-model="filter">
+              <option value="All Captains">All Captains</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
             </select>
           </div>
         </div>
@@ -231,7 +232,9 @@ export default {
         );
       }
       if (this.filter !== 'All Captains') {
-        filtered = filtered.filter(captain => captain.status === this.filter);
+        filtered = filtered.filter(captain =>
+            (captain.status || 'Offline').toLowerCase() === this.filter.toLowerCase()
+        );
       }
       return filtered;
     },
