@@ -31,9 +31,8 @@
             <td><input type="number" v-model="currentPrices.level4.priceCar" @change="handlePriceChange('level4', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('all', 'penfits')"></td>
             <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('all', 'compfort')"></td>
-            <td>
-              <button class="save-btn" @click="saveAllPrices">Save All</button>
-            </td>
+<!--            <td>-->
+<!--            </td>-->
           </tr>
           <tr>
             <td>Motorcycle</td>
@@ -54,6 +53,8 @@
           </tbody>
         </table>
       </div>
+      <button class="save-btn" @click="saveAllPrices">Save All</button>
+
     </div>
   </div>
 </template>

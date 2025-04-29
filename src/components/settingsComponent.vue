@@ -1,9 +1,10 @@
 <template>
   <div class="app-container">
     <!-- Sidebar -->
-    <div>
-     <Sidebar />
+    <div :class="['sidebar', { 'sidebar-collapsed': !isSidebarExpanded }]">
+      <Sidebar />
     </div>
+
 
     <!-- Main Content -->
     <div class="main-content">
@@ -245,6 +246,17 @@ export default {
 </script>
 
 <style scoped>
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  transition: width 0.3s ease;
+  color: #ffffff;
+}
+
+.sidebar-collapsed {
+  width: 80px;
+}
+
 /* General Layout */
 .app-container {
   display: flex;

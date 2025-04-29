@@ -24,7 +24,7 @@
         <div class="users-header">
           <h2>Users list</h2>
           <div class="search-bar">
-            <input type="text" placeholder="Search by Name" v-model="searchQuery" />
+            <input type="text" placeholder="Search by Name or Phone" v-model="searchQuery" />
             <i class="fas fa-search"></i>
           </div>
         </div>
@@ -42,6 +42,7 @@
               <thead>
               <tr>
                 <th>User</th>
+                <th>Phone Number</th>
                 <th>Completed Trips</th>
                 <th>Cancelled Trips</th>
                 <th>Wallet</th>
@@ -61,6 +62,7 @@
                     </div>
                   </div>
                 </td>
+                <td>{{ user.phoneNumber || 'N/A' }}</td>
                 <td>{{ user.completedTrips || 0 }}</td>
                 <td>{{ user.cancelledTrips || 0 }}</td>
                 <td>{{ user.wallet || '0 EGP' }}</td>
@@ -82,7 +84,7 @@
                 </td>
               </tr>
               <tr v-if="filteredUsers.length === 0">
-                <td colspan="7" class="no-data">No users found</td>
+                <td colspan="8" class="no-data">No users found</td>
               </tr>
               </tbody>
             </table>
@@ -145,7 +147,8 @@ export default {
     filteredUsers() {
       if (!this.users) return [];
       const filtered = this.users.filter((user) =>
-          (user.name || '').toLowerCase().includes(this.searchQuery.toLowerCase())
+          (user.name || '').toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          (user.phoneNumber || '').toLowerCase().includes(this.searchQuery.toLowerCase())
       );
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
@@ -154,7 +157,8 @@ export default {
     filteredUsersCount() {
       if (!this.users) return 0;
       return this.users.filter((user) =>
-          (user.name || '').toLowerCase().includes(this.searchQuery.toLowerCase())
+          (user.name || '').toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          (user.phoneNumber || '').toLowerCase().includes(this.searchQuery.toLowerCase())
       ).length;
     },
     totalPages() {
