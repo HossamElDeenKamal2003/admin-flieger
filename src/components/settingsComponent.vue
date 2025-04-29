@@ -31,7 +31,7 @@
           <div class="card-value">
             {{ propertyForm.time || currentProperty.time || 300 }}
             <button class="edit-btn" @click="editProperty('time')">
-              <i class="fas fa-pen"></i>
+              <span>Edit</span>
             </button>
           </div>
           <form v-if="editing.time" @submit.prevent="updateProperty('time')" class="edit-form">
@@ -55,7 +55,7 @@
           <div class="card-value">
             {{ maxDistance || currentMaxDistance || 300 }}
             <button class="edit-btn" @click="editDistance('maxDistance')">
-              <i class="fas fa-pen"></i>
+              <span>Edit</span>
             </button>
           </div>
           <form v-if="editing.maxDistance" @submit.prevent="updateDistance('maxDistance')" class="edit-form">
@@ -79,7 +79,7 @@
           <div class="card-value">
             {{ distanceInTrip || currentDistanceInTrip || 300 }}
             <button class="edit-btn" @click="editDistanceInTrip">
-              <i class="fas fa-pen"></i>
+              <span>Edit</span>
             </button>
           </div>
           <form v-if="editing.distanceInTrip" @submit.prevent="updateDistanceInTrip" class="edit-form">
@@ -103,7 +103,7 @@
           <div class="card-value">
             {{ maxDistanceOffer || currentMaxDistanceOffer || 300 }}
             <button class="edit-btn" @click="editDistance('maxDistanceOffer')">
-              <i class="fas fa-pen"></i>
+              <span>Edit</span>
             </button>
           </div>
           <form v-if="editing.maxDistanceOffer" @submit.prevent="updateDistance('maxDistanceOffer')" class="edit-form">
@@ -185,7 +185,7 @@ export default {
     },
     async updateProperty(field) {
       try {
-        const response = await axios.patch('https://backend.fego-rides.com/admin/update-properties', {
+        const response = await axios.patch('https://backend.fego-rides.com/admin/patch-time-distance', {
           time: this.propertyForm.time,
         });
         console.log(response.data);
@@ -311,6 +311,10 @@ export default {
   padding: 8px 0;
   font-size: 14px;
   color: #d3d3d3;
+}
+
+span{
+  color: red;
 }
 
 .submenu li.active {
