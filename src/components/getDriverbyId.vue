@@ -156,20 +156,63 @@
                 {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, driverData.trips?.length || 0) }}
                 of {{ driverData.trips?.length || 0 }} items
               </span>
-              <button :disabled="currentPage === 1" @click="currentPage--">=></button>
+              <button :disabled="currentPage === 1" @click="currentPage--">&lt;</button>
               <button>{{ currentPage }}</button>
-              <button :disabled="currentPage >= totalPages" @click="currentPage++">></button>
+              <button :disabled="currentPage >= totalPages" @click="currentPage++">&gt;</button>
             </div>
           </div>
         </div>
 
+        <!-- Image Modal -->
+        <div v-if="showImageModal" class="modal-overlay" @click="closeImage">
+          <div class="modal-content" @click.stop style="max-width: 25%">
+            <img
+                :src="currentImageUrl || 'https://via.placeholder.com/400'"
+                alt="Document Image"
+                @error="handleImageError"
+                style="max-width: 100%; height: auto;"
+            />
+            <button class="close-button" @click="closeImage">Close</button>
+          </div>
+        </div>
+
         <!-- Tabs -->
-        <div class="tabs">
-          <button class="tab active">License</button>
-          <button class="tab">Review</button>
-          <button class="tab">Rides</button>
-          <button class="tab">Transaction history</button>
-          <button class="tab">Car details</button>
+        <div class="tabs" v-if="driverData">
+          <button
+              class="tab"
+              :class="{ active: activeTab === 'license' }"
+              @click="openImage(driverData.driver_licence_image, 'license')"
+          >
+            Licence
+          </button>
+          <button
+              class="tab"
+              :class="{ active: activeTab === 'national_front' }"
+              @click="openImage(driverData.national_front, 'national_front')"
+          >
+            National ID Front
+          </button>
+          <button
+              class="tab"
+              :class="{ active: activeTab === 'national_back' }"
+              @click="openImage(driverData.national_back, 'national_back')"
+          >
+            National ID Back
+          </button>
+          <button
+              class="tab"
+              :class="{ active: activeTab === 'national_selfie' }"
+              @click="openImage(driverData.national_selfie, 'national_selfie')"
+          >
+            Selfie With ID
+          </button>
+          <button
+              class="tab"
+              :class="{ active: activeTab === 'block' }"
+              @click="toggleBlock"
+          >
+            {{ driverData.block ? 'Unblock' : 'Block' }}
+          </button>
         </div>
       </section>
     </main>
@@ -189,12 +232,15 @@ export default {
       isSidebarCollapsed: false,
       driverData: null,
       adminName: localStorage.getItem('username') || 'Admin',
-      newRequestsCount: 0, // Can be fetched from an API if needed
+      newRequestsCount: 0,
       currentPage: 1,
-      itemsPerPage: 3, // Based on Figma design (3 rows per page)
+      itemsPerPage: 3,
       loading: false,
       error: null,
-      baseUrl: 'https://backend.fego-rides.com'
+      baseUrl: 'https://backend.fego-rides.com',
+      showImageModal: false,
+      currentImageUrl: '',
+      activeTab: null // Track the active tab
     };
   },
   computed: {
@@ -218,39 +264,104 @@ export default {
         this.isSidebarCollapsed = false;
       }
     },
+    async toggleBlock() {
+      try {
+        this.loading = true;
+        this.activeTab = 'block';
+        const driverId = this.$route.params.driverId;
+        const currentBlockStatus = this.driverData.block;
+        const newBlockStatus = !currentBlockStatus;
+
+        await axios.patch(`${this.baseUrl}/authdriver/patch-block/${driverId}`, {
+          block: newBlockStatus
+        });
+
+        this.driverData.block = newBlockStatus;
+        alert(`Driver ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
+      } catch (error) {
+        console.error('Error toggling block status:', error);
+        this.$toast?.error('Failed to update block status');
+      } finally {
+        this.loading = false;
+      }
+    },
     async fetchDriverData() {
       this.loading = true;
       this.error = null;
       try {
-        const driverId = this.$route.params.driverId; // Get driverId from route params
+        const driverId = this.$route.params.driverId;
         const response = await axios.get(`${this.baseUrl}/authdriver/driver/${driverId}`);
 
-        // Map the API response to the driverData structure
         const driver = response.data.driver;
         this.driverData = {
           name: driver.username || 'N/A',
           phoneNumber: driver.phoneNumber || 'N/A',
           nationalId: driver.id || 'N/A',
           email: driver.email || 'N/A',
-          status: driver.status || 'offline', // API provides 'offline', UI expects 'Online' or 'Offline'
+          status: driver.status || 'offline',
           vehicle: driver.vehicleType || 'N/A',
-          brand: 'N/A', // Not provided in API response
+          brand: 'N/A',
           model: driver.carModel || 'N/A',
           plate: driver.carNumber || 'N/A',
-          color: 'N/A', // Not provided in API response
-          confirmedTrips: driver.ctr || 0, // Using 'ctr' as confirmed trips
-          cancelledTrips: 0, // Not provided in API response
+          color: 'N/A',
+          confirmedTrips: driver.ctr || 0,
+          cancelledTrips: 0,
           rating: driver.rate || 0,
-          cash: driver.dailayEarned || 0, // Using 'dailayEarned' as cash
+          cash: driver.dailayEarned || 0,
           wallet: driver.wallet || 0,
-          trips: [] // API does not provide trip history; leaving empty
+          block: driver.block,
+          trips: [],
+          // Cloudinary image URLs (assumed to be full URLs from the backend)
+          driver_licence_image: driver.driver_licence_image || 'N/A',
+          national_front: driver.national_front || 'N/A',
+          national_back: driver.national_back || 'N/A',
+          national_selfie: driver.national_selfie || 'N/A'
         };
+        console.log('Driver Data Images:', {
+          driver_licence_image: this.driverData.driver_licence_image,
+          national_front: this.driverData.national_front,
+          national_back: this.driverData.national_back,
+          national_selfie: this.driverData.national_selfie
+        });
       } catch (err) {
         this.error = 'Failed to load driver data. Please try again later.';
         console.error('Error fetching driver data:', err);
       } finally {
         this.loading = false;
       }
+    },
+    validateImageUrl(url) {
+      if (!url || url === 'N/A' || typeof url !== 'string') {
+        return null;
+      }
+      // Ensure the URL starts with https://
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return `https://${url}`;
+      }
+      return url;
+    },
+    openImage(imageUrl, tabName) {
+      const validatedUrl = this.validateImageUrl(imageUrl);
+      if (!validatedUrl) {
+        console.warn('Invalid image URL for', tabName, ':', imageUrl);
+        this.currentImageUrl = 'https://via.placeholder.com/400';
+        this.$toast?.error('Image not available');
+      } else {
+        this.currentImageUrl = validatedUrl;
+      }
+      this.showImageModal = true;
+      this.activeTab = tabName;
+      console.log('Opening image:', validatedUrl, 'Tab:', tabName);
+    },
+    closeImage() {
+      this.showImageModal = false;
+      this.currentImageUrl = '';
+      this.activeTab = null;
+    },
+    handleImageError() {
+      console.error('Failed to load image:', this.currentImageUrl);
+      this.currentImageUrl = 'https://via.placeholder.com/400';
+      this.$toast?.error('Failed to load image');
     }
   },
   created() {
@@ -267,6 +378,7 @@ export default {
 </script>
 
 <style scoped>
+/* Same styles as provided in the original code, no changes needed */
 .dashboard {
   display: flex;
   height: 100vh;
@@ -349,6 +461,45 @@ export default {
 
 .data-row span:first-child {
   font-weight: 600;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.modal-content img {
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+}
+
+.close-button {
+  margin-top: 10px;
+  background-color: #ff4d4d;
+  border: none;
+  padding: 8px 16px;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .status-online,

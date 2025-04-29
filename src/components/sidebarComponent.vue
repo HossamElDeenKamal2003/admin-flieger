@@ -36,6 +36,8 @@ export default {
         { name: 'Moderators', icon: 'moderators', route: '/moderators' },
         { name: 'Settings', icon: 'settings', route: '/admin/settings' },
         { name: 'Level', icon: 'settings', route: '/levels' },
+        { name: 'Get Requests', icon: 'get req', route: '/get-req' },
+
       ],
       activeMenu: 'Overview', // Default to Overview
       isCollapsed: false,
