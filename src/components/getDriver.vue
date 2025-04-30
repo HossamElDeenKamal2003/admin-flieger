@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -39,6 +38,11 @@
               <option value="All Captains">All Captains</option>
               <option value="Online">Online</option>
               <option value="Offline">Offline</option>
+            </select>
+            <select v-model="sortBy">
+              <option value="none">Sort by</option>
+              <option value="ctr-desc">CTR (High to Low)</option>
+              <option value="ctr-asc">CTR (Low to High)</option>
             </select>
           </div>
         </div>
@@ -216,6 +220,7 @@ export default {
       searchWaitingQuery: '',
       adminName: localStorage.getItem('username'),
       filter: 'All Captains',
+      sortBy: 'none', // New data property for sorting
       currentPage: 1,
       itemsPerPage: 10,
       currentWaitingPage: 1,
@@ -243,6 +248,12 @@ export default {
         filtered = filtered.filter(captain =>
             (captain.status || 'Offline').toLowerCase() === this.filter.toLowerCase()
         );
+      }
+      // Apply sorting based on sortBy value
+      if (this.sortBy === 'ctr-desc') {
+        filtered = filtered.sort((a, b) => (b.ctr || 0) - (a.ctr || 0));
+      } else if (this.sortBy === 'ctr-asc') {
+        filtered = filtered.sort((a, b) => (a.ctr || 0) - (b.ctr || 0));
       }
       return filtered;
     },
@@ -342,6 +353,9 @@ export default {
   watch: {
     filter() {
       this.currentPage = 1; // Reset to first page when filter changes
+    },
+    sortBy() {
+      this.currentPage = 1; // Reset to first page when sort changes
     },
     searchQuery() {
       this.currentPage = 1; // Reset to first page when search changes
@@ -614,4 +628,3 @@ th {
   margin-left: 250px;
 }
 </style>
-```
