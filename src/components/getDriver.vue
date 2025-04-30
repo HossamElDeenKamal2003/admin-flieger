@@ -58,16 +58,22 @@
             <th>City</th>
             <th>Vehicle</th>
             <th>Phone Number</th>
-            <th>Trips</th>
+            <th>Completed Trips</th>
             <th>State</th>
             <th>Wallet</th>
             <th>Date Of Certain License</th>
             <th>Captains Account</th>
+            <th>Block Status</th>
           </tr>
           </thead>
           <tbody>
-          <tr v-for="captain in paginatedCaptains" :key="captain.id">
-            <td><input type="checkbox" /></td>
+          <tr
+              v-for="captain in paginatedCaptains"
+              :key="captain.id"
+              class="clickable-row"
+              @click="goToDriverDetails(captain._id)"
+          >
+            <td @click.stop><input type="checkbox" /></td>
             <td>
               <img
                   :src="captain.profile_image || 'https://via.placeholder.com/40'"
@@ -82,13 +88,14 @@
             <td>{{ captain.phoneNumber || 'N/A' }}</td>
             <td>{{ captain.ctr || 0 }}</td>
             <td>
-                <span :class="captain.status === 'Online' ? 'status-online' : 'status-offline'">
-                  {{ captain.status || 'Offline' }}
-                </span>
+              <span class="status-container">
+                <span :class="captain.status === 'Online' ? 'status-dot-online' : 'status-dot-offline'"></span>
+                <span class="status-text">{{ captain.status || 'Offline' }}</span>
+              </span>
             </td>
             <td>{{ captain.wallet || 0 }}</td>
             <td>{{ captain.licence_expire_date || 'N/A' }}</td>
-            <td>
+            <td @click.stop>
               <router-link
                   :to="{ name: 'DriverDetails', params: { driverId: captain._id } }"
                   class="action-open"
@@ -96,9 +103,14 @@
                 View Details
               </router-link>
             </td>
+            <td>
+              <span :class="captain.block ? 'status-blocked' : 'status-enabled'">
+                {{ captain.block ? 'BLOCKED' : 'Enabled' }}
+              </span>
+            </td>
           </tr>
           <tr v-if="paginatedCaptains.length === 0">
-            <td colspan="13" class="no-data">No captains found</td>
+            <td colspan="14" class="no-data">No captains found</td>
           </tr>
           </tbody>
         </table>
@@ -218,7 +230,7 @@ export default {
       searchWaitingQuery: '',
       adminName: localStorage.getItem('username'),
       filter: 'All Captains',
-      sortBy: 'none', // New data property for sorting
+      sortBy: 'none',
       currentPage: 1,
       itemsPerPage: 10,
       currentWaitingPage: 1,
@@ -247,7 +259,6 @@ export default {
             (captain.status || 'Offline').toLowerCase() === this.filter.toLowerCase()
         );
       }
-      // Apply sorting based on sortBy value
       if (this.sortBy === 'ctr-desc') {
         filtered = filtered.sort((a, b) => (b.ctr || 0) - (a.ctr || 0));
       } else if (this.sortBy === 'ctr-asc') {
@@ -301,7 +312,6 @@ export default {
       try {
         const response = await axios.get(`${this.baseUrl}/get-drivers`);
         console.log(response.data);
-        // Reset arrays
         this.captains = [];
         this.waitingCaptains = [];
         this.activeCap = 0;
@@ -329,37 +339,34 @@ export default {
       }
     },
     toggleWaitingCaptainStatus(captain) {
-      // This would typically call an API endpoint to update the status
       captain.block = !captain.block;
-
       if (captain.block) {
-        // Move to waiting list
         this.waitingCaptains.push(captain);
         this.captains = this.captains.filter(c => c.id !== captain.id);
       } else {
-        // Move to active list
         this.captains.push(captain);
         this.waitingCaptains = this.waitingCaptains.filter(c => c.id !== captain.id);
       }
-
-      // Update counts
       this.activeCap = this.captains.filter(c => c.status === 'Online').length;
       this.activeWaiting = this.waitingCaptains.filter(c => c.status === 'Online').length;
       this.newRequestsCount = this.waitingCaptains.length;
+    },
+    goToDriverDetails(driverId) {
+      this.$router.push({ name: 'DriverDetails', params: { driverId } });
     }
   },
   watch: {
     filter() {
-      this.currentPage = 1; // Reset to first page when filter changes
+      this.currentPage = 1;
     },
     sortBy() {
-      this.currentPage = 1; // Reset to first page when sort changes
+      this.currentPage = 1;
     },
     searchQuery() {
-      this.currentPage = 1; // Reset to first page when search changes
+      this.currentPage = 1;
     },
     searchWaitingQuery() {
-      this.currentWaitingPage = 1; // Reset to first page when waiting search changes
+      this.currentWaitingPage = 1;
     }
   },
   created() {
@@ -382,9 +389,8 @@ export default {
   font-family: 'Arial', sans-serif;
 }
 
-/* Main Content */
 .main-content {
-  margin-left: 250px; /* Default margin for desktop */
+  margin-left: 250px;
   flex: 1;
   background-color: #f5f7fa;
   padding: 20px;
@@ -392,7 +398,6 @@ export default {
   transition: margin-left 0.3s ease;
 }
 
-/* Header */
 .header {
   display: flex;
   justify-content: space-between;
@@ -420,7 +425,6 @@ export default {
   cursor: pointer;
 }
 
-/* Captains List */
 .captains-list,
 .waiting-list {
   background-color: white;
@@ -470,26 +474,43 @@ th {
   color: #333;
 }
 
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #f5f7fa;
+}
+
 .captain-photo {
   width: 40px;
   height: 40px;
   border-radius: 50%;
 }
 
-.status-online,
-.status-offline {
+.status-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-text {
+  display: inline-block;
+}
+
+.status-dot-online,
+.status-dot-offline {
   display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  margin-right: 5px;
 }
 
-.status-online {
+.status-dot-online {
   background-color: #28c76f;
 }
 
-.status-offline {
+.status-dot-offline {
   background-color: #ff4d4f;
 }
 
@@ -505,7 +526,7 @@ th {
 
 .status-enabled {
   background-color: #e6f7fa;
-  color: #00cfe8;
+  color: #6b48ff;
 }
 
 .status-blocked {
@@ -523,6 +544,16 @@ th {
 .action-disable {
   background-color: #ffebee;
   color: #ff4d4f;
+}
+
+.block-status-blocked {
+  color: #ff4d4f;
+  background-color: #ffebee;
+}
+
+.block-status-unblocked {
+  color: #6b48ff;
+  background-color: #e6e6ff;
 }
 
 .table-footer {
@@ -552,20 +583,19 @@ th {
   cursor: not-allowed;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .main-content {
-    margin-left: 80px; /* Default margin when sidebar is collapsed on mobile */
+    margin-left: 80px;
   }
 
   .main-content-expanded {
-    margin-left: 250px; /* Margin when sidebar is expanded on mobile */
+    margin-left: 250px;
   }
 }
 
 @media (min-width: 769px) {
   .main-content {
-    margin-left: 250px !important; /* Always expanded on desktop */
+    margin-left: 250px !important;
   }
 }
 
@@ -624,5 +654,25 @@ th {
 
 .main-content-expanded {
   margin-left: 250px;
+}
+
+.status-enabled,
+.status-blocked {
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.status-enabled {
+  background-color: #e6f7fa;
+  color: #6b48ff;
+}
+
+.status-blocked {
+  background-color: #FF2929;
+  color: red;
 }
 </style>
