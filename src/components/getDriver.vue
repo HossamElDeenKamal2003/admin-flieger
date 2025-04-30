@@ -59,7 +59,6 @@
             <th>Vehicle</th>
             <th>Phone Number</th>
             <th>Trips</th>
-            <th>Offline Trips</th>
             <th>State</th>
             <th>Wallet</th>
             <th>Date Of Certain License</th>
@@ -82,7 +81,6 @@
             <td>{{ captain.vehicleType || 'N/A' }}</td>
             <td>{{ captain.phoneNumber || 'N/A' }}</td>
             <td>{{ captain.ctr || 0 }}</td>
-            <td>{{ captain.offlineTrips || 0 }}</td>
             <td>
                 <span :class="captain.status === 'Online' ? 'status-online' : 'status-offline'">
                   {{ captain.status || 'Offline' }}
