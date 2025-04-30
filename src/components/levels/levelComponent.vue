@@ -46,7 +46,7 @@
             <td><input type="number" v-model="fixedAmounts.fixedAmountvan" @change="handleFixedAmountChange('fixedAmountvan')"></td>
           </tr>
           <tr class="row-purple">
-            <td>Penfit</td>
+            <td>Commission</td>
             <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
             <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
             <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
