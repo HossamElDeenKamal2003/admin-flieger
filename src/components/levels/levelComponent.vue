@@ -17,8 +17,8 @@
             <th>Level 2</th>
             <th>Level 3</th>
             <th>Level 4</th>
-            <th>Penfits</th>
-            <th>Compfort</th>
+<!--            <th>Penfits</th>-->
+<!--            <th>Compfort</th>-->
             <th>Actions</th>
           </tr>
           </thead>
@@ -29,8 +29,8 @@
             <td><input type="number" v-model="currentPrices.level2.priceCar" @change="handlePriceChange('level2', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level3.priceCar" @change="handlePriceChange('level3', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level4.priceCar" @change="handlePriceChange('level4', 'priceCar')"></td>
-            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('all', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('all', 'compfort')"></td>
+<!--            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('all', 'penfits')"></td>-->
+<!--            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('all', 'compfort')"></td>-->
 <!--            <td>-->
 <!--            </td>-->
           </tr>
@@ -48,6 +48,22 @@
             <td><input type="number" v-model="currentPrices.level2.priceVan" @change="handlePriceChange('level2', 'priceVan')"></td>
             <td><input type="number" v-model="currentPrices.level3.priceVan" @change="handlePriceChange('level3', 'priceVan')"></td>
             <td><input type="number" v-model="currentPrices.level4.priceVan" @change="handlePriceChange('level4', 'priceVan')"></td>
+            <td colspan="3"></td>
+          </tr>
+          <tr>
+            <td>Penfit</td>
+            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfit')"></td>
+            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfit')"></td>
+            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfit')"></td>
+            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfit')"></td>
+            <td colspan="3"></td>
+          </tr>
+          <tr>
+            <td>comfort</td>
+            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('level1', 'comfort')"></td>
+            <td><input type="number" v-model="currentPrices.level2.compfort" @change="handlePriceChange('level2', 'comfort')"></td>
+            <td><input type="number" v-model="currentPrices.level3.compfort" @change="handlePriceChange('level3', 'comfort')"></td>
+            <td><input type="number" v-model="currentPrices.level4.compfort" @change="handlePriceChange('level4', 'comfort')"></td>
             <td colspan="3"></td>
           </tr>
           </tbody>
@@ -100,7 +116,7 @@ export default {
           axios.get('https://backend.fego-rides.com/prices/level3/getprices?country=Egypt'),
           axios.get('https://backend.fego-rides.com/prices/level4/getprices?country=Egypt')
         ]);
-
+        console.log(level1.data);
         // Map API response to frontend structure
         this.currentPrices = {
           level1: {
