@@ -37,6 +37,7 @@ export default {
         { name: 'Settings', icon: 'settings', route: '/admin/settings' },
         { name: 'Level', icon: 'settings', route: '/levels' },
         { name: 'Get Requests', icon: 'get req', route: '/get-req' },
+        { name: 'Driver Signup', icon: "sdfdf", route: '/driver-signup' },
 
       ],
       activeMenu: 'Overview', // Default to Overview
