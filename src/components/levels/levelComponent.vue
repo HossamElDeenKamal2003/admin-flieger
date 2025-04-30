@@ -1,7 +1,7 @@
 <template>
   <div class="fego-dashboard">
     <div class="sidebar">
-     <Sidebar />
+      <Sidebar />
     </div>
 
     <div class="main-content">
@@ -11,66 +11,60 @@
 
         <table class="prices-table">
           <thead>
-          <tr>
+          <tr class="table-header">
             <th>Vehicle</th>
             <th>Level 1</th>
             <th>Level 2</th>
             <th>Level 3</th>
             <th>Level 4</th>
-<!--            <th>Penfits</th>-->
-<!--            <th>Compfort</th>-->
-            <th>Actions</th>
+            <th>Fixed Amount</th>
           </tr>
           </thead>
           <tbody>
-          <tr>
+          <tr class="row-grey">
             <td>Car</td>
             <td><input type="number" v-model="currentPrices.level1.priceCar" @change="handlePriceChange('level1', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level2.priceCar" @change="handlePriceChange('level2', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level3.priceCar" @change="handlePriceChange('level3', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level4.priceCar" @change="handlePriceChange('level4', 'priceCar')"></td>
-<!--            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('all', 'penfits')"></td>-->
-<!--            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('all', 'compfort')"></td>-->
-<!--            <td>-->
-<!--            </td>-->
+            <td><input type="number" v-model="fixedAmounts.fixedAmountcar" @change="handleFixedAmountChange('fixedAmountcar')"></td>
           </tr>
-          <tr>
+          <tr class="row-purple">
             <td>Motorcycle</td>
             <td><input type="number" v-model="currentPrices.level1.motorocycle" @change="handlePriceChange('level1', 'motorocycle')"></td>
             <td><input type="number" v-model="currentPrices.level2.motorocycle" @change="handlePriceChange('level2', 'motorocycle')"></td>
             <td><input type="number" v-model="currentPrices.level3.motorocycle" @change="handlePriceChange('level3', 'motorocycle')"></td>
             <td><input type="number" v-model="currentPrices.level4.motorocycle" @change="handlePriceChange('level4', 'motorocycle')"></td>
-            <td colspan="3"></td>
+            <td><input type="number" v-model="fixedAmounts.fixedAmountMotorocycle" @change="handleFixedAmountChange('fixedAmountMotorocycle')"></td>
           </tr>
-          <tr>
+          <tr class="row-grey">
             <td>Van</td>
             <td><input type="number" v-model="currentPrices.level1.priceVan" @change="handlePriceChange('level1', 'priceVan')"></td>
             <td><input type="number" v-model="currentPrices.level2.priceVan" @change="handlePriceChange('level2', 'priceVan')"></td>
             <td><input type="number" v-model="currentPrices.level3.priceVan" @change="handlePriceChange('level3', 'priceVan')"></td>
             <td><input type="number" v-model="currentPrices.level4.priceVan" @change="handlePriceChange('level4', 'priceVan')"></td>
-            <td colspan="3"></td>
+            <td><input type="number" v-model="fixedAmounts.fixedAmountvan" @change="handleFixedAmountChange('fixedAmountvan')"></td>
           </tr>
-          <tr>
+          <tr class="row-purple">
             <td>Penfit</td>
-            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfit')"></td>
-            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfit')"></td>
-            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfit')"></td>
-            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfit')"></td>
-            <td colspan="3"></td>
+            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
+            <td></td>
           </tr>
-          <tr>
+          <tr class="row-grey">
             <td>comfort</td>
-            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('level1', 'comfort')"></td>
-            <td><input type="number" v-model="currentPrices.level2.compfort" @change="handlePriceChange('level2', 'comfort')"></td>
-            <td><input type="number" v-model="currentPrices.level3.compfort" @change="handlePriceChange('level3', 'comfort')"></td>
-            <td><input type="number" v-model="currentPrices.level4.compfort" @change="handlePriceChange('level4', 'comfort')"></td>
-            <td colspan="3"></td>
+            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('level1', 'compfort')"></td>
+            <td><input type="number" v-model="currentPrices.level2.compfort" @change="handlePriceChange('level2', 'compfort')"></td>
+            <td><input type="number" v-model="currentPrices.level3.compfort" @change="handlePriceChange('level3', 'compfort')"></td>
+            <td><input type="number" v-model="currentPrices.level4.compfort" @change="handlePriceChange('level4', 'compfort')"></td>
+            <td></td>
           </tr>
           </tbody>
         </table>
       </div>
       <button class="save-btn" @click="saveAllPrices">Save All</button>
-
     </div>
   </div>
 </template>
@@ -78,34 +72,32 @@
 <script>
 import axios from 'axios';
 import Sidebar from "@/components/sidebarComponent.vue";
+
 export default {
   name: 'FegoDashboard',
+  components: {
+    Sidebar
+  },
   data() {
     return {
-      activeMenu: 'Dashboard',
-      menuItems: [
-        'Dashboard',
-        'Orders',
-        'Trips',
-        'Users',
-        'Captains',
-        'Moderators',
-        'Settings'
-      ],
       currentPrices: {
         level1: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
         level2: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
         level3: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
         level4: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 }
       },
-      changes: {}
+      fixedAmounts: {
+        fixedAmountcar: 0,
+        fixedAmountvan: 0,
+        fixedAmountMotorocycle: 0
+      },
+      changes: {},
+      fixedAmountChanges: {}
     };
-  },
-  components: {
-    Sidebar
   },
   created() {
     this.fetchEgyptPrices();
+    this.fetchFixedPrices();
   },
   methods: {
     async fetchEgyptPrices() {
@@ -116,8 +108,7 @@ export default {
           axios.get('https://backend.fego-rides.com/prices/level3/getprices?country=Egypt'),
           axios.get('https://backend.fego-rides.com/prices/level4/getprices?country=Egypt')
         ]);
-        console.log(level1.data);
-        // Map API response to frontend structure
+
         this.currentPrices = {
           level1: {
             priceCar: level1.data[0]?.priceCar || 0,
@@ -152,32 +143,33 @@ export default {
         console.error('Error fetching Egypt prices:', error);
       }
     },
+    async fetchFixedPrices() {
+      try {
+        const response = await axios.get('https://backend.fego-rides.com/prices/getFixedPrices');
+        this.fixedAmounts = response.data.fixedAmounts;
+        console.log(response)
+      } catch (error) {
+        console.error('Error fetching Fixed Prices:', error);
+        alert('Error fetching Fixed Prices');
+      }
+    },
     handlePriceChange(level, field) {
       if (!this.changes[level]) {
         this.changes[level] = {};
       }
-      // Store the changed value
-      if (level === 'all') {
-        // For penfits and compfort, apply to all levels
-        this.changes['level1'][field] = this.currentPrices.level1[field];
-        this.changes['level2'][field] = this.currentPrices.level1[field];
-        this.changes['level3'][field] = this.currentPrices.level1[field];
-        this.changes['level4'][field] = this.currentPrices.level1[field];
-      } else {
-        this.changes[level][field] = this.currentPrices[level][field];
-      }
+      this.changes[level][field] = this.currentPrices[level][field];
+    },
+    handleFixedAmountChange(field) {
+      this.fixedAmountChanges[field] = this.fixedAmounts[field];
     },
     async saveAllPrices() {
       try {
         const updates = [];
 
-        // For each level with changes, prepare a PATCH request
+        // Process price changes
         for (const level in this.changes) {
-          if (level === 'all') continue; // Handled via level-specific updates
-
-          // Ensure all required fields are included
           const updateData = {
-            country: 'egypt',
+            country: 'Egypt',
             priceCar: this.currentPrices[level].priceCar || 0,
             motorocycle: this.currentPrices[level].motorocycle || 0,
             priceVan: this.currentPrices[level].priceVan || 0,
@@ -190,10 +182,19 @@ export default {
           );
         }
 
+        // Process fixed amount changes if any
+        if (Object.keys(this.fixedAmountChanges).length > 0) {
+          updates.push(
+              axios.patch('https://backend.fego-rides.com/prices/updateFixedAmount', this.fixedAmounts)
+          );
+        }
+
         await Promise.all(updates);
         alert('Prices updated successfully!');
         this.changes = {};
+        this.fixedAmountChanges = {};
         this.fetchEgyptPrices(); // Refresh data
+        this.fetchFixedPrices(); // Refresh fixed amounts
       } catch (error) {
         console.error('Error updating prices:', error.response?.data || error.message);
         alert('Error updating prices: ' + (error.response?.data?.message || error.message));
@@ -215,33 +216,6 @@ export default {
   background-color: #6b5b95;
   color: white;
   padding: 20px;
-}
-
-.logo {
-  font-size: 24px;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #34495e;
-}
-
-.main-menu ul {
-  list-style: none;
-  padding: 0;
-}
-
-.main-menu li {
-  padding: 12px 15px;
-  margin-bottom: 5px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.main-menu li:hover {
-  background-color: #34495e;
-}
-
-.main-menu li.active {
-  background-color: #3498db;
 }
 
 .main-content {
@@ -281,29 +255,49 @@ h3 {
 }
 
 .prices-table th {
-  background-color: #f8f9fa;
+  background-color: #6b5b95;
+  color: white;
   font-weight: 600;
-  color: #34495e;
 }
 
 .prices-table input {
   width: 80px;
-  padding: 5px;
+  padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  text-align: center;
 }
 
 .save-btn {
-  padding: 8px 16px;
+  padding: 10px 20px;
+  background-color: #6b5b95;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
-  background-color: #2ecc71;
-  color: white;
+  transition: background-color 0.3s;
 }
 
-button:hover {
-  opacity: 0.9;
+.save-btn:hover {
+  background-color: #5a4a7d;
+}
+
+/* Row styling */
+.row-grey {
+  background-color: #f8f9fa;
+}
+
+.row-purple {
+  background-color: rgba(107, 91, 149, 0.1);
+}
+
+.row-grey:hover, .row-purple:hover {
+  background-color: #e9ecef;
+}
+
+.table-header {
+  background-color: #6b5b95 !important;
+  color: white;
 }
 </style>
