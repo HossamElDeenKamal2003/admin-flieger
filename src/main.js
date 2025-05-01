@@ -1,22 +1,23 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import router from './router/index';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
+import store from './store'
+import Vue3Toastify from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faPrint, faFilePdf, faComments } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+const app = createApp(App)
+library.add(faPrint, faFilePdf, faComments)
+app.component('font-awesome-icon', FontAwesomeIcon)
 
-// import VueSocketIO from 'vue-3-socket.io';
-// import SocketIO from 'socket.io-client';
+app.use(Vue3Toastify, {
+    autoClose: 3000,
+    position: 'top-right',
+    theme: 'colored',
+    // other options
+})
 
-const app = createApp(App);
-
-// app.use(new VueSocketIO({
-//     debug: true,
-//     connection: SocketIO('http://localhost:3000', {}), 
-//     vuex: {
-//         actionPrefix: "SOCKET_",
-//         mutationPrefix: "SOCKET_"
-//     }
-// }));
-
-app.use(router);
-app.mount('#app');
+app.use(store)
+    .use(router)
+    .mount('#app')

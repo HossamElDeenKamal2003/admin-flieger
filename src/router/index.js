@@ -1,186 +1,115 @@
-    import { createRouter, createWebHistory } from "vue-router";
-    import AuthComponent from "../components/HelloWorld.vue";
-    import TxtRotate from "../components/HomeComponent.vue";
-    import usersPanel from "../components/usersPanel.vue";
-    import driversPanel from "../components/driversComponent.vue";
-    import getDriver from "../components/getDriver.vue";
-    import trackingDriver from "../components/trackingDrivers.vue";
-    import tripsComponent from "../components/tripsComponent.vue";
-    import settingsPage from "../components/settingsComponent.vue";
-    import permissionForm from "../components/permisitionsComponent.vue";
-    import chatSupport from "../components/chatSupport.vue";
-    import DriverSignup from "../components/driverSignup.vue";
-    import getreqComponent from "../components/getReq.vue";
-    import couponsComponent from "../components/couponsComponent.vue";
-    import levelComponent from "../components/levels/levelComponent.vue";
-    import DriverDetails from '@/components/getDriverbyId.vue';
-    import UserDetails from '@/components/userDetails.vue';
-    const routes = [
-         {
-            path: "/get-req",
-            name: "getreqComponent",
-            component: getreqComponent
-        },
-        {
-            path: '/chat',
-            name: 'chat',
-            beforeEnter: () => {
-              window.location.href = '/chat.html';
-            }
-          },
-    {
-        path: "/",
-        name: "auth",
-        component: AuthComponent,
-    },
-    {
-        path: "/home",
-        name: "home",
-        component: TxtRotate,
-        beforeEnter: (to, from, next) => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin' || role === "support1" || role === "support2" || role === "support3") {
-              next(); // Allow access
-            } else {
-                //alert("You Are Not An Admin")
-                next('/');
-            }
-        }
-    },
-    {
-        path: "/admin/users",
-        name: "usersPanel",
-        component: usersPanel,
-        beforeEnter: (to, from, next) => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin' || role === "support1") {
-              next(); // Allow access
-            } else {
-                //alert("You Are Not An Admin")
-                next('/');
-            }
-        }
-    },
-    {
-        path: "/admin/drivers",
-        name: driversPanel,
-        component: driversPanel,
-        beforeEnter: (to, from, next) => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin' || role === "support1") {
-              next(); // Allow access
-            } else {
-                //alert("You Are Not An Admin")
-                next('/');
-            }
-        }
-    },
-    {
-        path: "/admin/getdriver",
-        name: "getDriver",
-        component: getDriver,
-        beforeEnter: (to, from, next) => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin' || role === "support1") {
-              next(); // Allow access
-            } else {
-                //alert("You Are Not An Admin")
-                next('/');
-            }
-        }
-    },
-    {
-        path: "/admin/tracking",
-        name: "trackingDriver",
-        component: trackingDriver,
-        beforeEnter: (to, from, next) => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin' || role === "support1") {
-              next(); // Allow access
-            } else {
-                //alert("You Are Not An Admin")
-                next('/');
-            }
-        }
-    },
-    {
-        path: "/admin/get-trips",
-        name: "tripsComponent",
-        component: tripsComponent,
-        beforeEnter: (to, from, next) => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin' || role === "support1" || role === "support2") {
-              next(); // Allow access
-            } else {
-                //alert("You Are Not An Admin")
-                next('/');
-            }
-        }
-    },
-    {
-        path: "/admin/settings",
-        name: "settingsPage",
-        component: settingsPage,
-        beforeEnter: (to, from, next) => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin' || role === "support1") {
-              next(); // Allow access
-            } else {
-                //alert("You Are Not An Admin")
-                next('/');
-            }
-        }
-    },
-    {
-        path: "/permission",
-        name: "permissionPage",
-        component: permissionForm,
-        beforeEnter: (to, from, next) => {
-            const role = localStorage.getItem('role');
-            if (role === 'admin') {
-              next(); // Allow access
-            } else {
-                //alert("You Are Not An Admin")
-                next('/');
-            }
-        }
-    },
-    {
-        path: "/chatSupport",
-        name: "chatSupport",
-        component: chatSupport
-    },
-    {
-        path: "/driver-signup",
-        name: "DriverSignup",
-        component: DriverSignup
-    },
-    {
-        path: "/coupons",
-        name: "couponsComponent",
-        component: couponsComponent
-    },
-        {
-            path: "/levels",
-            name: "levelsComponent",
-            component: levelComponent
-        },
-        {
-            path: '/driver/:driverId',
-            name: 'DriverDetails',
-            component: DriverDetails
-        },
-        {
-            path: '/user/:userId',
-            name: 'UserDetails',
-            component: UserDetails
-        }
+import { createRouter, createWebHistory } from 'vue-router'
+import NewOrder from "../views/doctor/createOrder.vue"
+import homeComponent from "@/views/home/homeComponent.vue";
+import login from "@/views/auth/login.vue";
+import AllOrders from "@/views/doctor/allOrders.vue";
+import ShowOrder from '@/views/doctor/showOrders.vue';
+import LabOrders from "@/views/lab/labOrders.vue";
+import showOrderlab from "@/views/lab/showOrder.vue";
+import myDoctors from "@/views/lab/myDoctors.vue";
+import addDoctor from "@/views/lab/addDoctor.vue";
+import contract from "@/views/lab/contractView.vue";
+import deliverMain from "@/views/Delivery/pageDelivery.vue";
+import BillingDashboard from "@/views/lab/accountsView.vue";
+import SignupComponent from "@/views/auth/signup.vue"
+const routes = [
+  {
+    path:'/',
+    name: "homeComponent",
+    component: homeComponent
+  },
+  {
+    path: '/create-order',
+    name: 'create-order',
+    component: NewOrder,
+    beforeEnter: (to, from, next) => {
+      const role = localStorage.getItem('role');
+      if (role === 'doctor') {
+        console.log(role);
+        next(); // allow access
+      } else {
+        next('/login'); // cancel navigation
+        // Optionally redirect:
+        // next('/not-authorized');
+      }
+    }
+  },
 
-    ];
+  {
+    path: '/login',
+    name: "login",
+    component: login,
+  },
+  {
+    path: '/register',
+    name: "register",
+    component: SignupComponent,
+  },
+  {
+    path: '/doctor/orders',
+    name: 'AllOrders',
+    component: AllOrders,
+    beforeEnter: (to, from, next) => {
+      const role = localStorage.getItem('role');
+      if (role === 'doctor') {
+        next(); // allow access
+      } else {
+        next('/login'); // cancel navigation
+        // Or optionally:
+        // next('/login');
+      }
+    }
+  },
 
-    const router = createRouter({
-    history: createWebHistory(),
-    routes,
-    });
+  {
+    path: '/orders/:id',
+    name: 'showOrder',
+    component: ShowOrder,
+    meta: { requiresAuth: true },
+    props: true
+  },
+  {
+    path: '/lab',
+    name: "LabOrders",
+    component: LabOrders
+  },
+  {
+    path: '/showOrderlab/:id',
+    name: "showOrderlab",
+    component: showOrderlab,
+    meta: { requiresAuth: true },
+    props: true
+  },
+  {
+    path: '/my-doctors',
+    name: 'myDoctors',
+    component: myDoctors,
+  },
+  {
+    path: '/lab/add-doctor',
+    name: 'addDoctor',
+    component: addDoctor,
+  },
+  {
+    path:'/doctor-contract/:id',
+    name: 'contractContract',
+    component: contract
+  },
+  {
+    path: '/deliver-main',
+    name: 'deliverMain',
+    component: deliverMain,
+  },
+  {
+    path: '/accounts',
+    name: 'BillingDashboard',
+    component: BillingDashboard,
+  }
+]
 
-    export default router;
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
+  routes
+})
+
+export default router
