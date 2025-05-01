@@ -104,9 +104,9 @@
               </router-link>
             </td>
             <td>
-              <span :class="captain.block ? 'status-blocked' : 'status-enabled'">
-                {{ captain.block ? 'BLOCKED' : 'Enabled' }}
-              </span>
+            <span :class="captain.block ? 'status-blocked' : 'status-enabled'">
+              {{ captain.block ? 'BLOCKED' : 'ENABLED' }}
+            </span>
             </td>
           </tr>
           <tr v-if="paginatedCaptains.length === 0">
@@ -672,7 +672,7 @@ th {
 }
 
 .status-blocked {
-  background-color: #FF2929;
+  background-color: #e79c9c;
   color: red;
 }
 </style>

@@ -3,7 +3,6 @@
     <!-- Sidebar -->
     <div :class="['sidebar', { 'sidebar-collapsed': !isSidebarExpanded }]">
       <Sidebar />
-
     </div>
 
     <!-- Main Content -->
@@ -79,7 +78,7 @@
               </tr>
               </thead>
               <tbody>
-              <tr v-for="trip in paginatedTrips" :key="trip.tripId">
+              <tr v-for="trip in paginatedData" :key="trip.tripId">
                 <td>{{ trip.tripId || 'N/A' }}</td>
                 <td>{{ trip.vehicle || 'N/A' }}</td>
                 <td>{{ trip.orderedTime || 'N/A' }}</td>
@@ -92,7 +91,7 @@
                   {{ trip.status || 'N/A' }}
                 </td>
               </tr>
-              <tr v-if="paginatedTrips.length === 0">
+              <tr v-if="paginatedData.length === 0">
                 <td colspan="9" class="no-data">No trip history found</td>
               </tr>
               </tbody>
@@ -136,6 +135,7 @@
 <script>
 import axios from 'axios';
 import Sidebar from './sidebarComponent.vue';
+
 export default {
   name: "UserDetails",
   data() {
@@ -151,6 +151,7 @@ export default {
         trips: [],
         comments: []
       },
+      data: [], // Store the raw fetched trips
       currentPage: 1,
       itemsPerPage: 3,
       isLoading: false,
@@ -162,16 +163,16 @@ export default {
     Sidebar,
   },
   computed: {
-    paginatedTrips() {
-      if (!this.userData || !this.userData.trips) {
+    paginatedData() {
+      if (!this.data || this.data.length === 0) {
         return [];
       }
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.userData.trips.slice(start, end);
+      return this.data.slice(start, end);
     },
     totalPages() {
-      return Math.ceil((this.userData?.trips?.length || 0) / this.itemsPerPage);
+      return Math.ceil((this.data?.length || 0) / this.itemsPerPage);
     }
   },
   methods: {
@@ -184,7 +185,6 @@ export default {
       try {
         const userId = this.$route.params.userId;
         const response = await axios.get(`${this.baseUrl}/user-profile/getUser/${userId}`);
-
         const user = response.data.user || response.data;
         this.userData = {
           name: user.username || `${user.firstName} ${user.lastName}` || 'N/A',
@@ -193,50 +193,8 @@ export default {
           wallet: `${user.wallet || 0} EGP`,
           completedTrips: user.completedTrips || 23,
           cancelledTrips: user.cancelledTrips || 10,
-          trips: user.trips || [
-            {
-              tripId: 'N/A',
-              vehicle: 'Car',
-              orderedTime: '04.12.2021 20:30',
-              startLocation: '26 Fou Araby, Fuzkat Street, Tashkent, Oʻzbekiston',
-              finishLocation: '26 Fou Araby, Fuzkat Street, Tashkent, Oʻzbekiston',
-              value: 140,
-              payment: '140 Cash',
-              wallet: '0 EGP',
-              status: 'Completed'
-            },
-            {
-              tripId: 'N/A',
-              vehicle: 'Motorcycle',
-              orderedTime: '04.12.2021 20:24',
-              startLocation: '21 Hamidulla Orifov koʻchasi, Toshkent, Oʻzbekiston',
-              finishLocation: '21 Hamidulla Orifov koʻchasi, Toshkent, Oʻzbekiston',
-              value: 80,
-              payment: '100 Cash',
-              wallet: '20 EGP',
-              status: 'Completed'
-            },
-            {
-              tripId: 'N/A',
-              vehicle: 'Microbus',
-              orderedTime: '04.12.2021 20:23',
-              startLocation: '76 дарвозаи Янги, Toshkent, Oʻzbekiston',
-              finishLocation: '76 дарвозаи Янги, Toshkent, Oʻzbekiston',
-              value: 60,
-              payment: '',
-              wallet: '',
-              status: 'Cancelled'
-            }
-          ],
-          comments: user.comments || [
-            {
-              id: 1,
-              userName: 'Husen Seid',
-              userImage: 'https://via.placeholder.com/40',
-              rating: '4.0',
-              text: 'عامر مشرف وخلوق'
-            }
-          ]
+          trips: [],
+          comments: [],
         };
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -244,10 +202,44 @@ export default {
       } finally {
         this.isLoading = false;
       }
+    },
+    async fetchTrips() {
+      try {
+        const userId = this.$route.params.userId;
+        const response = await axios.get(`${this.baseUrl}/wallet/filterWalletDetails`, {
+          body: {
+            userId: userId // Pass userId as a query parameter
+          }
+        });
+
+        const { moneyFlow, trips } = response.data;
+
+        // Map the API response to the table's structure
+        this.data = trips.map(trip => {
+          const moneyFlowData = moneyFlow.find(flow => flow.flow.some(f => f.tripId === trip._id));
+          const flow = moneyFlowData?.flow.find(f => f.tripId === trip._id) || {};
+
+          return {
+            tripId: trip.uniqueId || 'N/A', // e.g., "L8"
+            vehicle: 'Car', // Hardcoded as per the image; ideally, fetch from API
+            orderedTime: trip.date || 'N/A', // e.g., "1-5-2025 00:03:27"
+            startLocation: 'N/A', // Not provided in API response
+            finishLocation: 'N/A', // Not provided in API response
+            value: flow.tripCost || 0, // e.g., 80
+            payment: flow.payCash > 0 ? 'Cash' : 'Wallet', // e.g., "Cash" if payCash exists
+            wallet: `${flow.payWallet || 0} EGP`, // e.g., "0 EGP"
+            status: flow.payWallet > 0 ? 'COMPLETED' : 'CANCELLED' // Placeholder logic; adjust based on actual API data
+          };
+        });
+      } catch (error) {
+        console.error('Error fetching trips:', error);
+        this.error = 'Failed to load trips. Please try again later.';
+      }
     }
   },
   created() {
     this.fetchUserData();
+    this.fetchTrips();
   }
 };
 </script>
