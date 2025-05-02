@@ -146,12 +146,15 @@ export default {
     async fetchFixedPrices() {
       try {
         const response = await axios.get('https://backend.fego-rides.com/prices/getFixedPrices');
-        this.fixedAmounts = response.data.fixedAmounts;
-        console.log(response)
+        this.fixedAmounts = response.data.fixedAmounts; // Stores all three fixed amounts
+        console.log(this.fixedAmounts)
       } catch (error) {
         console.error('Error fetching Fixed Prices:', error);
         alert('Error fetching Fixed Prices');
       }
+    },
+    handleFixedAmountChange(field) {
+      this.fixedAmountChanges[field] = this.fixedAmounts[field];
     },
     handlePriceChange(level, field) {
       if (!this.changes[level]) {
@@ -159,20 +162,17 @@ export default {
       }
       this.changes[level][field] = this.currentPrices[level][field];
     },
-    handleFixedAmountChange(field) {
-      this.fixedAmountChanges[field] = this.fixedAmounts[field];
-    },
     async saveAllPrices() {
       try {
         const updates = [];
 
-        // Process price changes
+        // Process price changes - send complete level data for each changed level
         for (const level in this.changes) {
           const updateData = {
-            country: 'Egypt',
+            country: 'egypt',
             priceCar: this.currentPrices[level].priceCar || 0,
-            motorocycle: this.currentPrices[level].motorocycle || 0,
             priceVan: this.currentPrices[level].priceVan || 0,
+            motorocycle: this.currentPrices[level].motorocycle || 0,
             penfits: this.currentPrices[level].penfits || 0,
             compfort: this.currentPrices[level].compfort || 0
           };
@@ -182,19 +182,30 @@ export default {
           );
         }
 
-        // Process fixed amount changes if any
+        // Process fixed amount changes - always send all three fixed amounts if any change exists
         if (Object.keys(this.fixedAmountChanges).length > 0) {
+          const fixedAmountUpdate = {
+            fixedAmountcar: this.fixedAmounts.fixedAmountcar || 0,
+            fixedAmountvan: this.fixedAmounts.fixedAmountvan || 0,
+            fixedAmountMotorocycle: this.fixedAmounts.fixedAmountMotorocycle || 0
+          };
+
           updates.push(
-              axios.patch('https://backend.fego-rides.com/prices/updateFixedAmount', this.fixedAmounts)
+              axios.patch('https://backend.fego-rides.com/prices/updateFixedAmount', fixedAmountUpdate)
           );
         }
 
-        await Promise.all(updates);
-        alert('Prices updated successfully!');
-        this.changes = {};
-        this.fixedAmountChanges = {};
-        this.fetchEgyptPrices(); // Refresh data
-        this.fetchFixedPrices(); // Refresh fixed amounts
+        // Only proceed if there are actual updates
+        if (updates.length > 0) {
+          await Promise.all(updates);
+          alert('Prices updated successfully!');
+          this.changes = {};
+          this.fixedAmountChanges = {};
+          this.fetchEgyptPrices(); // Refresh data
+          this.fetchFixedPrices(); // Refresh fixed amounts
+        } else {
+          alert('No changes detected to save.');
+        }
       } catch (error) {
         console.error('Error updating prices:', error.response?.data || error.message);
         alert('Error updating prices: ' + (error.response?.data?.message || error.message));
