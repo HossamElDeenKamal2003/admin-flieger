@@ -20,13 +20,13 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <button :class="{ 'active-tab': activeTab === 'all' }" @click="activeTab = 'all'">
+        <button :class="{ 'active-tab': activeTab === 'all' }" @click="setActiveTab('all')">
           All <span class="count-badge">{{ allCount }}</span>
         </button>
-        <button :class="{ 'active-tab': activeTab === 'pending' }" @click="activeTab = 'pending'">
+        <button :class="{ 'active-tab': activeTab === 'pending' }" @click="setActiveTab('pending')">
           PENDING <span class="count-badge">{{ pendingCount }}</span>
         </button>
-        <button :class="{ 'active-tab': activeTab === 'end' }" @click="activeTab = 'end'">
+        <button :class="{ 'active-tab': activeTab === 'end' }" @click="setActiveTab('end')">
           COMPLETED <span class="count-badge">{{ completedCount }}</span>
         </button>
         <button
@@ -71,6 +71,7 @@
             <th>Value</th>
             <th>Payment</th>
             <th>Wallet driver after trip</th>
+            <th>Trip Comment</th>
           </tr>
           </thead>
           <tbody>
@@ -91,10 +92,11 @@
             <!-- Vehicle -->
             <td>
                 <span v-if="trip.driver || trip.driverId">
-                  {{ trip.vehicleType || 'N/A' }} ({{ trip.driver?.username || trip.driverId?.username || 'N/A' }})
+                  {{ trip.vehicleType || trip.tripId?.vehicleType || 'N/A' }}
+                  ({{ trip.driver?.username || trip.driverId?.username || 'N/A' }})
                 </span>
               <span v-else>
-                  {{ trip.vehicleType || 'N/A' }}
+                  {{ trip.vehicleType || trip.tripId?.vehicleType || 'N/A' }}
                 </span>
             </td>
 
@@ -102,7 +104,7 @@
             <td>{{ trip.uniqueId || trip.tripId?.uniqueId || 'N/A' }}</td>
 
             <!-- Ordered Time -->
-            <td>{{ formatDate(trip.createdAt || trip.tripId?.createdAt) }}</td>
+            <td>{{ formatDate(trip.date || trip.tripId?.date) }}</td>
 
             <!-- Start Location -->
             <td>{{ trip.pickupLocationName || trip.tripId?.pickupLocationName || 'N/A' }}</td>
@@ -140,6 +142,9 @@
                   {{ formatCurrency(trip.moneyFlow?.flowItem?.walletAfter || 0) }} EGP
                 </span>
             </td>
+
+            <!-- Trip Comment -->
+            <td>{{ trip.comment || trip.tripId?.comment || 'N/A' }}</td>
           </tr>
           </tbody>
         </table>
@@ -150,15 +155,14 @@
             {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredTrips.length) }}
             of {{ filteredTrips.length }} items
           </span>
-          <button :disabled="currentPage === 1" @click="currentPage--">&lt;</button>
+          <button :disabled="currentPage === 1" @click="currentPage--">next</button>
           <button>{{ currentPage }}</button>
-          <button :disabled="currentPage >= totalPages" @click="currentPage++">&gt;</button>
+          <button :disabled="currentPage >= totalPages" @click="currentPage++">prev</button>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 <script>
 import Sidebar from "./sidebarComponent.vue";
 import axios from "axios";
@@ -188,7 +192,6 @@ export default {
     filteredTrips() {
       let filtered = [];
 
-      // Determine which trips to filter based on active tab
       if (this.activeTab === 'cancelledByUser') {
         filtered = this.cancelledByUserTrips;
       } else if (this.activeTab === 'cancelledByCaptain') {
@@ -196,13 +199,11 @@ export default {
       } else {
         filtered = this.trips;
 
-        // Filter by status (based on activeTab)
         if (this.activeTab !== "all") {
           filtered = filtered.filter((trip) => trip.status === this.activeTab);
         }
       }
 
-      // Filter by uniqueId
       if (this.searchUniqueId) {
         const query = this.searchUniqueId.toLowerCase();
         filtered = filtered.filter((trip) => {
@@ -211,14 +212,12 @@ export default {
         });
       }
 
-      // Filter by vehicle type
       if (this.vehicleTypeFilter) {
         filtered = filtered.filter(
             (trip) => (trip.vehicleType || trip.tripId?.vehicleType) === this.vehicleTypeFilter
         );
       }
 
-      // Filter by date
       if (this.dateFilter) {
         filtered = filtered.filter((trip) => {
           const tripDate = new Date(trip.createdAt || trip.tripId?.createdAt).toISOString().split("T")[0];
@@ -277,7 +276,6 @@ export default {
     },
     setActiveTab(tab) {
       this.activeTab = tab;
-      // Force refresh data when switching to cancelled tabs
       if (tab === 'cancelledByUser') {
         this.getCancelledByUserTrips();
       } else if (tab === 'cancelledByCaptain') {
@@ -296,7 +294,6 @@ export default {
         });
       } catch (error) {
         console.error("Error fetching trips:", error);
-        alert(error.response?.data?.message || error.message);
       } finally {
         this.loading = false;
       }
@@ -306,9 +303,9 @@ export default {
         this.loading = true;
         const response = await axios.get(`${this.baseUrl}/admin/get-cancelled-trips`);
         this.cancelledByUserTrips = response.data.trips || [];
+        console.log(this.cancelledByUserTrips);
       } catch (error) {
         console.error("Error fetching cancelled by user trips:", error);
-        alert(error.response?.data?.message || error.message);
       } finally {
         this.loading = false;
       }
@@ -320,7 +317,6 @@ export default {
         this.cancelledByCaptainTrips = response.data.trips || [];
       } catch (error) {
         console.error("Error fetching cancelled by captain trips:", error);
-        alert(error.response?.data?.message || error.message);
       } finally {
         this.loading = false;
       }
@@ -336,6 +332,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 /* Base Styles */
