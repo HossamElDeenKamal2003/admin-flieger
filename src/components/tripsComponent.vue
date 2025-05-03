@@ -62,7 +62,10 @@
         <table v-else>
           <thead>
           <tr>
-            <th>Driver</th>
+            <th>User Name</th>
+            <th>User Phone</th>
+            <th>Driver Name</th>
+            <th>Driver Phone</th>
             <th>Vehicle</th>
             <th>Trip ID</th>
             <th>Ordered Time</th>
@@ -76,7 +79,17 @@
           </thead>
           <tbody>
           <tr v-for="trip in paginatedTrips" :key="trip._id || trip.tripId?._id">
-            <!-- Driver (Image + Name) -->
+            <!-- User Name -->
+            <td>
+              <div style="display: flex; align-items: center;">
+                <span>{{ trip.user?.username || trip.userId?.username || 'N/A' }}</span>
+              </div>
+            </td>
+
+            <!-- User Phone -->
+            <td>{{ trip.user?.phoneNumber || trip.userId?.phoneNumber || 'N/A' }}</td>
+
+            <!-- Driver Name -->
             <td>
               <div style="display: flex; align-items: center;">
                 <img
@@ -88,6 +101,9 @@
                 <span>{{ trip.driver?.username || trip.driverId?.username || 'N/A' }}</span>
               </div>
             </td>
+
+            <!-- Driver Phone -->
+            <td>{{ trip.driver?.phoneNumber || trip.driverId?.phoneNumber || 'N/A' }}</td>
 
             <!-- Vehicle -->
             <td>
@@ -155,9 +171,9 @@
             {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredTrips.length) }}
             of {{ filteredTrips.length }} items
           </span>
-          <button :disabled="currentPage === 1" @click="currentPage--">next</button>
+          <button :disabled="currentPage === 1" @click="currentPage--">prev</button>
           <button>{{ currentPage }}</button>
-          <button :disabled="currentPage >= totalPages" @click="currentPage++">prev</button>
+          <button :disabled="currentPage >= totalPages" @click="currentPage++">next</button>
         </div>
       </div>
     </div>
@@ -267,6 +283,7 @@ export default {
   },
   created() {
     this.getTrips();
+    console.log("Trips", this.trips);
     this.getCancelledByUserTrips();
     this.getCancelledByCaptainTrips();
   },
@@ -290,6 +307,7 @@ export default {
           if (trip.moneyFlow?.document?.flow?.[0] && !trip.moneyFlow.flowItem) {
             trip.moneyFlow.flowItem = trip.moneyFlow.document.flow[0];
           }
+          console.log("Trips", this.trips)
           return trip;
         });
       } catch (error) {
