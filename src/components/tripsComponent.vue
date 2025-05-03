@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -32,13 +31,13 @@
         </button>
         <button
             :class="{ 'active-tab': activeTab === 'cancelledByUser' }"
-            @click="activeTab = 'cancelledByUser'"
+            @click="setActiveTab('cancelledByUser')"
         >
           CANCELLED <span class="count-badge">{{ cancelledByUserCount }}</span>
         </button>
         <button
             :class="{ 'active-tab': activeTab === 'cancelledByCaptain' }"
-            @click="activeTab = 'cancelledByCaptain'"
+            @click="setActiveTab('cancelledByCaptain')"
         >
           CANCELLED BY CAPTAIN <span class="count-badge">{{ cancelledByCaptainCount }}</span>
         </button>
@@ -75,44 +74,44 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="trip in paginatedTrips" :key="trip._id">
+          <tr v-for="trip in paginatedTrips" :key="trip._id || trip.tripId?._id">
             <!-- Driver (Image + Name) -->
             <td>
               <div style="display: flex; align-items: center;">
                 <img
-                    v-if="trip.driver?.profileImage"
-                    :src="trip.driver.profileImage"
+                    v-if="trip.driver?.profileImage || trip.driverId?.profile_image"
+                    :src="trip.driver?.profileImage || trip.driverId?.profile_image"
                     alt="Driver Image"
                     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 8px;"
                 >
-                <span>{{ trip.driver?.username || 'N/A' }}</span>
+                <span>{{ trip.driver?.username || trip.driverId?.username || 'N/A' }}</span>
               </div>
             </td>
 
             <!-- Vehicle -->
             <td>
-                <span v-if="trip.driver">
-                  {{ trip.vehicleType }} ({{ trip.driver.username }})
+                <span v-if="trip.driver || trip.driverId">
+                  {{ trip.vehicleType || 'N/A' }} ({{ trip.driver?.username || trip.driverId?.username || 'N/A' }})
                 </span>
               <span v-else>
-                  {{ trip.vehicleType }}
+                  {{ trip.vehicleType || 'N/A' }}
                 </span>
             </td>
 
             <!-- Trip ID -->
-            <td>{{ trip.uniqueId }}</td>
+            <td>{{ trip.uniqueId || trip.tripId?.uniqueId || 'N/A' }}</td>
 
             <!-- Ordered Time -->
-            <td>{{ formatDate(trip.createdAt) }}</td>
+            <td>{{ formatDate(trip.createdAt || trip.tripId?.createdAt) }}</td>
 
             <!-- Start Location -->
-            <td>{{ trip.pickupLocationName }}</td>
+            <td>{{ trip.pickupLocationName || trip.tripId?.pickupLocationName || 'N/A' }}</td>
 
             <!-- Finish Location -->
-            <td>{{ trip.destination }}</td>
+            <td>{{ trip.destination || trip.tripId?.destination || 'N/A' }}</td>
 
             <!-- Value -->
-            <td>{{ trip.cost }} EGP</td>
+            <td>{{ trip.cost || trip.tripId?.cost || 0 }} EGP</td>
 
             <!-- Payment -->
             <td>
@@ -173,6 +172,8 @@ export default {
     return {
       activeTab: "all",
       trips: [],
+      cancelledByUserTrips: [],
+      cancelledByCaptainTrips: [],
       isSidebarExpanded: true,
       baseUrl: "https://backend.fego-rides.com",
       loading: false,
@@ -185,32 +186,42 @@ export default {
   },
   computed: {
     filteredTrips() {
-      let filtered = this.trips;
+      let filtered = [];
 
-      // Filter by status (based on activeTab)
-      if (this.activeTab !== "all") {
-        filtered = filtered.filter((trip) => trip.status === this.activeTab);
+      // Determine which trips to filter based on active tab
+      if (this.activeTab === 'cancelledByUser') {
+        filtered = this.cancelledByUserTrips;
+      } else if (this.activeTab === 'cancelledByCaptain') {
+        filtered = this.cancelledByCaptainTrips;
+      } else {
+        filtered = this.trips;
+
+        // Filter by status (based on activeTab)
+        if (this.activeTab !== "all") {
+          filtered = filtered.filter((trip) => trip.status === this.activeTab);
+        }
       }
 
       // Filter by uniqueId
       if (this.searchUniqueId) {
         const query = this.searchUniqueId.toLowerCase();
-        filtered = filtered.filter((trip) =>
-            trip.uniqueId?.toLowerCase().includes(query)
-        );
+        filtered = filtered.filter((trip) => {
+          const uniqueId = trip.uniqueId || trip.tripId?.uniqueId || '';
+          return uniqueId.toLowerCase().includes(query);
+        });
       }
 
       // Filter by vehicle type
       if (this.vehicleTypeFilter) {
         filtered = filtered.filter(
-            (trip) => trip.vehicleType === this.vehicleTypeFilter
+            (trip) => (trip.vehicleType || trip.tripId?.vehicleType) === this.vehicleTypeFilter
         );
       }
 
       // Filter by date
       if (this.dateFilter) {
         filtered = filtered.filter((trip) => {
-          const tripDate = new Date(trip.createdAt).toISOString().split("T")[0];
+          const tripDate = new Date(trip.createdAt || trip.tripId?.createdAt).toISOString().split("T")[0];
           return tripDate === this.dateFilter;
         });
       }
@@ -235,32 +246,43 @@ export default {
       return this.trips.filter((trip) => trip.status === "end").length;
     },
     cancelledByUserCount() {
-      return this.trips.filter((trip) => trip.status === "cancelledByUser").length;
+      return this.cancelledByUserTrips.length;
     },
     cancelledByCaptainCount() {
-      return this.trips.filter((trip) => trip.status === "cancelledByCaptain").length;
+      return this.cancelledByCaptainTrips.length;
     },
   },
   watch: {
     searchUniqueId() {
-      this.currentPage = 1; // Reset to first page when search changes
+      this.currentPage = 1;
     },
     vehicleTypeFilter() {
-      this.currentPage = 1; // Reset to first page when vehicle filter changes
+      this.currentPage = 1;
     },
     dateFilter() {
-      this.currentPage = 1; // Reset to first page when date filter changes
+      this.currentPage = 1;
     },
     activeTab() {
-      this.currentPage = 1; // Reset to first page when tab changes
+      this.currentPage = 1;
     },
   },
   created() {
     this.getTrips();
+    this.getCancelledByUserTrips();
+    this.getCancelledByCaptainTrips();
   },
   methods: {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
+    },
+    setActiveTab(tab) {
+      this.activeTab = tab;
+      // Force refresh data when switching to cancelled tabs
+      if (tab === 'cancelledByUser') {
+        this.getCancelledByUserTrips();
+      } else if (tab === 'cancelledByCaptain') {
+        this.getCancelledByCaptainTrips();
+      }
     },
     async getTrips() {
       try {
@@ -274,6 +296,30 @@ export default {
         });
       } catch (error) {
         console.error("Error fetching trips:", error);
+        alert(error.response?.data?.message || error.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async getCancelledByUserTrips() {
+      try {
+        this.loading = true;
+        const response = await axios.get(`${this.baseUrl}/admin/get-cancelled-trips`);
+        this.cancelledByUserTrips = response.data.trips || [];
+      } catch (error) {
+        console.error("Error fetching cancelled by user trips:", error);
+        alert(error.response?.data?.message || error.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async getCancelledByCaptainTrips() {
+      try {
+        this.loading = true;
+        const response = await axios.get(`${this.baseUrl}/admin/get-cancelled-by-driver`);
+        this.cancelledByCaptainTrips = response.data.trips || [];
+      } catch (error) {
+        console.error("Error fetching cancelled by captain trips:", error);
         alert(error.response?.data?.message || error.message);
       } finally {
         this.loading = false;
