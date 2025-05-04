@@ -103,10 +103,16 @@
                 View Details
               </router-link>
             </td>
-            <td>
-            <span :class="captain.block ? 'status-blocked' : 'status-enabled'">
-              {{ captain.block ? 'BLOCKED' : 'ENABLED' }}
-            </span>
+            <td @click.stop>
+              <span :class="captain.block ? 'status-blocked' : 'status-enabled'">
+                {{ captain.block ? 'BLOCKED' : 'ENABLED' }}
+              </span>
+              <button
+                  class="action-disable"
+                  @click="toggleCaptainStatus(captain)"
+              >
+                {{ captain.block ? 'Enable' : 'Disable' }}
+              </button>
             </td>
           </tr>
           <tr v-if="paginatedCaptains.length === 0">
@@ -191,7 +197,7 @@
               </router-link>
               <button
                   class="action-disable"
-                  @click="toggleWaitingCaptainStatus(waitingCaptain)"
+                  @click="toggleCaptainStatus(waitingCaptain)"
               >
                 {{ waitingCaptain.block ? 'Enable' : 'Disable' }}
               </button>
@@ -256,7 +262,7 @@ export default {
   },
   computed: {
     filteredCaptains() {
-      let filtered = this.captains.filter(captain => captain.block === false);
+      let filtered = this.captains.filter(captain => captain.block === true);
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         filtered = filtered.filter(captain =>
@@ -265,6 +271,7 @@ export default {
             (captain.id?.toString().toLowerCase().includes(query))
         );
       }
+      console.log('Filtered captains:', filtered);
       if (this.filter !== 'All Captains') {
         filtered = filtered.filter(captain =>
             (captain.status || 'Offline').toLowerCase() === this.filter.toLowerCase()
@@ -273,12 +280,12 @@ export default {
       if (this.sortBy === 'ctr-desc') {
         filtered = filtered.sort((a, b) => (b.ctr || 0) - (a.ctr || 0));
       } else if (this.sortBy === 'ctr-asc') {
-        filtered = filtered.sort((a) => (a.ctr || 0) - (a.ctr || 0));
+        filtered = filtered.sort((a, b) => (a.ctr || 0) - (b.ctr || 0));
       }
       return filtered;
     },
     filteredWaitingCaptains() {
-      let filtered = this.waitingCaptains.filter(captain => captain.block === true && captain.ctr === 0);
+      let filtered = this.waitingCaptains.filter(captain => captain.block === false && (captain.ctr || 0) === 0);
       if (this.searchWaitingQuery) {
         const query = this.searchWaitingQuery.toLowerCase();
         filtered = filtered.filter(captain =>
@@ -287,6 +294,7 @@ export default {
             (captain.id?.toString().toLowerCase().includes(query))
         );
       }
+      console.log('Filtered waiting captains:', filtered);
       return filtered;
     },
     paginatedCaptains() {
@@ -318,49 +326,54 @@ export default {
       }
     },
     async getDrivers() {
+
       this.loading = true;
       this.error = null;
       try {
         const response = await axios.get(`${this.baseUrl}/get-drivers`);
-        console.log(response.data);
+        console.log('API response:', response.data);
         this.captains = [];
         this.waitingCaptains = [];
         this.activeCap = 0;
         this.activeWaiting = 0;
         this.newRequestsCount = 0;
-
         response.data.forEach(driver => {
+          console.log(`Driver ${driver.username}: block=${driver.block}, ctr=${driver.ctr}`);
           if (driver.block) {
-            this.waitingCaptains.push(driver);
-            if (driver.status === 'Online') {
-              this.activeWaiting++;
-            }
-            this.newRequestsCount++;
-          } else {
             this.captains.push(driver);
             if (driver.status === 'Online') {
               this.activeCap++;
             }
+            this.newRequestsCount++;
+          } else if ((driver.ctr || 0) === 0) {
+            this.waitingCaptains.push(driver);
+            if (driver.status === 'Online') {
+              this.activeWaiting++;
+            }
           }
         });
+        console.log('Captains:', this.captains);
+        console.log('Waiting Captains:', this.waitingCaptains);
       } catch (err) {
         this.error = 'Failed to load drivers. Please try again later.';
       } finally {
         this.loading = false;
       }
     },
-    toggleWaitingCaptainStatus(captain) {
+    toggleCaptainStatus(captain) {
       captain.block = !captain.block;
       if (captain.block) {
+        this.captains.push(captain);
+        this.waitingCaptains = this.waitingCaptains.filter(c => c.id !== captain.id);
+      } else if ((captain.ctr || 0) === 0) {
         this.waitingCaptains.push(captain);
         this.captains = this.captains.filter(c => c.id !== captain.id);
       } else {
-        this.captains.push(captain);
-        this.waitingCaptains = this.waitingCaptains.filter(c => c.id !== captain.id);
+        this.captains = this.captains.filter(c => c.id !== captain.id);
       }
       this.activeCap = this.captains.filter(c => c.status === 'Online').length;
       this.activeWaiting = this.waitingCaptains.filter(c => c.status === 'Online').length;
-      this.newRequestsCount = this.waitingCaptains.length;
+      this.newRequestsCount = this.captains.length;
     },
     goToDriverDetails(driverId) {
       this.$router.push({ name: 'DriverDetails', params: { driverId } });
@@ -392,7 +405,6 @@ export default {
   }
 };
 </script>
-
 <style scoped>
 .dashboard {
   display: flex;
