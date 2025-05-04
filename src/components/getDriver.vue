@@ -160,8 +160,13 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="waitingCaptain in paginatedWaitingCaptains" :key="waitingCaptain.id">
-            <td><input type="checkbox" /></td>
+          <tr
+              v-for="waitingCaptain in paginatedWaitingCaptains"
+              :key="waitingCaptain.id"
+              class="clickable-row"
+              @click="goToDriverDetails(waitingCaptain._id)"
+          >
+            <td @click.stop><input type="checkbox" /></td>
             <td>
               <img
                   :src="waitingCaptain.profile_image || 'https://via.placeholder.com/40'"
@@ -176,8 +181,14 @@
             <td>{{ waitingCaptain.vehicleType || 'N/A' }}</td>
             <td>{{ waitingCaptain.vehicleModel || 'N/A' }}</td>
             <td>{{ waitingCaptain.licenseDate || 'N/A' }}</td>
-            <td><button class="action-open">Open</button></td>
-            <td>
+            <td @click.stop><button class="action-open">Open</button></td>
+            <td @click.stop>
+              <router-link
+                  :to="{ name: 'DriverDetails', params: { driverId: waitingCaptain._id } }"
+                  class="action-open"
+              >
+                View Details
+              </router-link>
               <button
                   class="action-disable"
                   @click="toggleWaitingCaptainStatus(waitingCaptain)"
@@ -245,7 +256,7 @@ export default {
   },
   computed: {
     filteredCaptains() {
-      let filtered = this.captains;
+      let filtered = this.captains.filter(captain => captain.block === false);
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         filtered = filtered.filter(captain =>
@@ -262,12 +273,12 @@ export default {
       if (this.sortBy === 'ctr-desc') {
         filtered = filtered.sort((a, b) => (b.ctr || 0) - (a.ctr || 0));
       } else if (this.sortBy === 'ctr-asc') {
-        filtered = filtered.sort((a, b) => (a.ctr || 0) - (b.ctr || 0));
+        filtered = filtered.sort((a) => (a.ctr || 0) - (a.ctr || 0));
       }
       return filtered;
     },
     filteredWaitingCaptains() {
-      let filtered = this.waitingCaptains;
+      let filtered = this.waitingCaptains.filter(captain => captain.block === true && captain.ctr === 0);
       if (this.searchWaitingQuery) {
         const query = this.searchWaitingQuery.toLowerCase();
         filtered = filtered.filter(captain =>
@@ -381,6 +392,291 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.dashboard {
+  display: flex;
+  height: 100vh;
+  font-family: 'Arial', sans-serif;
+}
+
+.main-content {
+  margin-left: 250px;
+  flex: 1;
+  background-color: #f5f7fa;
+  padding: 20px;
+  border-radius: 20px 0 0 20px;
+  transition: margin-left 0.3s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.greeting h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.greeting p {
+  color: #888;
+  margin: 5px 0 0;
+}
+
+.wave {
+  font-size: 1.2rem;
+}
+
+.header-icons i {
+  font-size: 1.5rem;
+  margin-left: 15px;
+  cursor: pointer;
+}
+
+.captains-list,
+.waiting-list {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.table-header h2 {
+  font-size: 1.2rem;
+}
+
+.table-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.table-controls input,
+.table-controls select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  font-weight: bold;
+  color: #333;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #f5f7fa;
+}
+
+.captain-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.status-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-text {
+  display: inline-block;
+}
+
+.status-dot-online,
+.status-dot-offline {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-dot-online {
+  background-color: #28c76f;
+}
+
+.status-dot-offline {
+  background-color: #ff4d4f;
+}
+
+.status-enabled,
+.status-blocked,
+.action-open,
+.action-disable {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.status-enabled {
+  background-color: #e6f7fa;
+  color: #6b48ff;
+}
+
+.status-blocked {
+  background-color: #ffebee;
+  color: #ff4d4f;
+}
+
+.action-open {
+  background-color: #e6f7fa;
+  color: #00cfe8;
+  margin-right: 5px;
+  text-decoration: none;
+}
+
+.action-disable {
+  background-color: #ffebee;
+  color: #ff4d4f;
+}
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #6b48ff;
+  color: white;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 80px;
+  }
+
+  .main-content-expanded {
+    margin-left: 250px;
+  }
+}
+
+@media (min-width: 769px) {
+  .main-content {
+    margin-left: 250px !important;
+  }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #6b48ff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #ff4d4f;
+  padding: 15px;
+  margin: 20px 0;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message button {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+.main-content-expanded {
+  margin-left: 250px;
+}
+
+.status-enabled,
+.status-blocked {
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.status-enabled {
+  background-color: #e6f7fa;
+  color: #6b48ff;
+}
+
+.status-blocked {
+  background-color: #e79c9c;
+  color: red;
+}
+</style>
 
 <style scoped>
 .dashboard {
@@ -674,5 +970,12 @@ th {
 .status-blocked {
   background-color: #e79c9c;
   color: red;
+}
+.status-dot-online {
+  background-color: #28c76f; /* Green for online */
+}
+
+.status-dot-offline {
+  background-color: #ff4d4f; /* Red for offline */
 }
 </style>
