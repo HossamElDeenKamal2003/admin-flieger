@@ -89,7 +89,7 @@
             <td>{{ captain.ctr || 0 }}</td>
             <td>
               <span class="status-container">
-                <span :class="captain.status === 'Online' ? 'status-dot-online' : 'status-dot-offline'"></span>
+                <span :class="captain.status?.toLowerCase() === 'online' ? 'status-dot-online' : 'status-dot-offline'" :title="`Status: ${captain.status}`"></span>
                 <span class="status-text">{{ captain.status || 'Offline' }}</span>
               </span>
             </td>
@@ -104,8 +104,8 @@
               </router-link>
             </td>
             <td @click.stop>
-              <span :class="captain.block ? 'status-blocked' : 'status-enabled'">
-                {{ captain.block ? 'BLOCKED' : 'ENABLED' }}
+              <span :class="captain.block || (captain.ctr || 0) > 0 ? 'status-blocked' : 'status-enabled'">
+                {{ captain.block || (captain.ctr || 0) > 0 ? 'BLOCKED' : 'ENABLED' }}
               </span>
               <button
                   class="action-disable"
@@ -262,7 +262,7 @@ export default {
   },
   computed: {
     filteredCaptains() {
-      let filtered = this.captains.filter(captain => captain.block === true);
+      let filtered = this.captains.filter(captain => captain.block === true || (captain.block === false && (captain.ctr || 0) > 0));
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         filtered = filtered.filter(captain =>
@@ -326,7 +326,6 @@ export default {
       }
     },
     async getDrivers() {
-
       this.loading = true;
       this.error = null;
       try {
@@ -338,16 +337,18 @@ export default {
         this.activeWaiting = 0;
         this.newRequestsCount = 0;
         response.data.forEach(driver => {
-          console.log(`Driver ${driver.username}: block=${driver.block}, ctr=${driver.ctr}`);
-          if (driver.block) {
+          console.log(`Driver ${driver.username}: block=${driver.block}, ctr=${driver.ctr}, status=${driver.status}`);
+          if (driver.block || (!driver.block && (driver.ctr || 0) > 0)) {
             this.captains.push(driver);
-            if (driver.status === 'Online') {
+            if (driver.status?.toLowerCase() === 'online') {
               this.activeCap++;
             }
-            this.newRequestsCount++;
-          } else if ((driver.ctr || 0) === 0) {
+            if (driver.block) {
+              this.newRequestsCount++;
+            }
+          } else if (!driver.block && (driver.ctr || 0) === 0) {
             this.waitingCaptains.push(driver);
-            if (driver.status === 'Online') {
+            if (driver.status?.toLowerCase() === 'online') {
               this.activeWaiting++;
             }
           }
@@ -362,18 +363,16 @@ export default {
     },
     toggleCaptainStatus(captain) {
       captain.block = !captain.block;
-      if (captain.block) {
+      if (captain.block || (!captain.block && (captain.ctr || 0) > 0)) {
         this.captains.push(captain);
         this.waitingCaptains = this.waitingCaptains.filter(c => c.id !== captain.id);
-      } else if ((captain.ctr || 0) === 0) {
+      } else if (!captain.block && (captain.ctr || 0) === 0) {
         this.waitingCaptains.push(captain);
         this.captains = this.captains.filter(c => c.id !== captain.id);
-      } else {
-        this.captains = this.captains.filter(c => c.id !== captain.id);
       }
-      this.activeCap = this.captains.filter(c => c.status === 'Online').length;
-      this.activeWaiting = this.waitingCaptains.filter(c => c.status === 'Online').length;
-      this.newRequestsCount = this.captains.length;
+      this.activeCap = this.captains.filter(c => c.status?.toLowerCase() === 'online').length;
+      this.activeWaiting = this.waitingCaptains.filter(c => c.status?.toLowerCase() === 'online').length;
+      this.newRequestsCount = this.captains.filter(c => c.block).length;
     },
     goToDriverDetails(driverId) {
       this.$router.push({ name: 'DriverDetails', params: { driverId } });
@@ -405,290 +404,6 @@ export default {
   }
 };
 </script>
-<style scoped>
-.dashboard {
-  display: flex;
-  height: 100vh;
-  font-family: 'Arial', sans-serif;
-}
-
-.main-content {
-  margin-left: 250px;
-  flex: 1;
-  background-color: #f5f7fa;
-  padding: 20px;
-  border-radius: 20px 0 0 20px;
-  transition: margin-left 0.3s ease;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.greeting h1 {
-  font-size: 1.5rem;
-  margin: 0;
-}
-
-.greeting p {
-  color: #888;
-  margin: 5px 0 0;
-}
-
-.wave {
-  font-size: 1.2rem;
-}
-
-.header-icons i {
-  font-size: 1.5rem;
-  margin-left: 15px;
-  cursor: pointer;
-}
-
-.captains-list,
-.waiting-list {
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.table-header h2 {
-  font-size: 1.2rem;
-}
-
-.table-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.table-controls input,
-.table-controls select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 10px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-th {
-  font-weight: bold;
-  color: #333;
-}
-
-.clickable-row {
-  cursor: pointer;
-}
-
-.clickable-row:hover {
-  background-color: #f5f7fa;
-}
-
-.captain-photo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-.status-container {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.status-text {
-  display: inline-block;
-}
-
-.status-dot-online,
-.status-dot-offline {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.status-dot-online {
-  background-color: #28c76f;
-}
-
-.status-dot-offline {
-  background-color: #ff4d4f;
-}
-
-.status-enabled,
-.status-blocked,
-.action-open,
-.action-disable {
-  padding: 5px 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.status-enabled {
-  background-color: #e6f7fa;
-  color: #6b48ff;
-}
-
-.status-blocked {
-  background-color: #ffebee;
-  color: #ff4d4f;
-}
-
-.action-open {
-  background-color: #e6f7fa;
-  color: #00cfe8;
-  margin-right: 5px;
-  text-decoration: none;
-}
-
-.action-disable {
-  background-color: #ffebee;
-  color: #ff4d4f;
-}
-
-.table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pagination button {
-  padding: 5px 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #6b48ff;
-  color: white;
-  cursor: pointer;
-}
-
-.pagination button:disabled {
-  background-color: #ddd;
-  cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 80px;
-  }
-
-  .main-content-expanded {
-    margin-left: 250px;
-  }
-}
-
-@media (min-width: 769px) {
-  .main-content {
-    margin-left: 250px !important;
-  }
-}
-
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #6b48ff;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.error-message {
-  background-color: #ffebee;
-  color: #ff4d4f;
-  padding: 15px;
-  margin: 20px 0;
-  border-radius: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.error-message button {
-  background-color: #ff4d4f;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.no-data {
-  text-align: center;
-  padding: 20px;
-  color: #888;
-}
-
-.main-content-expanded {
-  margin-left: 250px;
-}
-
-.status-enabled,
-.status-blocked {
-  display: inline-block;
-  padding: 5px 15px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-align: center;
-}
-
-.status-enabled {
-  background-color: #e6f7fa;
-  color: #6b48ff;
-}
-
-.status-blocked {
-  background-color: #e79c9c;
-  color: red;
-}
-</style>
 
 <style scoped>
 .dashboard {
@@ -814,180 +529,143 @@ th {
   border-radius: 50%;
 }
 
-.status-dot-online {
-  background-color: #28c76f;
-}
-
-.status-dot-offline {
-  background-color: #ff4d4f;
-}
-
-.status-enabled,
-.status-blocked,
-.action-open,
-.action-disable {
-  padding: 5px 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.status-enabled {
-  background-color: #e6f7fa;
-  color: #6b48ff;
-}
-
-.status-blocked {
-  background-color: #ffebee;
-  color: #ff4d4f;
-}
-
-.action-open {
-  background-color: #e6f7fa;
-  color: #00cfe8;
-  margin-right: 5px;
-  text-decoration: none;
-}
-
-.action-disable {
-  background-color: #ffebee;
-  color: #ff4d4f;
-}
-
-.block-status-blocked {
-  color: #ff4d4f;
-  background-color: #ffebee;
-}
-
-.block-status-unblocked {
-  color: #6b48ff;
-  background-color: #e6e6ff;
-}
-
-.table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pagination button {
-  padding: 5px 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #6b48ff;
-  color: white;
-  cursor: pointer;
-}
-
-.pagination button:disabled {
-  background-color: #ddd;
-  cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 80px;
-  }
-
-  .main-content-expanded {
-    margin-left: 250px;
-  }
-}
-
-@media (min-width: 769px) {
-  .main-content {
-    margin-left: 250px !important;
-  }
-}
-
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #6b48ff;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.error-message {
-  background-color: #ffebee;
-  color: #ff4d4f;
-  padding: 15px;
-  margin: 20px 0;
-  border-radius: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.error-message button {
-  background-color: #ff4d4f;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.no-data {
-  text-align: center;
-  padding: 20px;
-  color: #888;
-}
-
-.main-content-expanded {
-  margin-left: 250px;
-}
-
-.status-enabled,
-.status-blocked {
-  display: inline-block;
-  padding: 5px 15px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-align: center;
-}
-
-.status-enabled {
-  background-color: #e6f7fa;
-  color: #6b48ff;
-}
-
-.status-blocked {
-  background-color: #e79c9c;
-  color: red;
-}
 .status-dot-online {
   background-color: #28c76f; /* Green for online */
 }
 
 .status-dot-offline {
   background-color: #ff4d4f; /* Red for offline */
+}
+
+.status-enabled,
+.status-blocked,
+.action-open,
+.action-disable {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.status-enabled {
+  background-color: #e6f7fa;
+  color: #6b48ff;
+}
+
+.status-blocked {
+  background-color: #e79c9c;
+  color: red;
+}
+
+.action-open {
+  background-color: #e6f7fa;
+  color: #00cfe8;
+  margin-right: 5px;
+  text-decoration: none;
+}
+
+.action-disable {
+  background-color: #ffebee;
+  color: #ff4d4f;
+}
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #6b48ff;
+  color: white;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 80px;
+  }
+
+  .main-content-expanded {
+    margin-left: 250px;
+  }
+}
+
+@media (min-width: 769px) {
+  .main-content {
+    margin-left: 250px !important;
+  }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #6b48ff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #ff4d4f;
+  padding: 15px;
+  margin: 20px 0;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message button {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+.main-content-expanded {
+  margin-left: 250px;
 }
 </style>
