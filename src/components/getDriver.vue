@@ -9,7 +9,7 @@
       <header class="header">
         <div class="greeting">
           <h1>Good morning, MR. {{ adminName }}<span class="wave">👋</span></h1>
-          <p v-if="newRequestsCount > 0">you have {{ newRequestsCount }} new Captain's Request</p>
+          <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-icons">
           <i class="icon notifications"></i>
@@ -105,14 +105,8 @@
             </td>
             <td @click.stop>
               <span :class="captain.block ? 'status-enabled' : 'status-blocked'">
-                {{ captain.block? 'ENABLED' : 'BLOCKED' }}
+                {{ captain.block ? 'ENABLED' : 'BLOCKED' }}
               </span>
-<!--              <button-->
-<!--                  class="action-disable"-->
-<!--                  @click="toggleCaptainStatus(captain)"-->
-<!--              >-->
-<!--                {{ captain.block ? 'Enable' : 'Disable' }}-->
-<!--              </button>-->
             </td>
           </tr>
           <tr v-if="paginatedCaptains.length === 0">
@@ -125,7 +119,6 @@
         <div class="table-footer">
           <div>
             <p>Total Captains: {{ captains.length }}</p>
-            <p>Active Captains: {{ activeCap }}</p>
           </div>
           <div class="pagination">
             <span>
@@ -138,94 +131,6 @@
           </div>
         </div>
       </section>
-
-      <!-- Captains Waiting List Section -->
-      <section class="waiting-list">
-        <div class="table-header">
-          <h2>Captains waiting list</h2>
-          <div class="table-controls">
-            <input type="text" placeholder="Search by Name, Phone, or National ID" v-model="searchWaitingQuery" />
-          </div>
-        </div>
-
-        <!-- Waiting Table -->
-        <table>
-          <thead>
-          <tr>
-            <th><input type="checkbox" /></th>
-            <th>Photo</th>
-            <th>Name</th>
-            <th>National ID</th>
-            <th>City</th>
-            <th>Phone Number</th>
-            <th>Vehicle</th>
-            <th>Model</th>
-            <th>Date Of Certain License</th>
-            <th>Document</th>
-            <th>Captains Account</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr
-              v-for="waitingCaptain in paginatedWaitingCaptains"
-              :key="waitingCaptain.id"
-              class="clickable-row"
-              @click="goToDriverDetails(waitingCaptain._id)"
-          >
-            <td @click.stop><input type="checkbox" /></td>
-            <td>
-              <img
-                  :src="waitingCaptain.profile_image || 'https://via.placeholder.com/40'"
-                  alt="Captain Photo"
-                  class="captain-photo"
-              />
-            </td>
-            <td>{{ waitingCaptain.username }}</td>
-            <td>{{ waitingCaptain.id }}</td>
-            <td>{{ waitingCaptain.city || 'N/A' }}</td>
-            <td>{{ waitingCaptain.phoneNumber || 'N/A' }}</td>
-            <td>{{ waitingCaptain.vehicleType || 'N/A' }}</td>
-            <td>{{ waitingCaptain.carModel || 'N/A' }}</td>
-            <td>{{ waitingCaptain.licence_expire_date || 'N/A' }}</td>
-            <td @click.stop><button class="action-open">Open</button></td>
-            <td @click.stop>
-              <router-link
-                  :to="{ name: 'DriverDetails', params: { driverId: waitingCaptain._id } }"
-                  class="action-open"
-              >
-                View Details
-              </router-link>
-              <button
-                  class="action-disable"
-                  @click="toggleCaptainStatus(waitingCaptain)"
-              >
-                {{ waitingCaptain.block ? 'Enable' : 'Disable' }}
-              </button>
-            </td>
-          </tr>
-          <tr v-if="paginatedWaitingCaptains.length === 0">
-            <td colspan="11" class="no-data">No waiting captains found</td>
-          </tr>
-          </tbody>
-        </table>
-
-        <!-- Waiting Table Footer -->
-        <div class="table-footer">
-          <div>
-            <p>Total Captain Waiting: {{ filteredWaitingCaptains.length }}</p>
-            <p>Active Requests: {{ activeWaiting }}</p>
-          </div>
-          <div class="pagination">
-            <span>
-              {{ (currentWaitingPage - 1) * waitingItemsPerPage + 1 }}-{{ Math.min(currentWaitingPage * waitingItemsPerPage, filteredWaitingCaptains.length) }}
-              of {{ filteredWaitingCaptains.length }} items
-            </span>
-            <button :disabled="currentWaitingPage === 1" @click="currentWaitingPage--">❮</button>
-            <button>{{ currentWaitingPage }}</button>
-            <button :disabled="currentWaitingPage >= totalWaitingPages" @click="currentWaitingPage++">❯</button>
-          </div>
-        </div>
-      </section>
     </main>
   </div>
 </template>
@@ -233,29 +138,25 @@
 <script>
 import Sidebar from './sidebarComponent.vue';
 import axios from 'axios';
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   components: {
+    WaitingDriversNumber,
     Sidebar
   },
   data() {
     return {
       isSidebarCollapsed: false,
       captains: [],
-      waitingCaptains: [],
       searchQuery: '',
-      searchWaitingQuery: '',
       adminName: localStorage.getItem('username'),
       filter: 'All Captains',
       sortBy: 'none',
       currentPage: 1,
       itemsPerPage: 10,
-      currentWaitingPage: 1,
-      waitingItemsPerPage: 10,
       baseUrl: 'https://backend.fego-rides.com/admin',
       activeCap: 0,
-      activeWaiting: 0,
-      newRequestsCount: 0,
       loading: false,
       error: null
     };
@@ -271,7 +172,6 @@ export default {
             (captain.id?.toString().toLowerCase().includes(query))
         );
       }
-      console.log('Filtered captains:', filtered);
       if (this.filter !== 'All Captains') {
         filtered = filtered.filter(captain =>
             (captain.status || 'Offline').toLowerCase() === this.filter.toLowerCase()
@@ -284,34 +184,13 @@ export default {
       }
       return filtered;
     },
-    filteredWaitingCaptains() {
-      let filtered = this.waitingCaptains.filter(captain => captain.block === false && captain.ctr === 0);
-      if (this.searchWaitingQuery) {
-        const query = this.searchWaitingQuery.toLowerCase();
-        filtered = filtered.filter(captain =>
-            (captain.username?.toLowerCase().includes(query)) ||
-            (captain.phoneNumber?.toLowerCase().includes(query)) ||
-            (captain.id?.toString().toLowerCase().includes(query))
-        );
-      }
-      console.log('Filtered waiting captains:', filtered);
-      return filtered;
-    },
     paginatedCaptains() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.filteredCaptains.slice(start, end);
     },
-    paginatedWaitingCaptains() {
-      const start = (this.currentWaitingPage - 1) * this.waitingItemsPerPage;
-      const end = start + this.waitingItemsPerPage;
-      return this.filteredWaitingCaptains.slice(start, end);
-    },
     totalPages() {
       return Math.ceil(this.filteredCaptains.length / this.itemsPerPage);
-    },
-    totalWaitingPages() {
-      return Math.ceil(this.filteredWaitingCaptains.length / this.waitingItemsPerPage);
     }
   },
   methods: {
@@ -330,49 +209,21 @@ export default {
       this.error = null;
       try {
         const response = await axios.get(`${this.baseUrl}/get-drivers`);
-        console.log('API response:', response.data);
         this.captains = [];
-        this.waitingCaptains = [];
         this.activeCap = 0;
-        this.activeWaiting = 0;
-        this.newRequestsCount = 0;
         response.data.forEach(driver => {
-          console.log(`Driver ${driver.username}: block=${driver.block}, ctr=${driver.ctr}, status=${driver.status}`);
           if (driver.block || (!driver.block && (driver.ctr || 0) > 0)) {
             this.captains.push(driver);
             if (driver.status?.toLowerCase() === 'online') {
               this.activeCap++;
             }
-            if (driver.block) {
-              this.newRequestsCount++;
-            }
-          } else if (!driver.block && (driver.ctr || 0) === 0) {
-            this.waitingCaptains.push(driver);
-            if (driver.status?.toLowerCase() === 'online') {
-              this.activeWaiting++;
-            }
           }
         });
-        console.log('Captains:', this.captains);
-        console.log('Waiting Captains:', this.waitingCaptains);
       } catch (err) {
         this.error = 'Failed to load drivers. Please try again later.';
       } finally {
         this.loading = false;
       }
-    },
-    toggleCaptainStatus(captain) {
-      captain.block = !captain.block;
-      if (captain.block || (!captain.block && (captain.ctr || 0) > 0)) {
-        this.captains.push(captain);
-        this.waitingCaptains = this.waitingCaptains.filter(c => c.id !== captain.id);
-      } else if (!captain.block && (captain.ctr || 0) === 0) {
-        this.waitingCaptains.push(captain);
-        this.captains = this.captains.filter(c => c.id !== captain.id);
-      }
-      this.activeCap = this.captains.filter(c => c.status?.toLowerCase() === 'online').length;
-      this.activeWaiting = this.waitingCaptains.filter(c => c.status?.toLowerCase() === 'online').length;
-      this.newRequestsCount = this.captains.filter(c => c.block).length;
     },
     goToDriverDetails(driverId) {
       this.$router.push({ name: 'DriverDetails', params: { driverId } });
@@ -387,9 +238,6 @@ export default {
     },
     searchQuery() {
       this.currentPage = 1;
-    },
-    searchWaitingQuery() {
-      this.currentWaitingPage = 1;
     }
   },
   created() {
@@ -433,11 +281,6 @@ export default {
   margin: 0;
 }
 
-.greeting p {
-  color: #888;
-  margin: 5px 0 0;
-}
-
 .wave {
   font-size: 1.2rem;
 }
@@ -448,8 +291,7 @@ export default {
   cursor: pointer;
 }
 
-.captains-list,
-.waiting-list {
+.captains-list {
   background-color: white;
   padding: 20px;
   border-radius: 10px;
@@ -530,17 +372,16 @@ th {
 }
 
 .status-dot-online {
-  background-color: #28c76f; /* Green for online */
+  background-color: #28c76f;
 }
 
 .status-dot-offline {
-  background-color: #ff4d4f; /* Red for offline */
+  background-color: #ff4d4f;
 }
 
 .status-enabled,
 .status-blocked,
-.action-open,
-.action-disable {
+.action-open {
   padding: 5px 10px;
   border: none;
   border-radius: 5px;
@@ -562,11 +403,6 @@ th {
   color: #00cfe8;
   margin-right: 5px;
   text-decoration: none;
-}
-
-.action-disable {
-  background-color: #ffebee;
-  color: #ff4d4f;
 }
 
 .table-footer {

@@ -10,8 +10,9 @@
       <!-- Header -->
       <header>
         <div>
-          <h1>Good morning, MR.FADY 👋</h1>
-          <p>you have 1 new captain's request</p>
+          <h1>Good morning, {{this.adminUsername}}👋</h1>
+          <WaitingDriversNumber :waiting-captains="waitingCaptains" />
+
         </div>
         <div class="header-icons">
           <i class="fas fa-plus-circle"></i>
@@ -182,10 +183,12 @@
 <script>
 import Sidebar from "./sidebarComponent.vue";
 import axios from "axios";
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   name: "tripsComponent",
   components: {
+    WaitingDriversNumber,
     Sidebar,
   },
   data() {
@@ -202,6 +205,7 @@ export default {
       dateFilter: "",
       currentPage: 1,
       itemsPerPage: 10,
+      adminUsername: ""
     };
   },
   computed: {
@@ -286,6 +290,7 @@ export default {
     console.log("Trips", this.trips);
     this.getCancelledByUserTrips();
     this.getCancelledByCaptainTrips();
+    this.adminUsername = localStorage.getItem('username')
   },
   methods: {
     handleSidebarToggle() {

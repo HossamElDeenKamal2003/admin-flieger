@@ -30,7 +30,7 @@
         <div class="setting-card">
           <label class="card-label">Waiting Time (S)</label>
           <div class="card-value">
-            {{ propertyForm.time || currentProperty.time || 300 }}
+            {{ propertyForm.time || currentProperty.time }}
             <button class="edit-btn" @click="editProperty('time')">
               <span>Edit</span>
             </button>
@@ -54,7 +54,7 @@
         <div class="setting-card">
           <label class="card-label">Max. Distance to captain see trip (M)</label>
           <div class="card-value">
-            {{ maxDistance || currentMaxDistance || 300 }}
+            {{ maxDistance || currentMaxDistance }}
             <button class="edit-btn" @click="editDistance('maxDistance')">
               <span>Edit</span>
             </button>
@@ -78,7 +78,7 @@
         <div class="setting-card">
           <label class="card-label">Distance to captain Make arrived (M)</label>
           <div class="card-value">
-            {{ distanceInTrip || currentDistanceInTrip || 300 }}
+            {{ distanceInTrip || currentDistanceInTrip }}
             <button class="edit-btn" @click="editDistanceInTrip">
               <span>Edit</span>
             </button>
@@ -102,7 +102,7 @@
         <div class="setting-card">
           <label class="card-label">Max. Distance to captain see another offer (M)</label>
           <div class="card-value">
-            {{ maxDistanceOffer || currentMaxDistanceOffer || 300 }}
+            {{ maxDistanceOffer || currentMaxDistanceOffer }}
             <button class="edit-btn" @click="editDistance('maxDistanceOffer')">
               <span>Edit</span>
             </button>

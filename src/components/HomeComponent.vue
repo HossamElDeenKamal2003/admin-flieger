@@ -1,541 +1,329 @@
 <template>
   <div class="dashboard">
-    <!-- Sidebar (unchanged) -->
-    <div :class="['sidebar', { 'sidebar-collapsed': !isSidebarExpanded }]">
-      <Sidebar/>
-    </div>
+    <!-- Sidebar -->
+    <Sidebar @toggle="handleSidebarToggle" />
 
     <!-- Main Content -->
-    <div :class="['main-content', { 'main-content-expanded': isSidebarExpanded }]">
-      <!-- Header (unchanged) -->
-      <header>
-        <div class="header-left">
-          <i class="fas fa-bars" @click="handleSidebarToggle"></i>
-          <h1>Good morning, MR.FADY 👋</h1>
-          <p>you have 1 new captain's request</p>
+    <main class="main-content" :class="{ 'main-content-expanded': !isSidebarCollapsed }">
+      <!-- Header -->
+      <header class="header">
+        <div class="greeting">
+          <h1>Good morning, MR. {{ adminName }}<span class="wave">👋</span></h1>
+          <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
-        <div class="header-right">
-          <i class="fas fa-plus-circle"></i>
+        <div class="header-icons">
+          <i class="icon notifications"></i>
+          <i class="icon menu"></i>
         </div>
       </header>
 
-      <!-- Knowledge Base (unchanged) -->
-      <div class="knowledge-base">
-        <div class="card">
-          <div class="card-header">
-            <span>Total Orders</span>
-            <i class="fas fa-chevron-right"></i>
-          </div>
-          <p class="card-value">100</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <span>Total Earnings</span>
-            <i class="fas fa-chevron-right"></i>
-          </div>
-          <p class="card-value">500 EGP</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <span>Profit</span>
-            <i class="fas fa-chevron-right"></i>
-          </div>
-          <p class="card-value">200 EGP</p>
-        </div>
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-overlay">
+        <div class="loading-spinner"></div>
       </div>
 
-      <!-- Main Content Grid -->
-      <div class="content-grid">
-        <!-- Trips Progress Chart (unchanged) -->
-        <div class="trips-progress">
-          <div class="chart-header">
-            <h2>Trips Progress</h2>
-            <select>
-              <option>2025</option>
+      <!-- Error State -->
+      <div v-if="error" class="error-message">
+        {{ error }}
+        <button @click="getDrivers">Retry</button>
+      </div>
+
+      <!-- Captains List Section -->
+      <section class="captains-list">
+        <div class="table-header">
+          <h2>Captains list</h2>
+          <div class="table-controls">
+            <input type="text" placeholder="Search by Name, Phone, or National ID" v-model="searchQuery" />
+            <select v-model="filter">
+              <option value="All Captains">All Captains</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+            </select>
+            <select v-model="sortBy">
+              <option value="none">Sort by</option>
+              <option value="ctr-desc">CTR (High to Low)</option>
+              <option value="ctr-asc">CTR (Low to High)</option>
             </select>
           </div>
-          <div class="chart-legend">
-            <span class="legend-item"><span class="dot orange"></span>Long Trips</span>
-            <span class="legend-item"><span class="dot blue"></span>Intermediate Trips</span>
-            <span class="legend-item"><span class="dot green"></span>Short Trips</span>
-          </div>
-          <div class="chart-placeholder">
-            <p>Chart: Long Trips, Intermediate Trips, Short Trips (Jan-Dec)</p>
-          </div>
         </div>
 
-        <!-- Top Captains -->
-        <div class="top-captains">
-          <h2>Top Captains</h2>
-          <div class="captains-list">
-            <div class="captain" v-for="captain in topCaptains" :key="captain.id">
-              <img :src="captain.image" alt="Captain" class="captain-image" />
-              <div class="captain-info">
-                <p class="captain-name">{{ captain.name }}</p>
-                <p class="captain-id">{{ captain.id }}</p>
-                <p class="captain-stats">
-                  Trips: {{ captain.trips }} Income: {{ captain.income }}
-                </p>
-              </div>
-              <div class="captain-rating">
-                <span class="stars">★ {{ captain.rating }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Captains Table -->
+        <table>
+          <thead>
+          <tr>
+            <th><input type="checkbox" /></th>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>National ID</th>
+            <th>City</th>
+            <th>Vehicle</th>
+            <th>Phone Number</th>
+            <th>Completed Trips</th>
+            <th>State</th>
+            <th>Wallet</th>
+            <th>Date Of Certain License</th>
+            <th>Captains Account</th>
+            <th>Block Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr
+              v-for="captain in paginatedCaptains"
+              :key="captain.id"
+              class="clickable-row"
+              @click="goToDriverDetails(captain._id)"
+          >
+            <td @click.stop><input type="checkbox" /></td>
+            <td>
+              <img
+                  :src="captain.profile_image || 'https://via.placeholder.com/40'"
+                  alt="Captain Photo"
+                  class="captain-photo"
+              />
+            </td>
+            <td>{{ captain.username }}</td>
+            <td>{{ captain.id }}</td>
+            <td>{{ captain.city || 'N/A' }}</td>
+            <td>{{ captain.vehicleType || 'N/A' }}</td>
+            <td>{{ captain.phoneNumber || 'N/A' }}</td>
+            <td>{{ captain.ctr || 0 }}</td>
+            <td>
+              <span class="status-container">
+                <span :class="captain.status?.toLowerCase() === 'online' ? 'status-dot-online' : 'status-dot-offline'" :title="`Status: ${captain.status}`"></span>
+                <span class="status-text">{{ captain.status || 'Offline' }}</span>
+              </span>
+            </td>
+            <td>{{ captain.wallet || 0 }}</td>
+            <td>{{ captain.licence_expire_date || 'N/A' }}</td>
+            <td @click.stop>
+              <router-link
+                  :to="{ name: 'DriverDetails', params: { driverId: captain._id } }"
+                  class="action-open"
+              >
+                View Details
+              </router-link>
+            </td>
+            <td @click.stop>
+              <span :class="captain.block ? 'status-enabled' : 'status-blocked'">
+                {{ captain.block ? 'ENABLED' : 'BLOCKED' }}
+              </span>
+            </td>
+          </tr>
+          <tr v-if="paginatedCaptains.length === 0">
+            <td colspan="14" class="no-data">No captains found</td>
+          </tr>
+          </tbody>
+        </table>
 
-        <!-- Top Users Table -->
-        <div class="top-users">
-          <h2>Top Users</h2>
-          <div class="table-container">
-            <table>
-              <thead>
-              <tr>
-                <th><input type="checkbox" /></th>
-                <th>User</th>
-                <th>Phone number</th>
-                <th>no of complete trip</th>
-                <th>no of cancelled trip</th>
-                <th>wallet</th>
-                <th>Rate</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="user in topUsers" :key="user.id">
-                <td><input type="checkbox" /></td>
-                <td>
-                  <div class="user-info">
-                    <img :src="user.image" alt="User" class="user-image" />
-                    <span>{{ user.name }}</span>
-                  </div>
-                </td>
-                <td>{{ user.phone }}</td>
-                <td>{{ user.completeTrips }}</td>
-                <td>{{ user.cancelledTrips }}</td>
-                <td>{{ user.wallet }}</td>
-                <td>
-                  <span class="stars">★ {{ user.rating }}</span>
-                </td>
-              </tr>
-              </tbody>
-            </table>
+        <!-- Table Footer -->
+        <div class="table-footer">
+          <div>
+            <p>Total Captains: {{ captains.length }}</p>
           </div>
-          <!-- Pagination -->
           <div class="pagination">
-            <p>1-10 of {{ topUsers.length }} items</p>
-            <div class="pagination-buttons">
-              <button><i class="fas fa-chevron-left"></i></button>
-              <button class="active">1</button>
-              <button>2</button>
-              <button><i class="fas fa-chevron-right"></i></button>
-            </div>
+            <span>
+              {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredCaptains.length) }}
+              of {{ filteredCaptains.length }} items
+            </span>
+            <button :disabled="currentPage === 1" @click="currentPage--">❮</button>
+            <button>{{ currentPage }}</button>
+            <button :disabled="currentPage >= totalPages" @click="currentPage++">❯</button>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   </div>
 </template>
 
 <script>
+import Sidebar from './sidebarComponent.vue';
+import WaitingDriversNumber from './waitingDriversNumber.vue';
 import axios from 'axios';
-import Sidebar from "./sidebarComponent.vue";
 
 export default {
-  name: "OverviewComponent",
+  components: {
+    Sidebar,
+    WaitingDriversNumber
+  },
   data() {
     return {
-      isSidebarExpanded: true,
-      topCaptains: [],
-      topUsers: [],
+      isSidebarCollapsed: false,
+      captains: [],
+      waitingCaptains: [],
+      searchQuery: '',
+      adminName: localStorage.getItem('username') || 'Admin',
+      filter: 'All Captains',
+      sortBy: 'none',
+      currentPage: 1,
+      itemsPerPage: 10,
+      baseUrl: 'https://backend.fego-rides.com/admin',
+      activeCap: 0,
+      loading: false,
+      error: null
     };
   },
-  components: {
-    Sidebar
+  computed: {
+    filteredCaptains() {
+      let filtered = this.captains.filter(captain => captain.block === true || (captain.block === false && (captain.ctr || 0) > 0));
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(captain =>
+            (captain.username?.toLowerCase().includes(query)) ||
+            (captain.phoneNumber?.toLowerCase().includes(query)) ||
+            (captain.id?.toString().toLowerCase().includes(query))
+        );
+      }
+      if (this.filter !== 'All Captains') {
+        filtered = filtered.filter(captain =>
+            (captain.status || 'Offline').toLowerCase() === this.filter.toLowerCase()
+        );
+      }
+      if (this.sortBy === 'ctr-desc') {
+        filtered = filtered.sort((a, b) => (b.ctr || 0) - (a.ctr || 0));
+      } else if (this.sortBy === 'ctr-asc') {
+        filtered = filtered.sort((a, b) => (a.ctr || 0) - (b.ctr || 0));
+      }
+      return filtered;
+    },
+    paginatedCaptains() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredCaptains.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredCaptains.length / this.itemsPerPage);
+    }
   },
   methods: {
-    handleSidebarToggle() {
-      this.isSidebarExpanded = !this.isSidebarExpanded;
+    handleSidebarToggle(collapsed) {
+      this.isSidebarCollapsed = collapsed;
     },
-    async fetchTopCaptains() {
-      try {
-        const response = await axios.get('https://backend.fego-rides.com/admin/get-drivers');
-        // Assuming response.data is an array of drivers
-        this.topCaptains = response.data
-            .filter(driver => driver.ctr <= 10) // Filter drivers with exactly 10 trips
-            .slice(0, 1) // Take the first one
-            .map(driver => ({
-              id: driver.id || 'N/A',
-              name: driver.username || 'Unknown',
-              image: driver.profile_image || 'https://via.placeholder.com/40',
-              trips: driver.ctr || 10,
-              income: driver.income || '0 EGP',
-              rating: driver.rating || '0.0',
-            }));
-      } catch (error) {
-        console.error('Error fetching drivers:', error);
-        this.topCaptains = [{
-          id: 'N/A',
-          name: 'No Driver Found',
-          image: 'https://via.placeholder.com/40',
-          trips: 10,
-          income: '0 EGP',
-          rating: '0.0',
-        }];
+    handleResize() {
+      if (window.innerWidth <= 768) {
+        this.isSidebarCollapsed = true;
+      } else {
+        this.isSidebarCollapsed = false;
       }
     },
-    async fetchTopUsers() {
+    async getDrivers() {
+      this.loading = true;
+      this.error = null;
       try {
-        const response = await axios.get('https://backend.fego-rides.com/admin/get-users');
-        // Assuming response.data is an array of users
-        this.topUsers = response.data
-            .sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0)) // Sort by rating descending
-            .slice(0, 10) // Take top 10
-            .map(user => ({
-              id: user.id || Date.now() + Math.random(), // Fallback ID
-              name: user.username || 'Unknown',
-              image: user.profile_image || 'https://via.placeholder.com/40',
-              phone: user.phoneNumber || 'N/A',
-              completeTrips: user.completedTrips || 0,
-              cancelledTrips: user.cancelledTrips || 0,
-              wallet: user.wallet || '0 EGP',
-              rating: user.rating || '0.0',
-            }));
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        this.topUsers = [{
-          id: Date.now(),
-          name: 'No User Found',
-          image: 'https://via.placeholder.com/40',
-          phone: 'N/A',
-          completeTrips: 0,
-          cancelledTrips: 0,
-          wallet: '0 EGP',
-          rating: '0.0',
-        }];
+        const response = await axios.get(`${this.baseUrl}/get-drivers`);
+        this.captains = [];
+        this.waitingCaptains = [];
+        this.activeCap = 0;
+        response.data.forEach(driver => {
+          if (driver.block || (!driver.block && (driver.ctr || 0) > 0)) {
+            this.captains.push(driver);
+            if (driver.status?.toLowerCase() === 'online') {
+              this.activeCap++;
+            }
+          } else if (!driver.block && (driver.ctr || 0) === 0) {
+            this.waitingCaptains.push(driver);
+          }
+        });
+      } catch (err) {
+        this.error = 'Failed to load drivers. Please try again later.';
+      } finally {
+        this.loading = false;
       }
     },
+    goToDriverDetails(driverId) {
+      this.$router.push({ name: 'DriverDetails', params: { driverId } });
+    }
   },
-  async mounted() {
-    await Promise.all([this.fetchTopCaptains(), this.fetchTopUsers()]);
+  watch: {
+    filter() {
+      this.currentPage = 1;
+    },
+    sortBy() {
+      this.currentPage = 1;
+    },
+    searchQuery() {
+      this.currentPage = 1;
+    }
   },
+  created() {
+    this.getDrivers();
+  },
+  mounted() {
+    this.handleResize();
+    window.addEventListener('resize', this.handleResize);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+  }
 };
 </script>
 
 <style scoped>
-/* Unchanged styles */
 .dashboard {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   font-family: 'Arial', sans-serif;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 250px;
-  transition: width 0.3s ease;
-  color: #ffffff;
-}
-
-.sidebar-collapsed {
-  width: 80px;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-}
-
-.sidebar-header .logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.sidebar-header span {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.sidebar-menu {
-  margin-top: 16px;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  cursor: pointer;
-}
-
-.menu-item i {
-  margin-right: 12px;
-  font-size: 18px;
-}
-
-.menu-item span {
-  font-size: 16px;
-}
-
-.menu-item.active {
-  background-color: #ffffff;
-  color: #6b48ff;
-  border-left: 4px solid #6b48ff;
-}
-
-/* Main Content */
 .main-content {
+  margin-left: 250px;
   flex: 1;
   background-color: #f5f7fa;
-  padding: 24px;
+  padding: 20px;
+  border-radius: 20px 0 0 20px;
   transition: margin-left 0.3s ease;
 }
 
-
-.main-content-expanded.sidebar-collapsed {
-  margin-left: 80px;
-}
-
-/* Header */
-header {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
+.greeting h1 {
+  font-size: 1.5rem;
+  margin: 0;
 }
 
-.header-left i {
-  font-size: 20px;
-  color: #6b7280;
-  margin-right: 16px;
+.wave {
+  font-size: 1.2rem;
+}
+
+.header-icons i {
+  font-size: 1.5rem;
+  margin-left: 15px;
   cursor: pointer;
-}
-
-.header-left h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2a44;
-  margin: 0;
-}
-
-.header-left p {
-  font-size: 14px;
-  color: #2563eb;
-  cursor: pointer;
-  margin: 4px 0 0 0;
-}
-
-.header-right i {
-  font-size: 20px;
-  color: #6b7280;
-}
-
-/* Knowledge Base */
-.knowledge-base {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.card {
-  flex: 1;
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.card-header span {
-  font-size: 16px;
-  font-weight: 500;
-  color: #374151;
-}
-
-.card-header i {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.card-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2a44;
-  margin: 0;
-}
-
-/* Content Grid */
-.content-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 16px;
-}
-
-/* Trips Progress */
-.trips-progress {
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.chart-header h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2a44;
-  margin: 0;
-}
-
-.chart-header select {
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 14px;
-  color: #374151;
-}
-
-.chart-legend {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.dot.orange {
-  background-color: #f97316;
-}
-
-.dot.blue {
-  background-color: #2563eb;
-}
-
-.dot.green {
-  background-color: #10b981;
-}
-
-.chart-placeholder {
-  height: 200px;
-  background-color: #f9fafb;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-/* Top Captains */
-.top-captains {
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.top-captains h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2a44;
-  margin: 0 0 16px 0;
 }
 
 .captains-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.captain {
+.table-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.captain-image {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+.table-header h2 {
+  font-size: 1.2rem;
 }
 
-.captain-info {
-  flex: 1;
+.table-controls {
+  display: flex;
+  gap: 10px;
 }
 
-.captain-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1f2a44;
-  margin: 0;
-}
-
-.captain-id {
-  font-size: 12px;
-  color: #6b7280;
-  margin: 2px 0;
-}
-
-.captain-stats {
-  font-size: 12px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.captain-rating .stars {
-  font-size: 12px;
-  color: #f59e0b;
-}
-
-/* Top Users Table */
-.top-users {
-  grid-column: span 2;
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.top-users h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2a44;
-  margin: 0 0 16px 0;
-}
-
-.table-container {
-  overflow-x: auto;
+.table-controls input,
+.table-controls select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 }
 
 table {
@@ -545,111 +333,179 @@ table {
 
 th,
 td {
-  padding: 12px;
+  padding: 10px;
   text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
 th {
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  background-color: #f9fafb;
-  text-transform: uppercase;
+  font-weight: bold;
+  color: #333;
 }
 
-td {
-  font-size: 14px;
-  color: #374151;
-  border-top: 1px solid #e5e7eb;
+.clickable-row {
+  cursor: pointer;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.clickable-row:hover {
+  background-color: #f5f7fa;
 }
 
-.user-image {
+.captain-photo {
   width: 40px;
   height: 40px;
   border-radius: 50%;
 }
 
-.stars {
-  font-size: 12px;
-  color: #f59e0b;
-}
-
-/* Pagination */
-.pagination
-
-{
+.status-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
+  gap: 5px;
 }
 
-.pagination p {
-  font-size: 14px;
-  color: #6b7280;
+.status-text {
+  display: inline-block;
 }
 
-.pagination-buttons {
-  display: flex;
-  gap: 8px;
+.status-dot-online,
+.status-dot-offline {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
 }
 
-.pagination-buttons button {
-  padding: 4px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  background-color: #ffffff;
-  font-size: 14px;
-  color: #6b7280;
+.status-dot-online {
+  background-color: #28c76f;
+}
+
+.status-dot-offline {
+  background-color: #ff4d4f;
+}
+
+.status-enabled,
+.status-blocked,
+.action-open {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-.pagination-buttons button.active {
-  background-color: #2563eb;
-  color: #ffffff;
-  border-color: #2563eb;
+.status-enabled {
+  background-color: #e6f7fa;
+  color: #6b48ff;
 }
 
-/* Responsive adjustments */
+.status-blocked {
+  background-color: #e79c9c;
+  color: red;
+}
+
+.action-open {
+  background-color: #e6f7fa;
+  color: #00cfe8;
+  margin-right: 5px;
+  text-decoration: none;
+}
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #6b48ff;
+  color: white;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .main-content {
-    margin-left: 0;
-    padding: 16px;
-  }
-
-  .sidebar {
-    width: 80px;
-  }
-
-  .main-content-expanded {
     margin-left: 80px;
   }
 
-  .header-left {
-    flex-direction: column;
-    align-items: flex-start;
+  .main-content-expanded {
+    margin-left: 250px;
   }
+}
 
-  .header-right {
-    margin-top: 8px;
+@media (min-width: 769px) {
+  .main-content {
+    margin-left: 250px !important;
   }
+}
 
-  .knowledge-base {
-    flex-direction: column;
-  }
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #6b48ff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
 
-  .top-users {
-    grid-column: span 1;
-  }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #ff4d4f;
+  padding: 15px;
+  margin: 20px 0;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message button {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+.main-content-expanded {
+  margin-left: 250px;
 }
 </style>

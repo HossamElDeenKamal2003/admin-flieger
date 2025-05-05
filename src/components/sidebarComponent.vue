@@ -33,12 +33,12 @@ export default {
         { name: 'Trips', icon: 'trips', route: '/admin/get-trips' },
         { name: 'Users', icon: 'users', route: '/admin/users' },
         { name: 'Captains', icon: 'captains', route: '/admin/getdriver' },
+        { name: 'Waiting Captains', icon: 'icon', route: '/waiting-drivers' },
         { name: 'Moderators', icon: 'moderators', route: '/moderators' },
         { name: 'Settings', icon: 'settings', route: '/admin/settings' },
         { name: 'Level', icon: 'settings', route: '/levels' },
         { name: 'Get Requests', icon: 'get req', route: '/get-req' },
         { name: 'Driver Signup', icon: "sdfdf", route: '/driver-signup' },
-
       ],
       activeMenu: 'Overview', // Default to Overview
       isCollapsed: false,

@@ -277,7 +277,7 @@ export default {
         });
 
         this.driverData.block = newBlockStatus;
-        alert(`Driver ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
+        alert(`Driver ${newBlockStatus ? 'unblocked' : 'blocked'} successfully`);
       } catch (error) {
         console.error('Error toggling block status:', error);
         this.$toast?.error('Failed to update block status');

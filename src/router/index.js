@@ -15,6 +15,7 @@
     import levelComponent from "../components/levels/levelComponent.vue";
     import DriverDetails from '@/components/getDriverbyId.vue';
     import UserDetails from '@/components/userDetails.vue';
+    import WaitingDrivers from '@/components/waitingDrivers.vue';
     const routes = [
          {
             path: "/get-req",
@@ -174,6 +175,11 @@
             path: '/user/:userId',
             name: 'UserDetails',
             component: UserDetails
+        },
+        {
+            path: '/waiting-drivers',
+            name: 'WaitingDrivers',
+            component: WaitingDrivers
         }
 
     ];

@@ -9,11 +9,11 @@
       <header class="header">
         <div class="greeting">
           <h1>Good morning, MR. {{ adminName }}<span class="wave">👋</span></h1>
-          <p v-if="newRequestsCount > 0">you have {{ newRequestsCount }} new Captain's Request</p>
+          <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-icons">
           <i class="icon notifications"></i>
-          <i class="icon menu" @click="toggleMobileMenu"></i>
+          <i class="icon menu"></i>
         </div>
       </header>
 
@@ -25,148 +25,110 @@
       <!-- Error State -->
       <div v-if="error" class="error-message">
         {{ error }}
-        <button @click="getCaptain">Retry</button>
+        <button @click="getDrivers">Retry</button>
       </div>
 
-      <!-- Captain Profile Section -->
-      <section class="captain-profile" v-if="!loading && !error">
-        <div class="row">
-          <!-- Captain Data -->
-          <div class="col-md-6 col-12">
-            <div class="card captain-data">
-              <h3>Captain Data</h3>
-              <div class="row">
-                <div class="col-md-4 col-12 text-center">
-                  <img
-                      :src="captain.profile_image || 'https://via.placeholder.com/100'"
-                      alt="Captain Photo"
-                      class="captain-photo"
-                  />
-                  <p class="state" :class="captain.state === 'Online' ? 'status-online' : 'status-offline'">
-                    {{ captain.state || 'Offline' }}
-                  </p>
-                </div>
-                <div class="col-md-8 col-12">
-                  <p><span>Name:</span> {{ captain.username || 'N/A' }}</p>
-                  <p><span>Phone Number:</span> {{ captain.phoneNumber || 'N/A' }}</p>
-                  <p><span>National ID:</span> {{ captain.id || 'N/A' }}</p>
-                  <p><span>Email:</span> {{ captain.email || 'N/A' }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Vehicle Data -->
-          <div class="col-md-6 col-12">
-            <div class="card vehicle-data">
-              <h3>Vehicle Data</h3>
-              <p><span>Vehicle:</span> {{ captain.vehicleType || 'N/A' }}</p>
-              <p><span>Brand:</span> {{ captain.carModel || 'N/A' }}</p>
-              <p><span>Model:</span> {{ captain.carModelYear || 'N/A' }}</p>
-              <p><span>NO Plate:</span> {{ captain.carNumber || 'N/A' }}</p>
-              <p><span>Color:</span> {{ captain.carColor || 'N/A' }}</p>
-            </div>
+      <!-- Captains List Section -->
+      <section class="captains-list">
+        <div class="table-header">
+          <h2>Captains list</h2>
+          <div class="table-controls">
+            <input type="text" placeholder="Search by Name, Phone, or National ID" v-model="searchQuery" />
+            <select v-model="filter">
+              <option value="All Captains">All Captains</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+            </select>
+            <select v-model="sortBy">
+              <option value="none">Sort by</option>
+              <option value="ctr-desc">CTR (High to Low)</option>
+              <option value="ctr-asc">CTR (Low to High)</option>
+            </select>
           </div>
         </div>
 
-        <!-- Trip Statistics -->
-        <div class="row stats">
-          <div class="col-md-2 col-4">
-            <div class="stat confirmed">
-              <i class="icon confirmed"></i>
-              <p>Confirmed {{ captain.confirmedTrips || 0 }}</p>
-            </div>
-          </div>
-          <div class="col-md-2 col-4">
-            <div class="stat cancelled">
-              <i class="icon cancelled"></i>
-              <p>Cancelled {{ captain.cancelledTrips || 0 }}</p>
-            </div>
-          </div>
-          <div class="col-md-2 col-4">
-            <div class="stat rate">
-              <i class="icon rate"></i>
-              <p>Rate {{ captain.rate || 0 }}</p>
-            </div>
-          </div>
-          <div class="col-md-2 col-4">
-            <div class="stat cash">
-              <i class="icon cash"></i>
-              <p>Cash {{ captain.cash || '0 EGP' }}</p>
-            </div>
-          </div>
-          <div class="col-md-2 col-4">
-            <div class="stat wallet">
-              <i class="icon wallet"></i>
-              <p>Wallet {{ captain.wallet || '0 EGP' }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Trips Table -->
-        <div class="card trips-table">
-          <div class="table-responsive">
-            <table>
-              <thead>
-              <tr>
-                <th>N°</th>
-                <th>Date</th>
-                <th>Trip ID</th>
-                <th>Comment</th>
-                <th>Value</th>
-                <th>Cash</th>
-                <th>Wallet</th>
-                <th>Trip State</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="(trip, index) in paginatedTrips" :key="index">
-                <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td>{{ trip.date || 'N/A' }}</td>
-                <td>{{ trip.tripId || 'N/A' }}</td>
-                <td>{{ trip.comment || 'N/A' }}</td>
-                <td>{{ trip.value || '0 EGP' }}</td>
-                <td>{{ trip.cash || '0 EGP' }}</td>
-                <td>{{ trip.wallet || '0 EGP' }}</td>
-                <td :class="trip.state === 'CANCELLED' ? 'status-cancelled' : 'status-completed'">
-                  {{ trip.state || 'N/A' }}
-                </td>
-              </tr>
-              <tr v-if="paginatedTrips.length === 0">
-                <td colspan="8" class="no-data">No trips found</td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="table-footer">
-            <p>Total Trips: {{ captain.totalTrips || 0 }}</p>
-            <div class="pagination">
-              <span>
-                {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, captain.recentTrips?.length || 0) }}
-                of {{ captain.recentTrips?.length || 0 }} items
-              </span>
-              <button :disabled="currentPage === 1" @click="currentPage--">&lt;</button>
-              <button>{{ currentPage }}</button>
-              <button :disabled="currentPage >= totalPages" @click="currentPage++">&gt;</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-          <button class="btn btn-danger" @click="redirectToLicense">License</button>
-          <button class="btn btn-light" @click="redirectToImage(captain.profile_image)">Review</button>
-          <button class="btn btn-light" @click="viewRides">Rides</button>
-          <button class="btn btn-light" @click="viewTransactionHistory">Transaction history</button>
-          <button class="btn btn-light" @click="viewCarDetails">Car details</button>
-          <button
-              class="btn btn-sm"
-              :class="{ 'btn-primary': !captain.block, 'btn-danger': captain.block }"
-              @click="toggleBlock(captain._id, captain.block)"
+        <!-- Captains Table -->
+        <table>
+          <thead>
+          <tr>
+            <th><input type="checkbox" /></th>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>National ID</th>
+            <th>City</th>
+            <th>Vehicle</th>
+            <th>Phone Number</th>
+            <th>Completed Trips</th>
+            <th>State</th>
+            <th>Wallet</th>
+            <th>Date Of Certain License</th>
+            <th>Captains Account</th>
+            <th>Block Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr
+              v-for="captain in paginatedCaptains"
+              :key="captain.id"
+              class="clickable-row"
+              @click="goToDriverDetails(captain._id)"
           >
-            {{ captain.block ? 'Unblock' : 'Block' }}
-          </button>
-          <button class="btn btn-danger btn-sm" @click="deleteUser(captain._id)">Delete</button>
+            <td @click.stop><input type="checkbox" /></td>
+            <td>
+              <img
+                  :src="captain.profile_image || 'https://via.placeholder.com/40'"
+                  alt="Captain Photo"
+                  class="captain-photo"
+              />
+            </td>
+            <td>{{ captain.username }}</td>
+            <td>{{ captain.id }}</td>
+            <td>{{ captain.city || 'N/A' }}</td>
+            <td>{{ captain.vehicleType || 'N/A' }}</td>
+            <td>{{ captain.phoneNumber || 'N/A' }}</td>
+            <td>{{ captain.ctr || 0 }}</td>
+            <td>
+              <span class="status-container">
+                <span :class="captain.status?.toLowerCase() === 'online' ? 'status-dot-online' : 'status-dot-offline'" :title="`Status: ${captain.status}`"></span>
+                <span class="status-text">{{ captain.status || 'Offline' }}</span>
+              </span>
+            </td>
+            <td>{{ captain.wallet || 0 }}</td>
+            <td>{{ captain.licence_expire_date || 'N/A' }}</td>
+            <td @click.stop>
+              <router-link
+                  :to="{ name: 'DriverDetails', params: { driverId: captain._id } }"
+                  class="action-open"
+              >
+                View Details
+              </router-link>
+            </td>
+            <td @click.stop>
+              <span :class="captain.block ? 'status-enabled' : 'status-blocked'">
+                {{ captain.block ? 'ENABLED' : 'BLOCKED' }}
+              </span>
+            </td>
+          </tr>
+          <tr v-if="paginatedCaptains.length === 0">
+            <td colspan="14" class="no-data">No captains found</td>
+          </tr>
+          </tbody>
+        </table>
+
+        <!-- Table Footer -->
+        <div class="table-footer">
+          <div>
+            <p>Total Captains: {{ captains.length }}</p>
+          </div>
+          <div class="pagination">
+            <span>
+              {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredCaptains.length) }}
+              of {{ filteredCaptains.length }} items
+            </span>
+            <button :disabled="currentPage === 1" @click="currentPage--">❮</button>
+            <button>{{ currentPage }}</button>
+            <button :disabled="currentPage >= totalPages" @click="currentPage++">❯</button>
+          </div>
         </div>
       </section>
     </main>
@@ -176,45 +138,64 @@
 <script>
 import Sidebar from './sidebarComponent.vue';
 import axios from 'axios';
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   components: {
+    WaitingDriversNumber,
     Sidebar
   },
   data() {
     return {
       isSidebarCollapsed: false,
-      captain: {
-        recentTrips: []
-      },
+      captains: [],
+      searchQuery: '',
       adminName: localStorage.getItem('username'),
+      filter: 'All Captains',
+      sortBy: 'none',
       currentPage: 1,
-      itemsPerPage: 5,
-      newRequestsCount: 0,
+      itemsPerPage: 10,
+      baseUrl: 'https://backend.fego-rides.com/admin',
+      activeCap: 0,
       loading: false,
-      error: null,
-      showMobileMenu: false,
-      baseUrl: 'https://backend.fego-rides.com/admin'
-    }
+      error: null
+    };
   },
   computed: {
-    paginatedTrips() {
+    filteredCaptains() {
+      let filtered = this.captains.filter(captain => captain.block === true || (captain.block === false && (captain.ctr || 0) > 0));
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(captain =>
+            (captain.username?.toLowerCase().includes(query)) ||
+            (captain.phoneNumber?.toLowerCase().includes(query)) ||
+            (captain.id?.toString().toLowerCase().includes(query))
+        );
+      }
+      if (this.filter !== 'All Captains') {
+        filtered = filtered.filter(captain =>
+            (captain.status || 'Offline').toLowerCase() === this.filter.toLowerCase()
+        );
+      }
+      if (this.sortBy === 'ctr-desc') {
+        filtered = filtered.sort((a, b) => (b.ctr || 0) - (a.ctr || 0));
+      } else if (this.sortBy === 'ctr-asc') {
+        filtered = filtered.sort((a, b) => (a.ctr || 0) - (b.ctr || 0));
+      }
+      return filtered;
+    },
+    paginatedCaptains() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.captain.recentTrips?.slice(start, end) || [];
+      return this.filteredCaptains.slice(start, end);
     },
     totalPages() {
-      return Math.ceil((this.captain.recentTrips?.length || 0) / this.itemsPerPage);
+      return Math.ceil(this.filteredCaptains.length / this.itemsPerPage);
     }
   },
   methods: {
     handleSidebarToggle(collapsed) {
       this.isSidebarCollapsed = collapsed;
-    },
-    toggleMobileMenu() {
-      if (window.innerWidth <= 768) {
-        this.isSidebarCollapsed = !this.isSidebarCollapsed;
-      }
     },
     handleResize() {
       if (window.innerWidth <= 768) {
@@ -223,72 +204,44 @@ export default {
         this.isSidebarCollapsed = false;
       }
     },
-    async getCaptain() {
+    async getDrivers() {
       this.loading = true;
       this.error = null;
       try {
-        // In a real app, you'd get the captain ID from route params
-        const response = await axios.get(`${this.baseUrl}/get-driver/${this.$route.params.id}`);
-        this.captain = response.data;
+        const response = await axios.get(`${this.baseUrl}/get-drivers`);
+        this.captains = [];
+        this.activeCap = 0;
+        response.data.forEach(driver => {
+          if (driver.block || (!driver.block && (driver.ctr || 0) > 0)) {
+            this.captains.push(driver);
+            if (driver.status?.toLowerCase() === 'online') {
+              this.activeCap++;
+            }
+          }
+        });
       } catch (err) {
-        this.error = 'Failed to load captain data. Please try again later.';
-        console.error(err);
+        this.error = 'Failed to load drivers. Please try again later.';
       } finally {
         this.loading = false;
       }
     },
-    redirectToLicense() {
-      // Implement license viewing logic
-      alert('License viewing functionality would be implemented here');
-    },
-    viewRides() {
-      // Implement rides viewing logic
-      alert('Rides viewing functionality would be implemented here');
-    },
-    viewTransactionHistory() {
-      // Implement transaction history viewing logic
-      alert('Transaction history functionality would be implemented here');
-    },
-    viewCarDetails() {
-      // Implement car details viewing logic
-      alert('Car details functionality would be implemented here');
-    },
-    redirectToImage(imageUrl) {
-      window.open(imageUrl, '_blank');
-    },
-    async deleteUser(id) {
-      if (confirm('Are you sure you want to delete this captain?')) {
-        try {
-          await axios.delete(`https://backend.fego-rides.com/authdriver/delete-user/${id}`);
-          this.$router.push('/captains');
-        } catch (error) {
-          console.error(error);
-          alert('Error occurred while deleting captain.');
-        }
-      }
-    },
-    async toggleBlock(userId, currentBlockStatus) {
-      try {
-        const newBlockStatus = !currentBlockStatus;
-        const response = await axios.patch(`https://backend.fego-rides.com/authdriver/patch-block/${userId}`, {
-          block: newBlockStatus,
-        });
-        this.captain = response.data;
-        alert(`Captain ${newBlockStatus ? 'blocked' : 'unblocked'} successfully.`);
-      } catch (error) {
-        console.error(error);
-        alert('Error occurred while updating block status.');
-      }
+    goToDriverDetails(driverId) {
+      this.$router.push({ name: 'DriverDetails', params: { driverId } });
     }
   },
   watch: {
-    currentPage() {
-      // Scroll to top when page changes
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    filter() {
+      this.currentPage = 1;
+    },
+    sortBy() {
+      this.currentPage = 1;
+    },
+    searchQuery() {
+      this.currentPage = 1;
     }
   },
   created() {
-    this.getCaptain();
+    this.getDrivers();
   },
   mounted() {
     this.handleResize();
@@ -297,22 +250,22 @@ export default {
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
   }
-}
+};
 </script>
 
 <style scoped>
-/* Base Styles */
 .dashboard {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   font-family: 'Arial', sans-serif;
 }
 
 .main-content {
   margin-left: 250px;
   flex: 1;
-  background-color: #6b5b95;
+  background-color: #f5f7fa;
   padding: 20px;
+  border-radius: 20px 0 0 20px;
   transition: margin-left 0.3s ease;
 }
 
@@ -321,7 +274,6 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  flex-wrap: wrap;
 }
 
 .greeting h1 {
@@ -329,18 +281,8 @@ export default {
   margin: 0;
 }
 
-.greeting p {
-  color: #888;
-  margin: 5px 0 0;
-}
-
 .wave {
   font-size: 1.2rem;
-}
-
-.header-icons {
-  display: flex;
-  align-items: center;
 }
 
 .header-icons i {
@@ -349,110 +291,45 @@ export default {
   cursor: pointer;
 }
 
-/* Captain Profile */
-.captain-profile {
+.captains-list {
   background-color: white;
   padding: 20px;
   border-radius: 10px;
+  margin-bottom: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.card {
-  border: none;
-  margin-bottom: 20px;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.captain-photo {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 10px;
-}
-
-.state {
-  font-size: 0.9rem;
+.table-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
+  margin-bottom: 20px;
 }
 
-.status-online::before,
-.status-offline::before {
-  content: '';
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 5px;
+.table-header h2 {
+  font-size: 1.2rem;
 }
 
-.status-online::before {
-  background-color: #28c76f;
-}
-
-.status-offline::before {
-  background-color: #ff4d4f;
-}
-
-/* Stats */
-.stats {
-  margin: 20px -10px;
-}
-
-.stat {
-  text-align: center;
-  padding: 15px 5px;
-  border-radius: 8px;
-  color: white;
-  margin-bottom: 10px;
-  min-height: 80px;
+.table-controls {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  gap: 10px;
 }
 
-.stat p {
-  margin: 5px 0 0;
-  font-size: 0.9rem;
-}
-
-.stat.confirmed {
-  background-color: #00cfe8;
-}
-
-.stat.cancelled {
-  background-color: #ff4d4f;
-}
-
-.stat.rate {
-  background-color: #6b48ff;
-}
-
-.stat.cash {
-  background-color: #28c76f;
-}
-
-.stat.wallet {
-  background-color: #1e1e1e;
-}
-
-/* Table */
-.table-responsive {
-  overflow-x: auto;
+.table-controls input,
+.table-controls select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
 }
 
-th, td {
-  padding: 12px 8px;
+th,
+td {
+  padding: 10px;
   text-align: left;
   border-bottom: 1px solid #ddd;
 }
@@ -460,23 +337,72 @@ th, td {
 th {
   font-weight: bold;
   color: #333;
-  background-color: #f9f9f9;
 }
 
-.status-cancelled {
-  color: #ff4d4f;
-  font-weight: bold;
+.clickable-row {
+  cursor: pointer;
 }
 
-.status-completed {
-  color: #28c76f;
-  font-weight: bold;
+.clickable-row:hover {
+  background-color: #f5f7fa;
 }
 
-.no-data {
-  text-align: center;
-  padding: 20px;
-  color: #888;
+.captain-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.status-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-text {
+  display: inline-block;
+}
+
+.status-dot-online,
+.status-dot-offline {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-dot-online {
+  background-color: #28c76f;
+}
+
+.status-dot-offline {
+  background-color: #ff4d4f;
+}
+
+.status-enabled,
+.status-blocked,
+.action-open {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.status-enabled {
+  background-color: #e6f7fa;
+  color: #6b48ff;
+}
+
+.status-blocked {
+  background-color: #e79c9c;
+  color: red;
+}
+
+.action-open {
+  background-color: #e6f7fa;
+  color: #00cfe8;
+  margin-right: 5px;
+  text-decoration: none;
 }
 
 .table-footer {
@@ -484,13 +410,12 @@ th {
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  flex-wrap: wrap;
 }
 
 .pagination {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
 }
 
 .pagination button {
@@ -507,49 +432,22 @@ th {
   cursor: not-allowed;
 }
 
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  flex-wrap: wrap;
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 80px;
+  }
+
+  .main-content-expanded {
+    margin-left: 250px;
+  }
 }
 
-.btn {
-  padding: 8px 16px;
-  border-radius: 5px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: none;
+@media (min-width: 769px) {
+  .main-content {
+    margin-left: 250px !important;
+  }
 }
 
-.btn:hover {
-  opacity: 0.9;
-}
-
-.btn-danger {
-  background-color: #ff4d4f;
-  color: white;
-}
-
-.btn-light {
-  background-color: #f5f7fa;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-.btn-primary {
-  background-color: #00cfe8;
-  color: white;
-}
-
-.btn-sm {
-  padding: 5px 10px;
-  font-size: 0.8rem;
-}
-
-/* Loading and Error States */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -572,6 +470,11 @@ th {
   animation: spin 1s linear infinite;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .error-message {
   background-color: #ffebee;
   color: #ff4d4f;
@@ -592,74 +495,13 @@ th {
   cursor: pointer;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #888;
 }
 
-/* Responsive adjustments */
-@media (max-width: 992px) {
-  .stat p {
-    font-size: 0.8rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    padding: 15px;
-  }
-
-  .main-content-expanded {
-    margin-left: 250px;
-  }
-
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .header-icons {
-    margin-top: 10px;
-  }
-
-  .captain-photo {
-    width: 80px;
-    height: 80px;
-  }
-
-  .action-buttons {
-    gap: 8px;
-  }
-
-  .btn {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .stats .col-4 {
-    padding: 0 5px;
-  }
-
-  .stat {
-    padding: 10px 5px;
-    min-height: 70px;
-  }
-
-  .stat p {
-    font-size: 0.7rem;
-  }
-
-  .table-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .card {
-    padding: 10px;
-  }
+.main-content-expanded {
+  margin-left: 250px;
 }
 </style>
