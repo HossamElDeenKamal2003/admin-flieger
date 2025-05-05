@@ -211,7 +211,7 @@
               :class="{ active: activeTab === 'block' }"
               @click="toggleBlock"
           >
-            {{ driverData.block ? 'Unblock' : 'Block' }}
+            {{ driverData.block ? 'Block' : 'Unblock' }}
           </button>
         </div>
       </section>

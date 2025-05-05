@@ -104,15 +104,15 @@
               </router-link>
             </td>
             <td @click.stop>
-              <span :class="captain.block || (captain.ctr || 0) > 0 ? 'status-blocked' : 'status-enabled'">
-                {{ captain.block || (captain.ctr || 0) > 0 ? 'BLOCKED' : 'ENABLED' }}
+              <span :class="captain.block ? 'status-enabled' : 'status-blocked'">
+                {{ captain.block? 'ENABLED' : 'BLOCKED' }}
               </span>
-              <button
-                  class="action-disable"
-                  @click="toggleCaptainStatus(captain)"
-              >
-                {{ captain.block ? 'Enable' : 'Disable' }}
-              </button>
+<!--              <button-->
+<!--                  class="action-disable"-->
+<!--                  @click="toggleCaptainStatus(captain)"-->
+<!--              >-->
+<!--                {{ captain.block ? 'Enable' : 'Disable' }}-->
+<!--              </button>-->
             </td>
           </tr>
           <tr v-if="paginatedCaptains.length === 0">
@@ -185,8 +185,8 @@
             <td>{{ waitingCaptain.city || 'N/A' }}</td>
             <td>{{ waitingCaptain.phoneNumber || 'N/A' }}</td>
             <td>{{ waitingCaptain.vehicleType || 'N/A' }}</td>
-            <td>{{ waitingCaptain.vehicleModel || 'N/A' }}</td>
-            <td>{{ waitingCaptain.licenseDate || 'N/A' }}</td>
+            <td>{{ waitingCaptain.carModel || 'N/A' }}</td>
+            <td>{{ waitingCaptain.licence_expire_date || 'N/A' }}</td>
             <td @click.stop><button class="action-open">Open</button></td>
             <td @click.stop>
               <router-link
@@ -285,7 +285,7 @@ export default {
       return filtered;
     },
     filteredWaitingCaptains() {
-      let filtered = this.waitingCaptains.filter(captain => captain.block === false && (captain.ctr || 0) === 0);
+      let filtered = this.waitingCaptains.filter(captain => captain.block === false && captain.ctr === 0);
       if (this.searchWaitingQuery) {
         const query = this.searchWaitingQuery.toLowerCase();
         filtered = filtered.filter(captain =>
