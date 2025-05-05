@@ -312,7 +312,7 @@ export default {
           if (trip.moneyFlow?.document?.flow?.[0] && !trip.moneyFlow.flowItem) {
             trip.moneyFlow.flowItem = trip.moneyFlow.document.flow[0];
           }
-          console.log("Trips", this.trips)
+          console.log("Trips....", response.data)
           return trip;
         });
       } catch (error) {
