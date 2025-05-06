@@ -39,6 +39,7 @@ export default {
         { name: 'Level', icon: 'settings', route: '/levels' },
         { name: 'Get Requests', icon: 'get req', route: '/get-req' },
         { name: 'Driver Signup', icon: "sdfdf", route: '/driver-signup' },
+        { name: "coupons", icon: "coupons", route: '/coupons' },
       ],
       activeMenu: 'Overview', // Default to Overview
       isCollapsed: false,
