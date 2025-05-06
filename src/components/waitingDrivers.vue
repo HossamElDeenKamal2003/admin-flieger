@@ -8,10 +8,8 @@
       <!-- Header -->
       <header class="header">
         <div class="greeting">
-          <h1>Good morning, MR. {{ adminName }}<span class="wave">👋</span></h1>
-          <p v-if="filteredWaitingCaptains.length > 0">
-            You have {{ filteredWaitingCaptains.length }} captain{{ filteredWaitingCaptains.length === 1 ? '' : 's' }} on the waiting list
-          </p>
+          <WaitingDriversNumber :waiting-captains="waitingCaptains" />
+
         </div>
         <div class="header-icons">
           <i class="icon notifications"></i>
@@ -125,9 +123,11 @@
 <script>
 import Sidebar from './sidebarComponent.vue';
 import axios from 'axios';
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   components: {
+    WaitingDriversNumber,
     Sidebar
   },
   data() {

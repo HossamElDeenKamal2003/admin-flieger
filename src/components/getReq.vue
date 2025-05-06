@@ -8,8 +8,7 @@
       <!-- Header -->
       <header class="header">
         <div class="greeting">
-          <h1>Good morning, MR. {{ adminName }}<span class="wave">👋</span></h1>
-          <p v-if="newRequestsCount > 0">you have {{ newRequestsCount }} new Captain's Request</p>
+          <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-icons">
           <i class="icon notifications"></i>
@@ -85,10 +84,12 @@
 
 <script>
 import Sidebar from '../components/sidebarComponent.vue';
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   name: "GetReqComponent",
   components: {
+    WaitingDriversNumber,
     Sidebar
   },
   data() {

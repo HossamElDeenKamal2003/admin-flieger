@@ -8,7 +8,6 @@
       <!-- Header -->
       <header class="header">
         <div class="greeting">
-          <h1>Good morning, MR. {{ adminName }}<span class="wave">👋</span></h1>
           <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-icons">

@@ -5,6 +5,8 @@
     </div>
 
     <div class="main-content">
+      <WaitingDriversNumber :waiting-captains="waitingCaptains" />
+
       <div class="levels-prices">
         <h2>Egypt Prices</h2>
         <h3>All Levels</h3>
@@ -72,10 +74,12 @@
 <script>
 import axios from 'axios';
 import Sidebar from "@/components/sidebarComponent.vue";
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   name: 'FegoDashboard',
   components: {
+    WaitingDriversNumber,
     Sidebar
   },
   data() {

@@ -11,7 +11,6 @@
       <header class="header">
         <div class="header-left">
           <i class="fas fa-bars" @click="toggleSidebar"></i>
-          <h1>Good morning, MR. Fady 👋</h1>
           <waiting-drivers-number />
         </div>
         <div class="header-right">
@@ -100,6 +99,7 @@ export default {
         phone: "",
         password: ""
       },
+      adminUsername: localStorage.getItem('username'),
       persons: [],
       id: ""
     };

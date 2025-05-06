@@ -11,7 +11,7 @@
       <header>
         <div class="header-left">
           <i class="fas fa-bars" @click="handleSidebarToggle"></i>
-          <h1>Good morning, {{adminUsername}} 👋</h1>
+
           <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-right">

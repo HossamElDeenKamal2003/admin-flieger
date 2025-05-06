@@ -13,7 +13,6 @@
           <i class="fas fa-bars"></i>
         </div>
         <div class="greeting">
-          Good morning, {{adminUsername}} 👋
           <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-actions">

@@ -11,8 +11,7 @@
       <header>
         <div class="header-left">
           <i class="fas fa-bars" @click="handleSidebarToggle"></i>
-          <h1>Good morning, MR.FADY 👋</h1>
-          <p>you have 1 new captain's request</p>
+          <waiting-drivers-number />
         </div>
         <div class="header-right">
           <i class="fas fa-plus-circle"></i>
@@ -139,6 +138,7 @@
 <script>
 import axios from 'axios';
 import Sidebar from "./sidebarComponent.vue";
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   name: "OverviewComponent",
@@ -147,9 +147,11 @@ export default {
       isSidebarExpanded: true,
       topCaptains: [],
       topUsers: [],
+      adminUsername: localStorage.getItem('username'),
     };
   },
   components: {
+    WaitingDriversNumber,
     Sidebar
   },
   methods: {

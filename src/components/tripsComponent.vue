@@ -10,7 +10,6 @@
       <!-- Header -->
       <header>
         <div>
-          <h1>Good morning, {{this.adminUsername}}👋</h1>
           <WaitingDriversNumber :waiting-captains="waitingCaptains" />
 
         </div>

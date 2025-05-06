@@ -4,9 +4,9 @@
     <div class="sidebar">
       <sidebarComponent />
     </div>
-
     <!-- Main Content -->
     <div class="main-content">
+      <WaitingDriversNumber :waiting-captains="waitingCaptains" />
       <div class="coupons-management">
         <h2 class="section-title">Coupons Management</h2>
 
@@ -85,6 +85,7 @@
 <script>
 import axios from 'axios';
 import sidebarComponent from "@/components/sidebarComponent.vue";
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 const baseUrl = 'https://backend.fego-rides.com';
 
 export default {
@@ -111,6 +112,7 @@ export default {
     };
   },
   components: {
+    WaitingDriversNumber,
     sidebarComponent
   },
   created() {
