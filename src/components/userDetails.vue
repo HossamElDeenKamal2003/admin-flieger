@@ -206,10 +206,8 @@ export default {
     async fetchTrips() {
       try {
         const userId = this.$route.params.userId;
-        const response = await axios.get(`${this.baseUrl}/wallet/filterWalletDetails`, {
-          body: {
-            userId: userId // Pass userId as a query parameter
-          }
+        const response = await axios.post(`https://backend.fego-rides.com/wallet/filterWalletDetails`, {
+         userId: userId,
         });
 
         const { moneyFlow, trips } = response.data;

@@ -205,4 +205,6 @@ export default {
     width: 250px !important;
   }
 }
+
+
 </style>

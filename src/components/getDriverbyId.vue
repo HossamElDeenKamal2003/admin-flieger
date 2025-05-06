@@ -32,30 +32,42 @@
       <section class="driver-data" v-if="driverData">
         <div class="data-cards">
           <!-- Captain Data -->
-          <div class="data-card">
-            <h2>Captain Data</h2>
-            <div class="data-row">
-              <span>Name:</span>
-              <span>{{ driverData.name || 'N/A' }}</span>
-            </div>
-            <div class="data-row">
-              <span>Phone Number:</span>
-              <span>{{ driverData.phoneNumber || 'N/A' }}</span>
-            </div>
-            <div class="data-row">
-              <span>National ID:</span>
-              <span>{{ driverData.nationalId || 'N/A' }}</span>
-            </div>
-            <div class="data-row">
-              <span>Email:</span>
-              <span>{{ driverData.email || 'N/A' }}</span>
-            </div>
-            <div class="data-row">
-              <span>State:</span>
-              <span>
-                <span :class="driverData.status === 'online' ? 'status-online' : 'status-offline'"></span>
-                {{ driverData.status || 'Offline' }}
-              </span>
+          <div class="data-card captain-card">
+            <div class="profile-section">
+              <div class="profile-image-container">
+                <img
+                    :src="driverData.profileImage"
+                    alt="Captain Profile"
+                    class="profile-image"
+                    @click="openImage(driverData.profileImage)"
+                >
+              </div>
+              <div class="profile-info">
+                <h2>Captain Data</h2>
+                <div class="data-row">
+                  <span>Name:</span>
+                  <span>{{ driverData.name || 'N/A' }}</span>
+                </div>
+                <div class="data-row">
+                  <span>Phone Number:</span>
+                  <span>{{ driverData.phoneNumber || 'N/A' }}</span>
+                </div>
+                <div class="data-row">
+                  <span>National ID:</span>
+                  <span>{{ driverData.nationalId || 'N/A' }}</span>
+                </div>
+                <div class="data-row">
+                  <span>Email:</span>
+                  <span>{{ driverData.email || 'N/A' }}</span>
+                </div>
+                <div class="data-row">
+                  <span>State:</span>
+                  <span>
+                    <span :class="driverData.status === 'online' ? 'status-online' : 'status-offline'"></span>
+                    {{ driverData.status || 'Offline' }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -211,7 +223,7 @@
               :class="{ active: activeTab === 'block' }"
               @click="toggleBlock"
           >
-            {{ driverData.block ? 'Block' : 'Unblock' }}
+            {{ driverData.block ? 'Unblock' : 'Block' }}
           </button>
         </div>
       </section>
@@ -240,7 +252,7 @@ export default {
       baseUrl: 'https://backend.fego-rides.com',
       showImageModal: false,
       currentImageUrl: '',
-      activeTab: null // Track the active tab
+      activeTab: null
     };
   },
   computed: {
@@ -310,19 +322,13 @@ export default {
           cash: driver.dailayEarned || 0,
           wallet: driver.wallet || 0,
           block: driver.block,
+          profileImage: driver.profile_image || 'https://via.placeholder.com/150',
           trips: [],
-          // Cloudinary image URLs (assumed to be full URLs from the backend)
           driver_licence_image: driver.driver_licence_image || 'N/A',
           national_front: driver.national_front || 'N/A',
           national_back: driver.national_back || 'N/A',
           national_selfie: driver.national_selfie || 'N/A'
         };
-        console.log('Driver Data Images:', {
-          driver_licence_image: this.driverData.driver_licence_image,
-          national_front: this.driverData.national_front,
-          national_back: this.driverData.national_back,
-          national_selfie: this.driverData.national_selfie
-        });
       } catch (err) {
         this.error = 'Failed to load driver data. Please try again later.';
         console.error('Error fetching driver data:', err);
@@ -334,16 +340,15 @@ export default {
       if (!url || url === 'N/A' || typeof url !== 'string') {
         return null;
       }
-      // Ensure the URL starts with https://
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
         return `https://${url}`;
       }
       return url;
     },
-    openImage(imageUrl, tabName) {
+    openImage(imageUrl, tabName = null) {
       const validatedUrl = this.validateImageUrl(imageUrl);
       if (!validatedUrl) {
-        console.warn('Invalid image URL for', tabName, ':', imageUrl);
+        console.warn('Invalid image URL:', imageUrl);
         this.currentImageUrl = 'https://via.placeholder.com/400';
         this.$toast?.error('Image not available');
       } else {
@@ -351,7 +356,6 @@ export default {
       }
       this.showImageModal = true;
       this.activeTab = tabName;
-      console.log('Opening image:', validatedUrl, 'Tab:', tabName);
     },
     closeImage() {
       this.showImageModal = false;
@@ -378,14 +382,12 @@ export default {
 </script>
 
 <style scoped>
-/* Same styles as provided in the original code, no changes needed */
 .dashboard {
   display: flex;
   height: 100vh;
   font-family: 'Arial', sans-serif;
 }
 
-/* Main Content */
 .main-content {
   margin-left: 250px;
   flex: 1;
@@ -395,7 +397,6 @@ export default {
   transition: margin-left 0.3s ease;
 }
 
-/* Header */
 .header {
   display: flex;
   justify-content: space-between;
@@ -424,7 +425,6 @@ export default {
   cursor: pointer;
 }
 
-/* Driver Data Section */
 .driver-data {
   background-color: white;
   padding: 20px;
@@ -446,10 +446,46 @@ export default {
   border-radius: 8px;
 }
 
+.captain-card {
+  display: flex;
+}
+
+.profile-section {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.profile-image-container {
+  width: 150px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #8e44ad;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.profile-image:hover {
+  transform: scale(1.05);
+}
+
+.profile-info {
+  flex: 1;
+}
+
 .data-card h2 {
   color: #2c3e50;
   font-size: 18px;
   margin-top: 0;
+  margin-bottom: 15px;
 }
 
 .data-row {
@@ -527,7 +563,6 @@ export default {
   margin-right: 5px;
 }
 
-/* Summary Stats */
 .summary-stats {
   display: flex;
   justify-content: space-between;
@@ -561,7 +596,6 @@ export default {
 .stat-item:nth-child(5) { background-color: #7f8c8d; }
 .stat-item:nth-child(5) .icon { background-color: white; }
 
-/* Trip History Table */
 .trip-history table {
   width: 100%;
   border-collapse: collapse;
@@ -615,7 +649,6 @@ export default {
   cursor: not-allowed;
 }
 
-/* Tabs */
 .tabs {
   display: flex;
   gap: 10px;
@@ -640,7 +673,6 @@ export default {
   color: #34495e;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .main-content {
     margin-left: 80px;
@@ -652,6 +684,16 @@ export default {
 
   .data-cards {
     flex-direction: column;
+  }
+
+  .profile-section {
+    flex-direction: column;
+  }
+
+  .profile-image-container {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1/1;
   }
 
   .summary-stats {

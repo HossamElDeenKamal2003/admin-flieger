@@ -5,7 +5,6 @@
       <Sidebar />
     </div>
 
-
     <!-- Main Content -->
     <div class="main-content">
       <!-- Header -->
@@ -14,7 +13,8 @@
           <i class="fas fa-bars"></i>
         </div>
         <div class="greeting">
-          Good morning, MR.Fady 👋 <span class="notification">you have 1 new Captain's Request</span>
+          Good morning, {{adminUsername}} 👋
+          <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-actions">
           <i class="fas fa-search"></i>
@@ -129,6 +129,7 @@
 <script>
 import axios from 'axios';
 import Sidebar from "./sidebarComponent.vue"
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 export default {
   data() {
     return {
@@ -142,6 +143,7 @@ export default {
       currentMaxDistanceOffer: '',
       distanceInTrip: '',
       currentDistanceInTrip: '',
+      adminUsername: localStorage.getItem('username'),
       editing: {
         time: false,
         maxDistance: false,
@@ -151,6 +153,7 @@ export default {
     };
   },
   components: {
+    WaitingDriversNumber,
     Sidebar
   },
   created() {
@@ -268,7 +271,7 @@ export default {
 /* Sidebar */
 .sidebar {
   width: 220px;
-  background-color:#6b5b95;
+  background-color: #6b5b95;
   color: white;
   padding: 20px;
   display: flex;
@@ -325,7 +328,7 @@ export default {
   color: #d3d3d3;
 }
 
-span{
+span {
   color: red;
 }
 
@@ -340,14 +343,19 @@ span{
   flex: 1;
   padding: 20px;
   background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Header */
 .header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 20px;
+  width: 100%;
+  max-width: 600px;
 }
 
 .menu-icon i {
@@ -359,6 +367,8 @@ span{
 .greeting {
   font-size: 16px;
   color: #333;
+  flex: 1;
+  text-align: center;
 }
 
 .greeting .notification {
@@ -385,6 +395,9 @@ span{
 .settings-grid {
   display: grid;
   gap: 20px;
+  width: 100%;
+  max-width: 600px;
+  justify-content: center;
 }
 
 /* Setting Card */
@@ -395,6 +408,8 @@ span{
   padding: 20px;
   text-align: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  width: 500px;
+  margin: 0 auto;
 }
 
 .card-label {
