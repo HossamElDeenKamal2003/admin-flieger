@@ -16,7 +16,13 @@
     import DriverDetails from '@/components/getDriverbyId.vue';
     import UserDetails from '@/components/userDetails.vue';
     import WaitingDrivers from '@/components/waitingDrivers.vue';
+    import walletSystems from "@/components/walletSystems.vue";
     const routes = [
+        {
+          path: "/wallet-systems",
+          name: "walletSystems",
+          component: walletSystems
+        },
          {
             path: "/get-req",
             name: "getreqComponent",
@@ -133,7 +139,7 @@
         }
     },
     {
-        path: "/permission",
+        path: "/moderators",
         name: "permissionPage",
         component: permissionForm,
         beforeEnter: (to, from, next) => {
