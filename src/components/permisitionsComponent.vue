@@ -54,6 +54,39 @@
           </table>
         </div>
       </div>
+      <div class="role-descriptions">
+        <h3>Role Permissions</h3>
+        <table class="table table-bordered">
+          <thead>
+          <tr>
+            <th>Role</th>
+            <th>Permissions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Support 1</td>
+            <td>Has access to all dashboard pages, including Moderators</td>
+          </tr>
+          <tr>
+            <td>Support 2</td>
+            <td>Has access to waiting captains, trips, captains, users, and chat, but not Moderators</td>
+          </tr>
+          <tr>
+            <td>Support 3</td>
+            <td>Has access to trips, captains, users, and chat, but not Moderators</td>
+          </tr>
+          <tr>
+            <td>Support 4</td>
+            <td>Has access only to chat (no Moderators access)</td>
+          </tr>
+          <tr>
+            <td>Admin</td>
+            <td>Has access to all pages, including Moderators</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Form (shown conditionally) -->
       <div class="form" v-if="showForm">
@@ -326,5 +359,16 @@ export default {
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
+}
+.role-descriptions {
+  margin-top: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.role-descriptions h3 {
+  margin-bottom: 15px;
 }
 </style>
