@@ -32,24 +32,26 @@
         </div>
         <div class="ids">
           <div>
-            <h2>User Offer ID: <span>67b0ab0de5b7c6a23dbc461a</span><button @click="copyOfferId('user')" class="copy-button">📋</button></h2>
+            <h2>User Offer ID: <span>67b0ab0de5b7c6a23dbc461a</span> <button @click="copyOfferId('user')" class="copy-button">📋</button></h2>
           </div>
           <div>
-            <h2>Driver Offer ID: <span>67b0ab10e5b7c6a23dbc461d</span><button @click="copyOfferId('driver')" class="copy-button">📋</button></h2>
+            <h2>Driver Offer ID: <span>67b0ab10e5b7c6a23dbc461d</span> <button @click="copyOfferId('driver')" class="copy-button">📋</button></h2>
           </div>
         </div>
         <!-- Offer Management -->
-        <div class="offer-management-card">
-          <h3>Offer Management</h3>
-          <input v-model="updateData.id" placeholder="Enter Offer ID" />
-          <input v-model="updateData.days" type="number" placeholder="Enter Days" />
-          <input v-model="updateData.amount" type="number" placeholder="Enter Amount" />
-          <button @click="updateDiscountOptions">Confirm</button>
-          <p v-if="offers.length > 0 && offers[0].updatedAt">Last Updated: {{ formatDate(offers[0].updatedAt) }}</p>
+        <div class="offer-management-wrapper">
+          <div class="offer-management-card">
+            <h3>Offer Management</h3>
+            <input v-model="updateData.id" placeholder="Enter Offer ID" />
+            <input v-model="updateData.days" type="number" placeholder="Enter Days" />
+            <input v-model="updateData.amount" type="number" placeholder="Enter Amount" />
+            <button @click="updateDiscountOptions">Confirm</button>
+            <p v-if="offers.length > 0 && offers[0].updatedAt">Last Updated: {{ formatDate(offers[0].updatedAt) }}</p>
+          </div>
         </div>
 
         <!-- User Offer Applay and Captain Offer Applay (Side by Side) -->
-        <div class="offer-apply-row" >
+        <div class="offer-apply-row">
           <!-- User Offer Applay -->
           <div class="offer-apply-card">
             <h3>User Offer Applay</h3>
@@ -351,6 +353,7 @@ export default {
 /* IDs Section */
 .ids {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 20px;
   margin-bottom: 20px;
@@ -362,10 +365,20 @@ export default {
   font-size: 18px;
   cursor: pointer;
   padding: 2px;
+  margin-left: 5px;
 }
 
 .copy-button:hover {
   opacity: 0.7;
+}
+
+/* Offer Management Wrapper for Centering */
+.offer-management-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  margin-bottom: 20px;
 }
 
 /* Offer Management Card */
@@ -374,7 +387,7 @@ export default {
   border: 2px solid #8e44ad;
   border-radius: 8px;
   background-color: white;
-  margin-bottom: 20px;
+  width: 50%;
 }
 
 .offer-management-card h3 {
@@ -479,9 +492,8 @@ p {
   margin: 10px 0 0;
   font-size: 14px;
 }
-
-.ids{
-  display: flex;
-  justify-content: space-between;
+h3{
+  text-align: center;
+  font-weight: bold;
 }
 </style>
