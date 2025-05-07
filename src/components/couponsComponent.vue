@@ -332,7 +332,7 @@ export default {
 /* Messages Row */
 .messages-row {
   display: flex;
-  gap: 20px;
+  gap: 150px;
   margin-bottom: 20px;
 }
 
@@ -399,7 +399,7 @@ export default {
 /* Offer Apply Row */
 .offer-apply-row {
   display: flex;
-  gap: 20px;
+  gap: 150px;
   margin-bottom: 20px;
 }
 
