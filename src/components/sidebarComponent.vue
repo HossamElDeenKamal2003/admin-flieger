@@ -18,6 +18,7 @@
         </li>
       </ul>
     </div>
+    <button @click="logout">Logout</button>
     <button class="toggle-btn" @click="toggleSidebar">
       <i :class="isCollapsed ? 'icon expand' : 'icon collapse'"></i>
     </button>
@@ -58,6 +59,10 @@ export default {
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
+    logout(){
+      localStorage.clear();
+      this.$router.push('/');
+    },
     handleResize() {
       this.isCollapsed = window.innerWidth <= 768;
       this.$emit('toggle', this.isCollapsed);
