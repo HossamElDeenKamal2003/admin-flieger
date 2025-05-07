@@ -30,7 +30,14 @@
             <p v-if="driverMessage.updatedAt">Last Updated: {{ formatDate(driverMessage.updatedAt) }}</p>
           </div>
         </div>
-
+        <div class="ids">
+          <div>
+            <h2>User Offer ID: <span>67b0ab0de5b7c6a23dbc461a</span><button @click="copyOfferId('user')" class="copy-button">📋</button></h2>
+          </div>
+          <div>
+            <h2>Driver Offer ID: <span>67b0ab10e5b7c6a23dbc461d</span><button @click="copyOfferId('driver')" class="copy-button">📋</button></h2>
+          </div>
+        </div>
         <!-- Offer Management -->
         <div class="offer-management-card">
           <h3>Offer Management</h3>
@@ -42,7 +49,7 @@
         </div>
 
         <!-- User Offer Applay and Captain Offer Applay (Side by Side) -->
-        <div class="offer-apply-row">
+        <div class="offer-apply-row" >
           <!-- User Offer Applay -->
           <div class="offer-apply-card">
             <h3>User Offer Applay</h3>
@@ -124,7 +131,6 @@ export default {
         const response = await axios.get(`${baseUrl}/getOffers`);
         this.offers = response.data.discount;
 
-        // Populate initial message data if available
         const userOffer = this.offers.find(offer => offer.type === 'user');
         const driverOffer = this.offers.find(offer => offer.type === 'driver');
 
@@ -227,6 +233,16 @@ export default {
       if (!date) return '';
       const d = new Date(date);
       return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}, ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+    },
+    copyOfferId(type) {
+      const id = type === 'user' ? '67b0ab0de5b7c6a23dbc461a' : '67b0ab10e5b7c6a23dbc461d';
+      navigator.clipboard.writeText(id)
+          .then(() => {
+            alert(`${type === 'user' ? 'User Offer ID' : 'Driver Offer ID'} copied to clipboard!`);
+          })
+          .catch(err => {
+            console.error(`Failed to copy ${type} offer ID: `, err);
+          });
     }
   }
 };
@@ -330,6 +346,26 @@ export default {
   color: #2c3e50;
   margin-top: 0;
   font-size: 18px;
+}
+
+/* IDs Section */
+.ids {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.copy-button:hover {
+  opacity: 0.7;
 }
 
 /* Offer Management Card */
@@ -442,5 +478,10 @@ p {
   color: #7f8c8d;
   margin: 10px 0 0;
   font-size: 14px;
+}
+
+.ids{
+  display: flex;
+  justify-content: space-between;
 }
 </style>
