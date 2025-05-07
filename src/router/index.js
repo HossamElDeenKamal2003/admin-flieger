@@ -17,7 +17,13 @@
     import UserDetails from '@/components/userDetails.vue';
     import WaitingDrivers from '@/components/waitingDrivers.vue';
     import walletSystems from "@/components/walletSystems.vue";
+    import confirmRequest from '@/components/confirmRequests.vue';
     const routes = [
+        {
+          path: '/confirm-requests',
+          name: 'confirmRequest',
+          component: confirmRequest
+        },
         {
           path: "/wallet-systems",
           name: "walletSystems",

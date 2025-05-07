@@ -40,6 +40,7 @@ export default {
         { name: 'Settings', icon: 'settings', route: '/admin/settings' },
         { name: 'Level', icon: 'settings', route: '/levels' },
         { name: 'Get Requests', icon: 'get req', route: '/get-req' },
+        {name: 'Confirm Requests', icon: 'confirm req', route: '/confirm-requests'},
         { name: 'Driver Signup', icon: "sdfdf", route: '/driver-signup' },
 
       ],
