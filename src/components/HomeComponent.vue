@@ -25,21 +25,21 @@
             <span>Total Orders</span>
             <i class="fas fa-chevron-right"></i>
           </div>
-          <p class="card-value">100</p>
+          <p class="card-value">{{this.totalTrips}}</p>
         </div>
         <div class="card">
           <div class="card-header">
             <span>Total Earnings</span>
             <i class="fas fa-chevron-right"></i>
           </div>
-          <p class="card-value">500 EGP</p>
+          <p class="card-value">{{totalEarnings}}</p>
         </div>
         <div class="card">
           <div class="card-header">
             <span>Profit</span>
             <i class="fas fa-chevron-right"></i>
           </div>
-          <p class="card-value">200 EGP</p>
+          <p class="card-value">{{profit}}</p>
         </div>
       </div>
 
@@ -147,6 +147,9 @@ export default {
       isSidebarExpanded: true,
       topCaptains: [],
       topUsers: [],
+      totalTrips: 0,
+      profit: 0,
+      totalEarnings: 0,
       adminUsername: localStorage.getItem('username'),
     };
   },
@@ -157,6 +160,15 @@ export default {
   methods: {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
+    },
+    async fetchData() {
+      axios.get('https://backend.fego-rides.com/book/totalOrders').then(response => {
+        this.totalTrips = response.data.totalTrips;
+        this.profit = response.data.profit;
+        this.totalEarnings = response.data.totalCommission;
+      }).catch(error => {
+        console.log(error);
+      });
     },
     async fetchTopCaptains() {
       try {
@@ -216,6 +228,9 @@ export default {
         }];
       }
     },
+  },
+  created(){
+    this.fetchData()
   },
   async mounted() {
     await Promise.all([this.fetchTopCaptains(), this.fetchTopUsers()]);

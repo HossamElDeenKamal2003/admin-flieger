@@ -8,8 +8,7 @@
       <!-- Header -->
       <header class="header">
         <div class="greeting">
-          <h1>Good morning, MR. {{ adminName }}<span class="wave">👋</span></h1>
-          <p v-if="newRequestsCount > 0">you have {{ newRequestsCount }} new Captain's Request</p>
+          <WaitingDriversNumber />
         </div>
         <div class="header-icons">
           <i class="icon notifications"></i>
@@ -39,32 +38,37 @@
                     :src="driverData.profileImage"
                     alt="Captain Profile"
                     class="profile-image"
-                    @click="openImage(driverData.profileImage)"
+                    @click="openImage(driverData.profileImage, 'profileImage')"
                 >
+                <input type="file" @change="uploadImage('profileImage', $event)" class="file-input" />
               </div>
               <div class="profile-info">
-                <h2>Captain Data</h2>
+                <h2><input v-model="profileInfoTitle" @change="updateField('profileInfoTitle', profileInfoTitle)" /></h2>
                 <div class="data-row">
                   <span>Name:</span>
-                  <span>{{ driverData.name || 'N/A' }}</span>
+                  <input v-model="driverData.name" @change="updateField('name', driverData.name)" />
                 </div>
                 <div class="data-row">
                   <span>Phone Number:</span>
-                  <span>{{ driverData.phoneNumber || 'N/A' }}</span>
+                  <input v-model="driverData.phoneNumber" @change="updateField('phoneNumber', driverData.phoneNumber)" />
                 </div>
                 <div class="data-row">
                   <span>National ID:</span>
-                  <span>{{ driverData.nationalId || 'N/A' }}</span>
+                  <input v-model="driverData.nationalId" @change="updateField('nationalId', driverData.nationalId)" />
                 </div>
                 <div class="data-row">
                   <span>Email:</span>
-                  <span>{{ driverData.email || 'N/A' }}</span>
+                  <input v-model="driverData.email" @change="updateField('email', driverData.email)" />
                 </div>
                 <div class="data-row">
                   <span>State:</span>
-                  <span>
-                    <span :class="driverData.status === 'online' ? 'status-online' : 'status-offline'"></span>
-                    {{ driverData.status || 'Offline' }}
+                  <span>{{ driverData.status || 'N/A' }}</span>
+                  <span :class="driverData.status === 'online' ? 'status-online' : 'status-offline'"></span>
+                </div>
+                <div class="data-row">
+                  <span>Block Status:</span>
+                  <span :class="driverData.block ? 'status-blocked' : 'status-enabled'">
+                    {{ driverData.block ? 'Driver is blocked' : 'Driver is unblocked' }}
                   </span>
                 </div>
               </div>
@@ -73,29 +77,27 @@
 
           <!-- Vehicle Data -->
           <div class="data-card">
-            <h2>Vehicle Data</h2>
+            <h2><input v-model="vehicleDataTitle" @change="updateField('vehicleDataTitle', vehicleDataTitle)" /></h2>
             <div class="data-row">
               <span>Vehicle:</span>
-              <span>{{ driverData.vehicle || 'N/A' }}</span>
+              <input v-model="driverData.vehicle" @change="updateField('vehicle', driverData.vehicle)" />
             </div>
             <div class="data-row">
               <span>Brand:</span>
-              <span>{{ driverData.brand || 'N/A' }}</span>
+              <input v-model="driverData.brand" @change="updateField('brand', driverData.brand)" />
             </div>
             <div class="data-row">
               <span>Model:</span>
-              <span>{{ driverData.model || 'N/A' }}</span>
+              <input v-model="driverData.model" @change="updateField('model', driverData.model)" />
             </div>
             <div class="data-row">
               <span>NO Plate:</span>
-              <span>{{ driverData.plate || 'N/A' }}</span>
+              <input v-model="driverData.plate" @change="updateField('plate', driverData.plate)" />
             </div>
             <div class="data-row">
               <span>Color:</span>
-              <span>
-                <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
-                {{ driverData.color || 'N/A' }}
-              </span>
+              <input v-model="driverData.color" @change="updateField('color', driverData.color)" />
+              <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
             </div>
           </div>
         </div>
@@ -103,24 +105,50 @@
         <!-- Summary Stats -->
         <div class="summary-stats">
           <div class="stat-item">
-            <span class="icon confirmed"></span>
+            <button class="icon confirmed" @click="filterTrips(['end'])"></button>
             Confirmed Trips {{ driverData.confirmedTrips || 0 }}
           </div>
           <div class="stat-item">
-            <span class="icon cancelled"></span>
+            <button class="icon cancelled" @click="filterTrips('cancelled')"></button>
             Cancelled Trips {{ driverData.cancelledTrips || 0 }}
           </div>
           <div class="stat-item">
             <span class="icon rating"></span>
-            Rate {{ driverData.rating || 0 }}
+            Rate <input v-model.number="driverData.rating" @change="updateField('rating', driverData.rating)" />
           </div>
           <div class="stat-item">
             <span class="icon cash"></span>
-            Cash {{ driverData.cash || 0 }}
+            Cash <input v-model.number="driverData.cash" @change="updateField('cash', driverData.cash)" />
           </div>
           <div class="stat-item">
             <span class="icon wallet"></span>
-            Wallet {{ driverData.wallet || 0 }} EGP
+            Wallet <input v-model.number="driverData.wallet" @change="updateField('wallet', driverData.wallet)" /> EGP
+          </div>
+        </div>
+
+        <!-- Tabs for Additional Images and Block -->
+        <div class="tabs">
+          <button
+              v-for="(label, index) in tabLabels"
+              :key="index"
+              :class="{ 'tab': true, 'active': activeTab === label.toLowerCase().replace(/\s/g, '') }"
+              @click="handleTabClick(label.toLowerCase().replace(/\s/g, ''))"
+          >
+            {{ label === 'Block' ? (driverData.block ? 'Unblock' : 'Block') : label }}
+          </button>
+        </div>
+
+        <!-- Image Modal -->
+        <div v-if="showImageModal" class="modal-overlay" @click="closeImage">
+          <div class="modal-content" @click.stop>
+            <img
+                :src="currentImageUrl"
+                alt="Driver Image"
+                @error="handleImageError"
+            >
+            <input type="file" ref="imageUpload" @change="updateImage" class="file-input-modal" />
+            <button class="update-button" @click="triggerImageUpload">Update Image</button>
+            <button class="close-button" @click="closeImage">Close</button>
           </div>
         </div>
 
@@ -129,31 +157,31 @@
           <table>
             <thead>
             <tr>
-              <th>Nº</th>
-              <th>Date</th>
-              <th>Trip ID</th>
-              <th>Comment</th>
-              <th>Value</th>
-              <th>Cash</th>
-              <th>Wallet</th>
-              <th>Trip State</th>
+              <th>{{ tripHeaders[0] }}</th>
+              <th>{{ tripHeaders[1] }}</th>
+              <th>{{ tripHeaders[2] }}</th>
+              <th>{{ tripHeaders[3] }}</th>
+              <th>{{ tripHeaders[4] }}</th>
+              <th>{{ tripHeaders[5] }}</th>
+              <th>{{ tripHeaders[6] }}</th>
+              <th>{{ tripHeaders[7] }}</th>
+              <th>Actions</th>
             </tr>
             </thead>
             <tbody>
-            <tr v-for="(trip, index) in paginatedTrips" :key="trip.id">
+            <tr v-for="(trip, index) in paginatedTrips" :key="trip._id">
               <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
               <td>{{ trip.date || 'N/A' }}</td>
-              <td>{{ trip.tripId || 'N/A' }}</td>
+              <td>{{ trip.uniqueId || 'N/A' }}</td>
               <td>{{ trip.comment || 'N/A' }}</td>
-              <td>{{ trip.value || 0 }}</td>
-              <td>{{ trip.cash || 0 }}</td>
-              <td>{{ trip.wallet || 0 }}</td>
-              <td :class="trip.status === 'CANCELLED' ? 'status-cancelled' : ''">
-                {{ trip.status || 'N/A' }}
-              </td>
+              <td>{{ trip.cost || 0 }}</td>
+              <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.payCash || 'N/A' }}</td>
+              <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.payWallet || 'N/A' }}</td>
+              <td :class="{'status-end': trip.status === 'end', 'status-cancelled': trip.status === 'cancelled'}">{{ trip.status || 'N/A' }}</td>
+              <td><button @click="openEditModal(trip)">Edit</button></td>
             </tr>
             <tr v-if="paginatedTrips.length === 0">
-              <td colspan="8" class="no-data">No trip history found</td>
+              <td colspan="9" class="no-data">No trip history found</td>
             </tr>
             </tbody>
           </table>
@@ -161,108 +189,154 @@
           <!-- Table Footer -->
           <div class="table-footer">
             <div>
-              <p>Total Trips: {{ driverData.trips?.length || 0 }}</p>
+              <p>Total Trips: {{ totalTrips || 0 }}</p>
             </div>
             <div class="pagination">
               <span>
-                {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, driverData.trips?.length || 0) }}
-                of {{ driverData.trips?.length || 0 }} items
+                {{ paginationStartComputed }}-{{ paginationEndComputed }}
+                of {{ totalItemsComputed }} items
               </span>
-              <button :disabled="currentPage === 1" @click="currentPage--">&lt;</button>
+              <button :disabled="currentPage === 1" @click="currentPage--">prev</button>
               <button>{{ currentPage }}</button>
-              <button :disabled="currentPage >= totalPages" @click="currentPage++">&gt;</button>
+              <button :disabled="currentPage >= totalPages" @click="currentPage++">next</button>
             </div>
           </div>
         </div>
 
-        <!-- Image Modal -->
-        <div v-if="showImageModal" class="modal-overlay" @click="closeImage">
-          <div class="modal-content" @click.stop style="max-width: 25%">
-            <img
-                :src="currentImageUrl || 'https://via.placeholder.com/400'"
-                alt="Document Image"
-                @error="handleImageError"
-                style="max-width: 100%; height: auto;"
-            />
-            <button class="close-button" @click="closeImage">Close</button>
+        <!-- Edit Trip Modal -->
+        <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
+          <div class="modal-content" @click.stop>
+            <h3>Edit Trip - {{ selectedTrip.uniqueId }}</h3>
+            <div class="modal-field">
+              <label>Date:</label>
+              <input v-model="selectedTrip.date" @change="updateTrip(selectedTrip._id, 'date', selectedTrip.date)" />
+            </div>
+            <div class="modal-field">
+              <label>Trip ID:</label>
+              <input v-model="selectedTrip.uniqueId" @change="updateTrip(selectedTrip._id, 'uniqueId', selectedTrip.uniqueId)" />
+            </div>
+            <div class="modal-field">
+              <label>Comment:</label>
+              <input v-model="selectedTrip.comment" @change="updateTrip(selectedTrip._id, 'comment', selectedTrip.comment)" />
+            </div>
+            <div class="modal-field">
+              <label>Cost:</label>
+              <input v-model.number="selectedTrip.cost" @change="updateTrip(selectedTrip._id, 'cost', selectedTrip.cost)" />
+            </div>
+            <div class="modal-field">
+              <label>Pay Cash:</label>
+              <input v-model.number="selectedTrip.driverMoneyFlowId.flow[0].payCash" @change="updateTrip(selectedTrip._id, 'payCash', selectedTrip.driverMoneyFlowId.flow[0].payCash)" />
+            </div>
+            <div class="modal-field">
+              <label>Pay Wallet:</label>
+              <input v-model.number="selectedTrip.driverMoneyFlowId.flow[0].payWallet" @change="updateTrip(selectedTrip._id, 'payWallet', selectedTrip.driverMoneyFlowId.flow[0].payWallet)" />
+            </div>
+            <div class="modal-field">
+              <label>Status:</label>
+              <select v-model="selectedTrip.status" @change="updateTrip(selectedTrip._id, 'status', selectedTrip.status)">
+                <option value="end">End</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="modal-buttons">
+              <button @click="saveTripChanges">Update</button>
+              <button @click="closeEditModal">Close</button>
+            </div>
           </div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs" v-if="driverData">
-          <button
-              class="tab"
-              :class="{ active: activeTab === 'license' }"
-              @click="openImage(driverData.driver_licence_image, 'license')"
-          >
-            Licence
-          </button>
-          <button
-              class="tab"
-              :class="{ active: activeTab === 'national_front' }"
-              @click="openImage(driverData.national_front, 'national_front')"
-          >
-            National ID Front
-          </button>
-          <button
-              class="tab"
-              :class="{ active: activeTab === 'national_back' }"
-              @click="openImage(driverData.national_back, 'national_back')"
-          >
-            National ID Back
-          </button>
-          <button
-              class="tab"
-              :class="{ active: activeTab === 'national_selfie' }"
-              @click="openImage(driverData.national_selfie, 'national_selfie')"
-          >
-            Selfie With ID
-          </button>
-          <button
-              class="tab"
-              :class="{ active: activeTab === 'block' }"
-              @click="toggleBlock"
-          >
-            {{ driverData.block ? 'Unblock' : 'Block' }}
-          </button>
         </div>
       </section>
     </main>
   </div>
 </template>
-
 <script>
 import Sidebar from './sidebarComponent.vue';
 import axios from 'axios';
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   components: {
+    WaitingDriversNumber,
     Sidebar
   },
   data() {
     return {
+      trips: [],
+      cancelledTrips: [],
       isSidebarCollapsed: false,
       driverData: null,
       adminName: localStorage.getItem('username') || 'Admin',
       newRequestsCount: 0,
       currentPage: 1,
-      itemsPerPage: 3,
+      itemsPerPage: 10,
       loading: false,
       error: null,
       baseUrl: 'https://backend.fego-rides.com',
       showImageModal: false,
       currentImageUrl: '',
-      activeTab: null
+      activeTab: null,
+      profileInfoTitle: 'Captain Data',
+      vehicleDataTitle: 'Vehicle Data',
+      tripHeaders: ['Nº', 'Date', 'Trip ID', 'Comment', 'Value', 'Cash', 'Wallet', 'Trip State'],
+      tabLabels: ['Profile Image', 'Licence', 'National ID Front', 'National ID Back', 'Selfie With ID', 'Block'],
+      totalTrips: 0,
+      paginationStart: 0,
+      paginationEnd: 0,
+      totalItems: 0,
+      showEditModal: false,
+      selectedTrip: {},
+      filterStatus: null,
+      imageFieldToUpdate: null,
     };
   },
   computed: {
     paginatedTrips() {
+      let filteredTrips = this.trips;
+      if (this.filterStatus) {
+        if (Array.isArray(this.filterStatus)) {
+          filteredTrips = this.trips.filter(trip => this.filterStatus.includes(trip.status));
+        } else {
+          filteredTrips = this.trips.filter(trip => trip.status === this.filterStatus);
+        }
+      }
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.driverData?.trips?.slice(start, end) || [];
+      return filteredTrips.slice(start, end) || [];
+    },
+    paginationStartComputed() {
+      return (this.currentPage - 1) * this.itemsPerPage + 1;
+    },
+    paginationEndComputed() {
+      const end = (this.currentPage - 1) * this.itemsPerPage + this.itemsPerPage;
+      return Math.min(end, this.paginatedTrips.length || 0);
+    },
+    totalItemsComputed() {
+      if (this.filterStatus) {
+        if (Array.isArray(this.filterStatus)) {
+          return this.trips.filter(trip => this.filterStatus.includes(trip.status)).length;
+        }
+        return this.trips.filter(trip => trip.status === this.filterStatus).length;
+      }
+      return this.trips.length || 0;
+    },
+    totalTripsComputed() {
+      return this.totalItemsComputed;
     },
     totalPages() {
-      return Math.ceil((this.driverData?.trips?.length || 0) / this.itemsPerPage);
+      return Math.ceil((this.totalItemsComputed || 0) / this.itemsPerPage);
+    }
+  },
+  watch: {
+    paginationStartComputed(newValue) {
+      this.paginationStart = newValue;
+    },
+    paginationEndComputed(newValue) {
+      this.paginationEnd = newValue;
+    },
+    totalItemsComputed(newValue) {
+      this.totalItems = newValue;
+    },
+    totalTripsComputed(newValue) {
+      this.totalTrips = newValue;
     }
   },
   methods: {
@@ -276,10 +350,28 @@ export default {
         this.isSidebarCollapsed = false;
       }
     },
+    handleTabClick(tabName) {
+      this.activeTab = tabName;
+      if (tabName === 'block') {
+        this.toggleBlock();
+      } else {
+        const imageFields = {
+          profileimage: 'profileImage',
+          licence: 'driver_licence_image',
+          nationalidfront: 'national_front',
+          nationalidback: 'national_back',
+          selfiewithid: 'national_selfie'
+        };
+        const field = imageFields[tabName];
+        if (field && this.driverData[field]) {
+          this.imageFieldToUpdate = field;
+          this.openImage(this.driverData[field], tabName);
+        }
+      }
+    },
     async toggleBlock() {
       try {
         this.loading = true;
-        this.activeTab = 'block';
         const driverId = this.$route.params.driverId;
         const currentBlockStatus = this.driverData.block;
         const newBlockStatus = !currentBlockStatus;
@@ -289,7 +381,7 @@ export default {
         });
 
         this.driverData.block = newBlockStatus;
-        alert(`Driver ${newBlockStatus ? 'unblocked' : 'blocked'} successfully`);
+        alert(`Driver ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
       } catch (error) {
         console.error('Error toggling block status:', error);
         this.$toast?.error('Failed to update block status');
@@ -323,7 +415,7 @@ export default {
           wallet: driver.wallet || 0,
           block: driver.block,
           profileImage: driver.profile_image || 'https://via.placeholder.com/150',
-          trips: [],
+          trips: driver.trips || [],
           driver_licence_image: driver.driver_licence_image || 'N/A',
           national_front: driver.national_front || 'N/A',
           national_back: driver.national_back || 'N/A',
@@ -361,15 +453,138 @@ export default {
       this.showImageModal = false;
       this.currentImageUrl = '';
       this.activeTab = null;
+      this.imageFieldToUpdate = null;
     },
     handleImageError() {
       console.error('Failed to load image:', this.currentImageUrl);
       this.currentImageUrl = 'https://via.placeholder.com/400';
       this.$toast?.error('Failed to load image');
+    },
+    triggerImageUpload() {
+      this.$refs.imageUpload.click();
+    },
+    async updateImage(event) {
+      try {
+        this.loading = true;
+        const driverId = this.$route.params.driverId;
+        const file = event.target.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('fieldName', this.imageFieldToUpdate);
+
+        const response = await axios.post(`${this.baseUrl}/authdriver/upload-image/${driverId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        this.driverData[this.imageFieldToUpdate] = response.data.imageUrl;
+        this.currentImageUrl = response.data.imageUrl;
+        alert(`${this.imageFieldToUpdate} updated successfully`);
+      } catch (error) {
+        console.error(`Error uploading ${this.imageFieldToUpdate}:`, error);
+        this.$toast?.error(`Failed to upload ${this.imageFieldToUpdate}`);
+        await this.fetchDriverData();
+      } finally {
+        this.loading = false;
+        this.$refs.imageUpload.value = '';
+      }
+    },
+    async updateField(fieldName, value) {
+      try {
+        this.loading = true;
+        const driverId = this.$route.params.driverId;
+        await axios.patch(`${this.baseUrl}/authdriver/update-field/${driverId}`, {
+          [fieldName]: value
+        });
+        alert(`${fieldName} updated successfully`);
+      } catch (error) {
+        console.error(`Error updating ${fieldName}:`, error);
+        this.$toast?.error(`Failed to update ${fieldName}`);
+        await this.fetchDriverData();
+      } finally {
+        this.loading = false;
+      }
+    },
+    async getTrips() {
+      const driverId = this.$route.params.driverId;
+      axios.post('https://backend.fego-rides.com/wallet/filterTripsWithMoneyFlow', {
+        id: driverId,
+        type: "driver",
+        page: 1
+      }).then((response) => {
+        this.trips = response.data.trips;
+        this.cancelledTrips = response.data.cancelledTrips;
+      }).catch(error => {
+        console.log(error);
+        alert(error.message);
+      });
+    },
+    async updateTrip(tripId, fieldName, value) {
+      try {
+        this.loading = true;
+        const driverId = this.$route.params.driverId;
+        const payload = {};
+        if (fieldName === 'all') {
+          payload.trip = value;
+        } else if (fieldName.includes('.')) {
+          const [parent, child] = fieldName.split('.');
+          payload[parent] = { [child]: value };
+        } else {
+          payload[fieldName] = value;
+        }
+        await axios.patch(`${this.baseUrl}/authdriver/update-trip/${driverId}`, {
+          tripId,
+          ...payload
+        });
+        alert(`${fieldName} for trip ${tripId} updated successfully`);
+      } catch (error) {
+        console.error(`Error updating trip ${tripId} ${fieldName}:`, error);
+        this.$toast?.error(`Failed to update trip ${tripId} ${fieldName}`);
+        await this.fetchDriverData();
+      } finally {
+        this.loading = false;
+      }
+    },
+    async uploadImage(fieldName, event) {
+      try {
+        this.loading = true;
+        const driverId = this.$route.params.driverId;
+        const file = event.target.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('fieldName', fieldName);
+
+        const response = await axios.post(`${this.baseUrl}/authdriver/upload-image/${driverId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        this.driverData[fieldName] = response.data.imageUrl;
+        alert(`${fieldName} updated successfully`);
+      } catch (error) {
+        console.error(`Error uploading ${fieldName}:`, error);
+        this.$toast?.error(`Failed to upload ${fieldName}`);
+        await this.fetchDriverData();
+      } finally {
+        this.loading = false;
+      }
+    },
+    openEditModal(trip) {
+      this.selectedTrip = { ...trip };
+      this.showEditModal = true;
+    },
+    closeEditModal() {
+      this.showEditModal = false;
+      this.selectedTrip = {};
+    },
+    saveTripChanges() {
+      this.updateTrip(this.selectedTrip._id, 'all', this.selectedTrip);
+      this.closeEditModal();
+    },
+    filterTrips(status) {
+      this.filterStatus = status;
+      this.currentPage = 1;
     }
   },
   created() {
     this.fetchDriverData();
+    this.getTrips();
   },
   mounted() {
     this.handleResize();
@@ -380,7 +595,6 @@ export default {
   }
 };
 </script>
-
 <style scoped>
 .dashboard {
   display: flex;
@@ -463,6 +677,7 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid #8e44ad;
+  position: relative;
 }
 
 .profile-image {
@@ -477,6 +692,16 @@ export default {
   transform: scale(1.05);
 }
 
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .profile-info {
   flex: 1;
 }
@@ -486,6 +711,21 @@ export default {
   font-size: 18px;
   margin-top: 0;
   margin-bottom: 15px;
+}
+
+.data-card h2 input,
+.greeting h1 input,
+.greeting p input,
+.data-row input,
+.summary-stats input,
+.trip-history td input,
+.modal-field input,
+.modal-field select {
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 60%;
+  margin: 0 5px;
 }
 
 .data-row {
@@ -520,6 +760,9 @@ export default {
   max-width: 90%;
   max-height: 90%;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .modal-content img {
@@ -528,14 +771,28 @@ export default {
   max-height: 80vh;
 }
 
-.close-button {
+.close-button,
+.update-button {
   margin-top: 10px;
-  background-color: #ff4d4d;
-  border: none;
   padding: 8px 16px;
-  color: white;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.close-button {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.update-button {
+  background-color: #6b48ff;
+  color: white;
+  margin-right: 10px;
+}
+
+.file-input-modal {
+  display: none;
 }
 
 .status-online,
@@ -553,6 +810,16 @@ export default {
 
 .status-offline {
   background-color: #ff4d4f;
+}
+
+.status-enabled {
+  color: #28c76f;
+  font-weight: 600;
+}
+
+.status-blocked {
+  color: #ff4d4f;
+  font-weight: 600;
 }
 
 .color-dot {
@@ -615,8 +882,12 @@ export default {
   color: #34495e;
 }
 
+.status-end {
+  color: purple;
+}
+
 .status-cancelled {
-  color: #ff4d4f;
+  color: red;
 }
 
 .table-footer {
@@ -764,5 +1035,55 @@ export default {
   text-align: center;
   padding: 20px;
   color: #888;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-field {
+  margin-bottom: 15px;
+}
+
+.modal-field label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-buttons button:first-child {
+  background-color: #6b48ff;
+  color: white;
+}
+
+.modal-buttons button:last-child {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.trip-history table td button {
+  padding: 5px 10px;
+  background-color: #6b48ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

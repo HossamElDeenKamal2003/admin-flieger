@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -88,14 +87,12 @@
             <td>{{ captain.phoneNumber || 'N/A' }}</td>
             <td>{{ captain.ctr || 0 }}</td>
             <td>
-                <span class="status-container">
-                  <span :class="captain.status?.toLowerCase() === 'online' ? 'status-dot-online' : 'status-dot-offline'" :title="`Status: ${captain.status}`"></span>
-                  <span class="status-text">{{ captain.status || 'Offline' }}</span>
-                </span>
+              <span class="status-container">
+                <span :class="captain.status?.toLowerCase() === 'online' ? 'status-dot-online' : 'status-dot-offline'" :title="`Status: ${captain.status}`"></span>
+                <span class="status-text">{{ captain.status || 'Offline' }}</span>
+              </span>
             </td>
-            <td @click.stop>
-              <input type="number" v-model="captain.wallet" @change="updateWallet(captain._id, $event.target.value)" />
-            </td>
+            <td>{{ captain.wallet || 0 }}</td>
             <td>{{ captain.licence_expire_date || 'N/A' }}</td>
             <td @click.stop>
               <router-link
@@ -106,9 +103,9 @@
               </router-link>
             </td>
             <td @click.stop>
-                <span :class="captain.block ? 'status-enabled' : 'status-blocked'">
-                  {{ captain.block ? 'ENABLED' : 'BLOCKED' }}
-                </span>
+              <span :class="captain.block ? 'status-enabled' : 'status-blocked'">
+                {{ captain.block ? 'ENABLED' : 'BLOCKED' }}
+              </span>
             </td>
           </tr>
           <tr v-if="paginatedCaptains.length === 0">
@@ -229,23 +226,6 @@ export default {
     },
     goToDriverDetails(driverId) {
       this.$router.push({ name: 'DriverDetails', params: { driverId } });
-    },
-    async updateWallet(driverId, newWalletValue) {
-      try {
-        // Make an API call to update the wallet value on the backend
-        await axios.patch(`${this.baseUrl}/update-wallet`, {
-          driverId: driverId,
-          wallet: parseFloat(newWalletValue) || 0
-        });
-        // Optionally, refresh the drivers list to reflect the updated wallet
-        await this.getDrivers();
-        alert('Wallet updated successfully!');
-      } catch (error) {
-        console.error('Error updating wallet:', error);
-        alert('Failed to update wallet: ' + (error.response?.data?.message || error.message));
-        // Revert the wallet value in case of an error
-        await this.getDrivers();
-      }
     }
   },
   watch: {
@@ -524,4 +504,3 @@ th {
   margin-left: 250px;
 }
 </style>
-```
