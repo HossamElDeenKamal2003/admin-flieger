@@ -92,8 +92,9 @@
                 <span class="status-text">{{ captain.status || 'Offline' }}</span>
               </span>
             </td>
-            <td>{{ captain.wallet || 0 }}</td>
-            <td>{{ captain.licence_expire_date || 'N/A' }}</td>
+            <td>
+              <input type="number" v-model="captain.wallet" />
+            </td>            <td>{{ captain.licence_expire_date || 'N/A' }}</td>
             <td @click.stop>
               <router-link
                   :to="{ name: 'DriverDetails', params: { driverId: captain._id } }"

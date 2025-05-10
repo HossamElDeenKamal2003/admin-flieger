@@ -23,7 +23,7 @@
           </tr>
           </thead>
           <tbody>
-          <tr class="row-grey">
+          <tr>
             <td>Car</td>
             <td><input type="number" v-model="currentPrices.level1.priceCar" @change="handlePriceChange('level1', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level2.priceCar" @change="handlePriceChange('level2', 'priceCar')"></td>
@@ -31,7 +31,7 @@
             <td><input type="number" v-model="currentPrices.level4.priceCar" @change="handlePriceChange('level4', 'priceCar')"></td>
             <td><input type="number" v-model="fixedAmounts.fixedAmountcar" @change="handleFixedAmountChange('fixedAmountcar')"></td>
           </tr>
-          <tr class="row-purple">
+          <tr>
             <td>Motorcycle</td>
             <td><input type="number" v-model="currentPrices.level1.motorocycle" @change="handlePriceChange('level1', 'motorocycle')"></td>
             <td><input type="number" v-model="currentPrices.level2.motorocycle" @change="handlePriceChange('level2', 'motorocycle')"></td>
@@ -39,7 +39,7 @@
             <td><input type="number" v-model="currentPrices.level4.motorocycle" @change="handlePriceChange('level4', 'motorocycle')"></td>
             <td><input type="number" v-model="fixedAmounts.fixedAmountMotorocycle" @change="handleFixedAmountChange('fixedAmountMotorocycle')"></td>
           </tr>
-          <tr class="row-grey">
+          <tr>
             <td>Van</td>
             <td><input type="number" v-model="currentPrices.level1.priceVan" @change="handlePriceChange('level1', 'priceVan')"></td>
             <td><input type="number" v-model="currentPrices.level2.priceVan" @change="handlePriceChange('level2', 'priceVan')"></td>
@@ -47,20 +47,44 @@
             <td><input type="number" v-model="currentPrices.level4.priceVan" @change="handlePriceChange('level4', 'priceVan')"></td>
             <td><input type="number" v-model="fixedAmounts.fixedAmountvan" @change="handleFixedAmountChange('fixedAmountvan')"></td>
           </tr>
-          <tr class="row-purple">
-            <td>Commission</td>
+          <tr>
+            <td>Comfort</td>
+            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('level1', 'compfort')"></td>
+            <td><input type="number" v-model="currentPrices.level2.compfort" @change="handlePriceChange('level2', 'compfort')"></td>
+            <td><input type="number" v-model="currentPrices.level3.compfort" @change="handlePriceChange('level3', 'compfort')"></td>
+            <td><input type="number" v-model="currentPrices.level4.compfort" @change="handlePriceChange('level4', 'compfort')"></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Commission Car</td>
             <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
             <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
             <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
             <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
             <td></td>
           </tr>
-          <tr class="row-grey">
-            <td>comfort</td>
-            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('level1', 'compfort')"></td>
-            <td><input type="number" v-model="currentPrices.level2.compfort" @change="handlePriceChange('level2', 'compfort')"></td>
-            <td><input type="number" v-model="currentPrices.level3.compfort" @change="handlePriceChange('level3', 'compfort')"></td>
-            <td><input type="number" v-model="currentPrices.level4.compfort" @change="handlePriceChange('level4', 'compfort')"></td>
+          <tr>
+            <td>Commission Motorcycle</td>
+            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Commission Van</td>
+            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Commission Comfort</td>
+            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
             <td></td>
           </tr>
           </tbody>
@@ -70,7 +94,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import axios from 'axios';
 import Sidebar from "@/components/sidebarComponent.vue";
@@ -107,10 +130,10 @@ export default {
     async fetchEgyptPrices() {
       try {
         const [level1, level2, level3, level4] = await Promise.all([
-          axios.get('https://backend.fego-rides.com/prices/level1/getprices?country=Egypt'),
-          axios.get('https://backend.fego-rides.com/prices/level2/getprices?country=Egypt'),
-          axios.get('https://backend.fego-rides.com/prices/level3/getprices?country=Egypt'),
-          axios.get('https://backend.fego-rides.com/prices/level4/getprices?country=Egypt')
+          axios.get('https://backend.fego-rides.com/prices/level1/getprices'),
+          axios.get('https://backend.fego-rides.com/prices/level2/getprices'),
+          axios.get('https://backend.fego-rides.com/prices/level3/getprices'),
+          axios.get('https://backend.fego-rides.com/prices/level4/getprices')
         ]);
 
         this.currentPrices = {
@@ -220,6 +243,51 @@ export default {
 </script>
 
 <style scoped>
+.vehicle-commission-table {
+  font-family: Arial, sans-serif;
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #8e44ad; /* Purple border to match your previous theme */
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #8e44ad; /* Purple header background */
+  color: white;
+  font-weight: bold;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #ffffff; /* White for odd rows */
+}
+
+tbody tr:nth-child(even) {
+  background-color: #e8ecef; /* Light grey for even rows */
+}
+
+input[type="number"] {
+  width: 60px;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+}
 .fego-dashboard {
   display: flex;
   min-height: 100vh;

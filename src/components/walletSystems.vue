@@ -51,6 +51,19 @@
                 @input="validatePercentage"
             />
             <div v-if="percentageError" class="error-message">{{ percentageError }}</div>
+            <label for="percentage">Days</label>
+            <input
+                type="number"
+                id="percentage"
+                v-model.number="percentage"
+                placeholder="Enter percentage"
+                class="form-control"
+                min="0"
+                max="100"
+                step="0.1"
+                @input="validatePercentage"
+            />
+            <div v-if="percentageError" class="error-message">{{ percentageError }}</div>
 
             <div class="toggle-group">
               <span :class="{ 'active-label': isWalletActive, 'inactive-label': !isWalletActive }">

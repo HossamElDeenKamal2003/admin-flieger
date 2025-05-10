@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -64,7 +65,9 @@
                 <td>{{ user.phoneNumber || 'N/A' }}</td>
                 <td>{{ user.completedTrips || 0 }}</td>
                 <td>{{ user.cancelledTrips || 0 }}</td>
-                <td>{{ user.wallet || '0 EGP' }}</td>
+                <td @click.stop>
+                  <input type="number" v-model="user.wallet" @change="updateWallet(user._id, $event.target.value)" />
+                </td>
                 <td>
                   <span class="stars">★ {{ user.rating || '0.0' }}</span>
                 </td>
@@ -126,6 +129,7 @@
 import axios from 'axios';
 import Sidebar from "./sidebarComponent.vue";
 import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
+
 export default {
   name: "UsersListComponent",
   data() {
@@ -184,7 +188,7 @@ export default {
           image: user.profile_image || 'https://via.placeholder.com/40',
           completedTrips: user.completedTrips || 0,
           cancelledTrips: user.cancelledTrips || 0,
-          wallet: `${user.wallet || 0} EGP`,
+          wallet: user.wallet || 0, // Changed to store as a number for input binding
           rating: user.rate || '0.0'
         }));
       } catch (error) {
@@ -203,6 +207,23 @@ export default {
       } catch (error) {
         console.error('Error deleting user:', error);
         this.$toast.error('Failed to delete user. Please try again.');
+      }
+    },
+    async updateWallet(userId, newWalletValue) {
+      try {
+        // Make an API call to update the wallet value on the backend
+        await axios.patch(`https://backend.fego-rides.com/admin/update-wallet`, {
+          userId: userId,
+          wallet: parseFloat(newWalletValue) || 0
+        });
+        // Refresh the users list to reflect the updated wallet
+        await this.fetchUsers();
+        alert('Wallet updated successfully!');
+      } catch (error) {
+        console.error('Error updating wallet:', error);
+        alert('Failed to update wallet: ' + (error.response?.data?.message || error.message));
+        // Revert the wallet value in case of an error
+        await this.fetchUsers();
       }
     }
   },
@@ -459,7 +480,8 @@ td {
 }
 
 /* Loading and Error States */
-.loading-state, .error-state {
+.loading-state,
+.error-state {
   text-align: center;
   padding: 20px;
 }
@@ -559,3 +581,4 @@ td {
   }
 }
 </style>
+```
