@@ -44,7 +44,6 @@ export default {
         { name: 'Confirm Requests', icon: 'confirm req', route: '/confirm-requests'},
         { name: 'Driver Signup', icon: "sdfdf", route: '/driver-signup' },
         { name: 'Chat', icon: 'chat', route: '/chat' },
-        { name: 'Chat', icon: 'chat', route: '/chat' },
         {name: "Chat History", icon: "kjsk", route: 'chat-history'}
       ],
       activeMenu: 'Overview', // Default to Overview
