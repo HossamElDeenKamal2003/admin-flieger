@@ -72,6 +72,18 @@ const routes = [
         }
     },
     {
+        path: '/chat-history',
+        name: 'chatHisory',
+        beforeEnter: (to, from, next) => {
+            const role = localStorage.getItem('role');
+            if (role === 'admin' || role === "support1" || role === "support2" || role === "support3" || role === "support4") {
+                window.location.href = '/chat-history.html';
+                return;
+            }
+            next('/');
+        }
+    },
+    {
         path: "/",
         name: "auth",
         component: AuthComponent,

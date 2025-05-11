@@ -17,14 +17,16 @@
       </header>
 
       <!-- Loading State -->
-      <div v-if="loading" class="loading-overlay">
+      <div v-if="loading.driverData || loading.trips || loading.stats" class="loading-overlay">
         <div class="loading-spinner"></div>
       </div>
 
       <!-- Error State -->
-      <div v-if="error" class="error-message">
-        {{ error }}
-        <button @click="fetchDriverData">Retry</button>
+      <div v-if="errors.driverData || errors.trips || errors.stats" class="error-message">
+        <p v-if="errors.driverData">{{ errors.driverData }}</p>
+        <p v-if="errors.trips">{{ errors.trips }}</p>
+        <p v-if="errors.stats">{{ errors.stats }}</p>
+        <button @click="retryAll">Retry All</button>
       </div>
 
       <!-- Driver Data Section -->
@@ -64,6 +66,20 @@
                   <span>State:</span>
                   <span>{{ driverData.status || 'N/A' }}</span>
                   <span :class="driverData.status === 'online' ? 'status-online' : 'status-offline'"></span>
+                </div>
+                <div class="target-grid">
+                  <div class="target-item">
+                    <span class="label">Daily Target</span>
+                    <span class="value">{{ driverStats.today?.tripCount || 0 }} / {{ driverStats.today?.dailyTarget || 0 }}</span>
+                  </div>
+                  <div class="target-item">
+                    <span class="label">Week Target</span>
+                    <span class="value">{{ driverStats.currentWeek?.tripCount || 0 }} / {{ driverStats.currentWeek?.weekTarget || 0 }}</span>
+                  </div>
+                  <div class="target-item">
+                    <span class="label">Month Target</span>
+                    <span class="value">{{ driverStats.lastMonth?.tripCount || 0 }} / {{ driverStats.lastMonth?.monthTarget || 0 }}</span>
+                  </div>
                 </div>
                 <div class="data-row">
                   <span>Block Status:</span>
@@ -106,11 +122,11 @@
         <div class="summary-stats">
           <div class="stat-item">
             <button class="icon confirmed" @click="filterTrips(['end'])"></button>
-            Confirmed Trips {{ driverData.confirmedTrips || 0 }}
+            Completed Trips {{ lengthCompleted }}
           </div>
           <div class="stat-item">
             <button class="icon cancelled" @click="filterTrips('cancelled')"></button>
-            Cancelled Trips {{ driverData.cancelledTrips || 0 }}
+            Cancelled Trips {{ lengthCanceled }}
           </div>
           <div class="stat-item">
             <span class="icon rating"></span>
@@ -248,15 +264,16 @@
     </main>
   </div>
 </template>
+
 <script>
 import Sidebar from './sidebarComponent.vue';
 import axios from 'axios';
-import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
+import WaitingDriversNumber from '@/components/waitingDriversNumber.vue';
 
 export default {
   components: {
     WaitingDriversNumber,
-    Sidebar
+    Sidebar,
   },
   data() {
     return {
@@ -264,12 +281,28 @@ export default {
       cancelledTrips: [],
       isSidebarCollapsed: false,
       driverData: null,
+      driverStats: {
+        today: { tripCount: 0, dailyTarget: 0 },
+        currentWeek: { tripCount: 0, weekTarget: 0 },
+        lastMonth: { tripCount: 0, monthTarget: 0 },
+      },
       adminName: localStorage.getItem('username') || 'Admin',
       newRequestsCount: 0,
       currentPage: 1,
       itemsPerPage: 10,
-      loading: false,
-      error: null,
+      loading: {
+        driverData: false,
+        trips: false,
+        stats: false,
+        action: false,
+      },
+      errors: {
+        driverData: null,
+        trips: null,
+        stats: null,
+      },
+      lengthCanceled: 0,
+      lengthCompleted: 0,
       baseUrl: 'https://backend.fego-rides.com',
       showImageModal: false,
       currentImageUrl: '',
@@ -307,7 +340,7 @@ export default {
     },
     paginationEndComputed() {
       const end = (this.currentPage - 1) * this.itemsPerPage + this.itemsPerPage;
-      return Math.min(end, this.paginatedTrips.length || 0);
+      return Math.min(end, this.totalItemsComputed || 0);
     },
     totalItemsComputed() {
       if (this.filterStatus) {
@@ -318,12 +351,9 @@ export default {
       }
       return this.trips.length || 0;
     },
-    totalTripsComputed() {
-      return this.totalItemsComputed;
-    },
     totalPages() {
       return Math.ceil((this.totalItemsComputed || 0) / this.itemsPerPage);
-    }
+    },
   },
   watch: {
     paginationStartComputed(newValue) {
@@ -334,10 +364,8 @@ export default {
     },
     totalItemsComputed(newValue) {
       this.totalItems = newValue;
-    },
-    totalTripsComputed(newValue) {
       this.totalTrips = newValue;
-    }
+    },
   },
   methods: {
     handleSidebarToggle(collapsed) {
@@ -348,6 +376,173 @@ export default {
         this.isSidebarCollapsed = true;
       } else {
         this.isSidebarCollapsed = false;
+      }
+    },
+    async getTarget() {
+      const driverId = this.$route.params.driverId;
+      if (!driverId) {
+        this.errors.stats = 'No driver ID provided.';
+        this.$toast.error('Invalid driver ID');
+        return;
+      }
+
+      this.loading.stats = true;
+      this.errors.stats = null;
+      try {
+        const response = await axios.get(`${this.baseUrl}/wallet/driverStatistic/${driverId}`, {
+          timeout: 10000,
+        });
+
+        const stats = response.data;
+        if (!stats.today || !stats.currentWeek || !stats.lastMonth) {
+          throw new Error('Invalid statistics data structure');
+        }
+
+        this.driverStats = {
+          today: {
+            tripCount: stats.today.tripCount || 0,
+            dailyTarget: stats.today.dailyTarget || 0,
+          },
+          currentWeek: {
+            tripCount: stats.currentWeek.tripCount || 0,
+            weekTarget: stats.currentWeek.weekTarget || 0,
+          },
+          lastMonth: {
+            tripCount: stats.lastMonth.tripCount || 0,
+            monthTarget: stats.lastMonth.monthTarget || 0,
+          },
+        };
+      } catch (error) {
+        console.error('Error fetching driver statistics:', error);
+        this.errors.stats = this.getErrorMessage(error, 'Failed to load driver statistics.');
+        this.$toast.error(this.errors.stats);
+      } finally {
+        this.loading.stats = false;
+      }
+    },
+    async fetchDriverData() {
+      const driverId = this.$route.params.driverId;
+      if (!driverId) {
+        this.errors.driverData = 'No driver ID provided.';
+        this.$toast.error('Invalid driver ID');
+        return;
+      }
+
+      this.loading.driverData = true;
+      this.errors.driverData = null;
+      try {
+        const response = await axios.get(`${this.baseUrl}/authdriver/driver/${driverId}`, {
+          timeout: 10000,
+        });
+
+        const driver = response.data.driver;
+        if (!driver) {
+          throw new Error('Driver data not found');
+        }
+
+        this.driverData = {
+          name: driver.username || 'N/A',
+          phoneNumber: driver.phoneNumber || 'N/A',
+          nationalId: driver.id || 'N/A',
+          email: driver.email || 'N/A',
+          status: driver.status || 'offline',
+          vehicle: driver.vehicleType || 'N/A',
+          brand: 'N/A',
+          model: driver.carModel || 'N/A',
+          plate: driver.carNumber || 'N/A',
+          color: 'N/A',
+          confirmedTrips: driver.ctr || 0,
+          cancelledTrips: 0,
+          rating: driver.rate || 0,
+          cash: driver.dailayEarned || 0,
+          wallet: driver.wallet || 0,
+          block: driver.block || false,
+          profileImage: driver.profile_image || 'https://via.placeholder.com/150',
+          trips: driver.trips || [],
+          driver_licence_image: driver.driver_licence_image || 'N/A',
+          national_front: driver.national_front || 'N/A',
+          national_back: driver.national_back || 'N/A',
+          national_selfie: driver.national_selfie || 'N/A',
+        };
+        this.trips = driver.trips || [];
+      } catch (error) {
+        console.error('Error fetching driver data:', error);
+        this.errors.driverData = this.getErrorMessage(error, 'Failed to load driver data.');
+        this.$toast.error(this.errors.driverData);
+      } finally {
+        this.loading.driverData = false;
+      }
+    },
+    async getTrips() {
+      const driverId = this.$route.params.driverId;
+      if (!driverId) {
+        this.errors.trips = 'No driver ID provided.';
+        this.$toast.error('Invalid driver ID');
+        return;
+      }
+
+      this.loading.trips = true;
+      this.errors.trips = null;
+      try {
+        const response = await axios.post(
+            `${this.baseUrl}/wallet/filterTripsWithMoneyFlow`,
+            {
+              id: driverId,
+              type: 'driver',
+              page: 1,
+            },
+            { timeout: 10000 }
+        );
+
+        const { trips, cancelledTrips } = response.data;
+        if (!Array.isArray(trips) || !Array.isArray(cancelledTrips)) {
+          throw new Error('Invalid trips data structure');
+        }
+
+        this.trips = trips;
+        for(let i = 0; i < this.trips.length; i++) {
+          if(this.trips[i].status === 'end'){
+            this.lengthCompleted++;
+            console.log("end", i.status);
+          }else{
+            this.lengthCanceled++;
+            console.log("cancelled", i.status);
+
+          }
+        }
+        this.cancelledTrips = cancelledTrips;
+      } catch (error) {
+        console.error('Error fetching trips:', error);
+        this.errors.trips = this.getErrorMessage(error, 'Failed to load trip history.');
+        this.$toast.error(this.errors.trips);
+      } finally {
+        this.loading.trips = false;
+      }
+    },
+    async toggleBlock() {
+      try {
+        this.loading.action = true;
+        const driverId = this.$route.params.driverId;
+        if (!driverId) {
+          this.$toast.error('Invalid driver ID');
+          return;
+        }
+        const currentBlockStatus = this.driverData.block;
+        const newBlockStatus = !currentBlockStatus;
+
+        await axios.patch(
+            `${this.baseUrl}/authdriver/patch-block/${driverId}`,
+            { block: newBlockStatus },
+            { timeout: 10000 }
+        );
+
+        this.driverData.block = newBlockStatus;
+        alert(`Driver ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
+      } catch (error) {
+        console.error('Error toggling block status:', error);
+        this.$toast.error(this.getErrorMessage(error, 'Failed to update block status.'));
+      } finally {
+        this.loading.action = false;
       }
     },
     handleTabClick(tabName) {
@@ -369,64 +564,115 @@ export default {
         }
       }
     },
-    async toggleBlock() {
+    async updateField(fieldName, value) {
       try {
-        this.loading = true;
+        this.loading.action = true;
         const driverId = this.$route.params.driverId;
-        const currentBlockStatus = this.driverData.block;
-        const newBlockStatus = !currentBlockStatus;
-
-        await axios.patch(`${this.baseUrl}/authdriver/patch-block/${driverId}`, {
-          block: newBlockStatus
-        });
-
-        this.driverData.block = newBlockStatus;
-        alert(`Driver ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
+        await axios.patch(
+            `${this.baseUrl}/authdriver/update-field/${driverId}`,
+            { [fieldName]: value },
+            { timeout: 10000 }
+        );
+        alert(`${fieldName} updated successfully`);
       } catch (error) {
-        console.error('Error toggling block status:', error);
-        this.$toast?.error('Failed to update block status');
+        console.error(`Error updating ${fieldName}:`, error);
+        this.$toast.error(this.getErrorMessage(error, `Failed to update ${fieldName}.`));
+        await this.fetchDriverData();
       } finally {
-        this.loading = false;
+        this.loading.action = false;
       }
     },
-    async fetchDriverData() {
-      this.loading = true;
-      this.error = null;
+    async updateTrip(tripId, fieldName, value) {
       try {
+        this.loading.action = true;
         const driverId = this.$route.params.driverId;
-        const response = await axios.get(`${this.baseUrl}/authdriver/driver/${driverId}`);
-
-        const driver = response.data.driver;
-        this.driverData = {
-          name: driver.username || 'N/A',
-          phoneNumber: driver.phoneNumber || 'N/A',
-          nationalId: driver.id || 'N/A',
-          email: driver.email || 'N/A',
-          status: driver.status || 'offline',
-          vehicle: driver.vehicleType || 'N/A',
-          brand: 'N/A',
-          model: driver.carModel || 'N/A',
-          plate: driver.carNumber || 'N/A',
-          color: 'N/A',
-          confirmedTrips: driver.ctr || 0,
-          cancelledTrips: 0,
-          rating: driver.rate || 0,
-          cash: driver.dailayEarned || 0,
-          wallet: driver.wallet || 0,
-          block: driver.block,
-          profileImage: driver.profile_image || 'https://via.placeholder.com/150',
-          trips: driver.trips || [],
-          driver_licence_image: driver.driver_licence_image || 'N/A',
-          national_front: driver.national_front || 'N/A',
-          national_back: driver.national_back || 'N/A',
-          national_selfie: driver.national_selfie || 'N/A'
-        };
-      } catch (err) {
-        this.error = 'Failed to load driver data. Please try again later.';
-        console.error('Error fetching driver data:', err);
+        const payload = {};
+        if (fieldName === 'all') {
+          payload.trip = value;
+        } else if (fieldName.includes('.')) {
+          const [parent, child] = fieldName.split('.');
+          payload[parent] = { [child]: value };
+        } else {
+          payload[fieldName] = value;
+        }
+        await axios.patch(
+            `${this.baseUrl}/authdriver/update-trip/${driverId}`,
+            { tripId, ...payload },
+            { timeout: 10000 }
+        );
+        alert(`${fieldName} for trip ${tripId} updated successfully`);
+      } catch (error) {
+        console.error(`Error updating trip ${tripId} ${fieldName}:`, error);
+        this.$toast.error(this.getErrorMessage(error, `Failed to update trip ${fieldName}.`));
+        await this.fetchDriverData();
       } finally {
-        this.loading = false;
+        this.loading.action = false;
       }
+    },
+    async uploadImage(fieldName, event) {
+      try {
+        this.loading.action = true;
+        const driverId = this.$route.params.driverId;
+        const file = event.target.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('fieldName', fieldName);
+
+        const response = await axios.post(
+            `${this.baseUrl}/authdriver/upload-image/${driverId}`,
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
+        );
+        this.driverData[fieldName] = response.data.imageUrl;
+        alert(`${fieldName} updated successfully`);
+      } catch (error) {
+        console.error(`Error uploading ${fieldName}:`, error);
+        this.$toast.error(this.getErrorMessage(error, `Failed to upload ${fieldName}.`));
+        await this.fetchDriverData();
+      } finally {
+        this.loading.action = false;
+        event.target.value = '';
+      }
+    },
+    async updateImage(event) {
+      try {
+        this.loading.action = true;
+        const driverId = this.$route.params.driverId;
+        const file = event.target.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('fieldName', this.imageFieldToUpdate);
+
+        const response = await axios.post(
+            `${this.baseUrl}/authdriver/upload-image/${driverId}`,
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
+        );
+        this.driverData[this.imageFieldToUpdate] = response.data.imageUrl;
+        this.currentImageUrl = response.data.imageUrl;
+        alert(`${this.imageFieldToUpdate} updated successfully`);
+      } catch (error) {
+        console.error(`Error uploading ${this.imageFieldToUpdate}:`, error);
+        this.$toast.error(this.getErrorMessage(error, `Failed to upload ${this.imageFieldToUpdate}.`));
+        await this.fetchDriverData();
+      } finally {
+        this.loading.action = false;
+        this.$refs.imageUpload.value = '';
+      }
+    },
+    getErrorMessage(error, defaultMessage) {
+      if (error.response) {
+        return error.response.data.message || `${defaultMessage} (Error ${error.response.status})`;
+      } else if (error.request) {
+        return 'Network error: Please check your internet connection.';
+      } else {
+        return defaultMessage;
+      }
+    },
+    retryAll() {
+      this.fetchDriverData();
+      this.getTrips();
+      this.getTarget();
     },
     validateImageUrl(url) {
       if (!url || url === 'N/A' || typeof url !== 'string') {
@@ -442,7 +688,7 @@ export default {
       if (!validatedUrl) {
         console.warn('Invalid image URL:', imageUrl);
         this.currentImageUrl = 'https://via.placeholder.com/400';
-        this.$toast?.error('Image not available');
+        this.$toast.error('Image not available');
       } else {
         this.currentImageUrl = validatedUrl;
       }
@@ -458,112 +704,10 @@ export default {
     handleImageError() {
       console.error('Failed to load image:', this.currentImageUrl);
       this.currentImageUrl = 'https://via.placeholder.com/400';
-      this.$toast?.error('Failed to load image');
+      this.$toast.error('Failed to load image');
     },
     triggerImageUpload() {
       this.$refs.imageUpload.click();
-    },
-    async updateImage(event) {
-      try {
-        this.loading = true;
-        const driverId = this.$route.params.driverId;
-        const file = event.target.files[0];
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('fieldName', this.imageFieldToUpdate);
-
-        const response = await axios.post(`${this.baseUrl}/authdriver/upload-image/${driverId}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        this.driverData[this.imageFieldToUpdate] = response.data.imageUrl;
-        this.currentImageUrl = response.data.imageUrl;
-        alert(`${this.imageFieldToUpdate} updated successfully`);
-      } catch (error) {
-        console.error(`Error uploading ${this.imageFieldToUpdate}:`, error);
-        this.$toast?.error(`Failed to upload ${this.imageFieldToUpdate}`);
-        await this.fetchDriverData();
-      } finally {
-        this.loading = false;
-        this.$refs.imageUpload.value = '';
-      }
-    },
-    async updateField(fieldName, value) {
-      try {
-        this.loading = true;
-        const driverId = this.$route.params.driverId;
-        await axios.patch(`${this.baseUrl}/authdriver/update-field/${driverId}`, {
-          [fieldName]: value
-        });
-        alert(`${fieldName} updated successfully`);
-      } catch (error) {
-        console.error(`Error updating ${fieldName}:`, error);
-        this.$toast?.error(`Failed to update ${fieldName}`);
-        await this.fetchDriverData();
-      } finally {
-        this.loading = false;
-      }
-    },
-    async getTrips() {
-      const driverId = this.$route.params.driverId;
-      axios.post('https://backend.fego-rides.com/wallet/filterTripsWithMoneyFlow', {
-        id: driverId,
-        type: "driver",
-        page: 1
-      }).then((response) => {
-        this.trips = response.data.trips;
-        this.cancelledTrips = response.data.cancelledTrips;
-      }).catch(error => {
-        console.log(error);
-        alert(error.message);
-      });
-    },
-    async updateTrip(tripId, fieldName, value) {
-      try {
-        this.loading = true;
-        const driverId = this.$route.params.driverId;
-        const payload = {};
-        if (fieldName === 'all') {
-          payload.trip = value;
-        } else if (fieldName.includes('.')) {
-          const [parent, child] = fieldName.split('.');
-          payload[parent] = { [child]: value };
-        } else {
-          payload[fieldName] = value;
-        }
-        await axios.patch(`${this.baseUrl}/authdriver/update-trip/${driverId}`, {
-          tripId,
-          ...payload
-        });
-        alert(`${fieldName} for trip ${tripId} updated successfully`);
-      } catch (error) {
-        console.error(`Error updating trip ${tripId} ${fieldName}:`, error);
-        this.$toast?.error(`Failed to update trip ${tripId} ${fieldName}`);
-        await this.fetchDriverData();
-      } finally {
-        this.loading = false;
-      }
-    },
-    async uploadImage(fieldName, event) {
-      try {
-        this.loading = true;
-        const driverId = this.$route.params.driverId;
-        const file = event.target.files[0];
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('fieldName', fieldName);
-
-        const response = await axios.post(`${this.baseUrl}/authdriver/upload-image/${driverId}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        this.driverData[fieldName] = response.data.imageUrl;
-        alert(`${fieldName} updated successfully`);
-      } catch (error) {
-        console.error(`Error uploading ${fieldName}:`, error);
-        this.$toast?.error(`Failed to upload ${fieldName}`);
-        await this.fetchDriverData();
-      } finally {
-        this.loading = false;
-      }
     },
     openEditModal(trip) {
       this.selectedTrip = { ...trip };
@@ -580,11 +724,13 @@ export default {
     filterTrips(status) {
       this.filterStatus = status;
       this.currentPage = 1;
-    }
+    },
   },
   created() {
+    console.log('Methods available:', Object.keys(this.$options.methods));
     this.fetchDriverData();
     this.getTrips();
+    this.getTarget();
   },
   mounted() {
     this.handleResize();
@@ -592,10 +738,12 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
-  }
+  },
 };
 </script>
+
 <style scoped>
+/* Existing styles unchanged, included for completeness */
 .dashboard {
   display: flex;
   height: 100vh;
@@ -1018,8 +1166,8 @@ export default {
   margin: 20px 0;
   border-radius: 5px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .error-message button {
@@ -1029,6 +1177,7 @@ export default {
   padding: 5px 10px;
   border-radius: 3px;
   cursor: pointer;
+  align-self: flex-start;
 }
 
 .no-data {
@@ -1085,5 +1234,39 @@ export default {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 20px;
+}
+
+.target-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.label {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.value {
+  color: #6b5b95;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .target-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

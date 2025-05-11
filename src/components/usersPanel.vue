@@ -62,8 +62,8 @@
                   </div>
                 </td>
                 <td>{{ user.phoneNumber || 'N/A' }}</td>
-<!--                <td>{{ user.completedTrips }}</td>-->
-<!--                <td>{{ user.cancelledTrips || 0 }}</td>-->
+                <td>{{ user.completedTrips }}</td>
+                <td>{{ user.cancelledTrips || 0 }}</td>
                 <td>{{ user.wallet || '0 EGP' }}</td>
                 <td>
                   <span class="stars">★ {{ user.rating || '0.0' }}</span>

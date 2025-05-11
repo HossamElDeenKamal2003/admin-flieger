@@ -18,7 +18,7 @@
         </li>
       </ul>
     </div>
-    <button @click="logout">Logout</button>
+    <button @click="confirmLogout" class="btn btn-danger">Logout</button>
     <button class="toggle-btn" @click="toggleSidebar">
       <i :class="isCollapsed ? 'icon expand' : 'icon collapse'"></i>
     </button>
@@ -36,14 +36,16 @@ export default {
         { name: 'Captains', icon: 'captains', route: '/admin/getdriver' },
         { name: "Coupons & Offers", icon: "coupons", route: '/coupons' },
         { name: 'Waiting Captains', icon: 'icon', route: '/waiting-drivers' },
-        {name: "Wallet Systems", icon: "wallet Systems", route: "/wallet-systems"},
+        { name: "Wallet Systems", icon: "wallet Systems", route: "/wallet-systems"},
         { name: 'Moderators', icon: 'moderators', route: '/moderators' },
         { name: 'Settings', icon: 'settings', route: '/admin/settings' },
         { name: 'Level', icon: 'settings', route: '/levels' },
         { name: 'Get Requests', icon: 'get req', route: '/get-req' },
-        {name: 'Confirm Requests', icon: 'confirm req', route: '/confirm-requests'},
+        { name: 'Confirm Requests', icon: 'confirm req', route: '/confirm-requests'},
         { name: 'Driver Signup', icon: "sdfdf", route: '/driver-signup' },
-
+        { name: 'Chat', icon: 'chat', route: '/chat' },
+        { name: 'Chat', icon: 'chat', route: '/chat' },
+        {name: "Chat History", icon: "kjsk", route: 'chat-history'}
       ],
       activeMenu: 'Overview', // Default to Overview
       isCollapsed: false,
@@ -59,7 +61,12 @@ export default {
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
-    logout(){
+    confirmLogout() {
+      if (window.confirm('Are you sure you want to logout?')) {
+        this.logout();
+      }
+    },
+    logout() {
       localStorage.clear();
       this.$router.push('/');
     },
@@ -214,6 +221,4 @@ export default {
     width: 250px !important;
   }
 }
-
-
 </style>
