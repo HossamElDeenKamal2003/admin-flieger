@@ -8,7 +8,7 @@
     <div class="main-content">
       <WaitingDriversNumber :waiting-captains="waitingCaptains" />
       <div class="coupons-management">
-        <h2 class="section-title">Coupons Management</h2>
+        <h2 class="section-title">Offers Management</h2>
 
         <!-- User Message and Captains Message (Side by Side) -->
         <div class="messages-row">

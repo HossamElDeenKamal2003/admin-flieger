@@ -104,7 +104,6 @@
               </div>
             </div>
           </div>
-
           <!-- Vehicle Data -->
           <div class="data-card">
             <h2 style="font-weight: bold; color: #6b5b95; font-size: 1.2em">

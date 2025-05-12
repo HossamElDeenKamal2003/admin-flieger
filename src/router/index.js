@@ -18,8 +18,13 @@ import UserDetails from '@/components/userDetails.vue';
 import WaitingDrivers from '@/components/waitingDrivers.vue';
 import walletSystems from "@/components/walletSystems.vue";
 import confirmRequest from '@/components/confirmRequests.vue';
-
+import sucessTransactions from "@/components/getRequests.vue";
 const routes = [
+    {
+      path: '/sucesstrans',
+      name: "Sucesstrans",
+      component: sucessTransactions,
+    },
     {
         path: '/confirm-requests',
         name: 'confirmRequest',

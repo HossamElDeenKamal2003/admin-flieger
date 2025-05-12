@@ -130,7 +130,7 @@
 <script>
 import Sidebar from './sidebarComponent.vue';
 import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
-
+// import axios from "axios";
 export default {
   name: "walletSystems",
   components: {
@@ -151,7 +151,24 @@ export default {
       percentageError: null,
       transactionFeeError: null,
       isSavingWallet: false,
-      isSavingFee: false
+      isSavingFee: false,
+      wallet2: {
+        subScription: "",
+        profit: "",
+        isActive: "",
+        walletType: "",
+        title: "",
+        description: "",
+
+      },
+      wallet3: {
+        subScription: "",
+        profit: "",
+        isActive: "",
+        walletType: "",
+        title: "",
+        description: ""
+      }
     };
   },
   computed: {
@@ -190,6 +207,10 @@ export default {
         this.transactionFeeError = null;
       }
     },
+
+    // async getWalletsDataSystem2(type){
+    //   axios.get("https://backend.fego-rides.com/getWalletSystems",)
+    // },
 
     async saveWalletLimit() {
       if (this.hasWalletErrors) return;
