@@ -62,11 +62,11 @@
         <div class="trip-stats">
           <div class="stat-item completed">
             <button class="fas fa-check-circle" @click="filterTrips('COMPLETED')"></button>
-            Completed Trips {{ userData.completedTrips || 0 }}
+            Completed Trips {{ completedTripsCount }}
           </div>
           <div class="stat-item cancelled">
             <button class="fas fa-times-circle" @click="filterTrips('CANCELLED')"></button>
-            Cancelled Trips {{ userData.cancelledTrips || 0 }}
+            Cancelled Trips {{ cancelledTripsCount }}
           </div>
         </div>
 
@@ -101,15 +101,13 @@
             <tr v-for="(trip, index) in paginatedData" :key="trip.tripId">
               <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
               <td>{{ trip.vehicle || 'N/A' }}</td>
-              <td>{{ trip.orderedTime || 'N/A' }}</td>
+              <td>{{ formatDate(trip.orderedTime) || 'N/A' }}</td>
               <td>{{ trip.startLocation || 'N/A' }}</td>
               <td>{{ trip.finishLocation || 'N/A' }}</td>
-              <td>{{ trip.value || 0 }}</td>
+              <td>{{ trip.value || 0 }} EGP</td>
               <td>{{ trip.payment || 'N/A' }}</td>
               <td>{{ trip.wallet || '0 EGP' }}</td>
-              <td :class="trip.status === 'CANCELLED' ? 'status-cancelled' : 'status-completed'">
-                {{ trip.status || 'N/A' }}
-              </td>
+              <td :class="{'status-end': trip.status === 'end', 'status-cancelled': trip.status === 'cancelled'}">{{ trip.status || 'N/A' }}</td>
               <td><button @click="openEditModal(trip)">Edit</button></td>
             </tr>
             <tr v-if="paginatedData.length === 0">
@@ -121,7 +119,7 @@
           <!-- Table Footer -->
           <div class="table-footer">
             <div>
-              <p>Total Trips: {{ totalTrips || 0 }}</p>
+              <p>Total Trips: {{ totalItems }}</p>
             </div>
             <div class="pagination">
               <span>
@@ -140,66 +138,17 @@
           <div class="modal-content" @click.stop>
             <h3>Edit Trip - {{ selectedTrip.tripId }}</h3>
             <div class="modal-field">
-              <label>Trip ID:</label>
-              <input v-model="selectedTrip.tripId" @change="updateTrip(selectedTrip.tripId, 'tripId', selectedTrip.tripId)" />
-            </div>
-            <div class="modal-field">
-              <label>Vehicle:</label>
-              <input v-model="selectedTrip.vehicle" @change="updateTrip(selectedTrip.tripId, 'vehicle', selectedTrip.vehicle)" />
-            </div>
-            <div class="modal-field">
-              <label>Ordered Time:</label>
-              <input v-model="selectedTrip.orderedTime" @change="updateTrip(selectedTrip.tripId, 'orderedTime', selectedTrip.orderedTime)" />
-            </div>
-            <div class="modal-field">
-              <label>Start Location:</label>
-              <input v-model="selectedTrip.startLocation" @change="updateTrip(selectedTrip.tripId, 'startLocation', selectedTrip.startLocation)" />
-            </div>
-            <div class="modal-field">
-              <label>Finish Location:</label>
-              <input v-model="selectedTrip.finishLocation" @change="updateTrip(selectedTrip.tripId, 'finishLocation', selectedTrip.finishLocation)" />
-            </div>
-            <div class="modal-field">
-              <label>Value:</label>
-              <input v-model.number="selectedTrip.value" @change="updateTrip(selectedTrip.tripId, 'value', selectedTrip.value)" />
-            </div>
-            <div class="modal-field">
-              <label>Payment:</label>
-              <input v-model="selectedTrip.payment" @change="updateTrip(selectedTrip.tripId, 'payment', selectedTrip.payment)" />
-            </div>
-            <div class="modal-field">
-              <label>Wallet:</label>
-              <input v-model="selectedTrip.wallet" @change="updateTrip(selectedTrip.tripId, 'wallet', selectedTrip.wallet)" />
-            </div>
-            <div class="modal-field">
               <label>Status:</label>
               <select v-model="selectedTrip.status" @change="updateTrip(selectedTrip.tripId, 'status', selectedTrip.status)">
                 <option value="COMPLETED">COMPLETED</option>
                 <option value="CANCELLED">CANCELLED</option>
+                <option value="END">END</option>
               </select>
             </div>
             <div class="modal-buttons">
               <button @click="saveTripChanges">Update</button>
               <button @click="closeEditModal">Close</button>
             </div>
-          </div>
-        </div>
-
-        <!-- Comments Section -->
-        <div class="comments-section">
-          <h2>Commits</h2>
-          <div class="comment" v-for="comment in userData.comments" :key="comment.id">
-            <div class="comment-header">
-              <img :src="comment.userImage" alt="User" class="comment-user-image" />
-              <div>
-                <p class="comment-user-name">{{ comment.userName }}</p>
-                <p class="comment-rating">★ {{ comment.rating }}</p>
-              </div>
-            </div>
-            <p class="comment-text">{{ comment.text }}</p>
-          </div>
-          <div v-if="!userData.comments || userData.comments.length === 0" class="no-comments">
-            No comments found
           </div>
         </div>
       </div>
@@ -214,11 +163,15 @@ import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   name: "UserDetails",
+  components: {
+    WaitingDriversNumber,
+    Sidebar,
+  },
   data() {
     return {
       isSidebarExpanded: true,
       userData: null,
-      data: [],
+      tripsData: [],
       currentPage: 1,
       itemsPerPage: 10,
       isLoading: false,
@@ -226,60 +179,48 @@ export default {
       baseUrl: 'https://backend.fego-rides.com',
       activeTab: null,
       filterStatus: null,
-      totalTrips: 0,
-      paginationStart: 0,
-      paginationEnd: 0,
-      totalItems: 0,
       showEditModal: false,
       selectedTrip: {},
+      waitingCaptains: 0,
     };
   },
-  components: {
-    WaitingDriversNumber,
-    Sidebar,
-  },
   computed: {
-    paginatedData() {
-      let filteredTrips = this.data;
-      if (this.filterStatus) {
-        filteredTrips = this.data.filter(trip => trip.status === this.filterStatus);
+    completedTripsCount() {
+      return this.tripsData.filter(trip =>
+          trip.status === 'COMPLETED' || trip.status === 'END'
+      ).length;
+    },
+    cancelledTripsCount() {
+      return this.tripsData.filter(trip => trip.status === 'CANCELLED').length;
+    },
+    filteredTrips() {
+      if (!this.filterStatus) return this.tripsData;
+
+      if (this.filterStatus === 'COMPLETED') {
+        return this.tripsData.filter(trip =>
+            trip.status === 'COMPLETED' || trip.status === 'END'
+        );
       }
+      return this.tripsData.filter(trip => trip.status === this.filterStatus);
+    },
+    paginatedData() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return filteredTrips.slice(start, end) || [];
+      console.log("filtered Trips",this.filteredTrips)
+      return this.filteredTrips.slice(start, end);
     },
-    paginationStartComputed() {
-      return (this.currentPage - 1) * this.itemsPerPage + 1;
-    },
-    paginationEndComputed() {
-      const end = (this.currentPage - 1) * this.itemsPerPage + this.itemsPerPage;
-      return Math.min(end, this.totalItemsComputed || 0);
-    },
-    totalItemsComputed() {
-      if (this.filterStatus) {
-        return this.data.filter(trip => trip.status === this.filterStatus).length;
-      }
-      return this.data.length || 0;
-    },
-    totalTripsComputed() {
-      return this.totalItemsComputed;
+    totalItems() {
+      return this.filteredTrips.length;
     },
     totalPages() {
-      return Math.ceil((this.totalItemsComputed || 0) / this.itemsPerPage);
-    }
-  },
-  watch: {
-    paginationStartComputed(newValue) {
-      this.paginationStart = newValue;
+      return Math.ceil(this.totalItems / this.itemsPerPage);
     },
-    paginationEndComputed(newValue) {
-      this.paginationEnd = newValue;
+    paginationStart() {
+      return (this.currentPage - 1) * this.itemsPerPage + 1;
     },
-    totalItemsComputed(newValue) {
-      this.totalItems = newValue;
-    },
-    totalTripsComputed(newValue) {
-      this.totalTrips = newValue;
+    paginationEnd() {
+      const end = this.currentPage * this.itemsPerPage;
+      return Math.min(end, this.totalItems);
     }
   },
   methods: {
@@ -296,8 +237,7 @@ export default {
       try {
         this.isLoading = true;
         const userId = this.$route.params.userId;
-        const currentBlockStatus = this.userData.block;
-        const newBlockStatus = !currentBlockStatus;
+        const newBlockStatus = !this.userData.block;
 
         await axios.patch(`${this.baseUrl}/user-profile/patch-block/${userId}`, {
           block: newBlockStatus
@@ -307,7 +247,7 @@ export default {
         alert(`User ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
       } catch (error) {
         console.error('Error toggling block status:', error);
-        this.$toast?.error('Failed to update block status');
+        alert('Failed to update block status');
       } finally {
         this.isLoading = false;
       }
@@ -324,11 +264,7 @@ export default {
           phoneNumber: user.phoneNumber || user.mobile || 'N/A',
           rating: user.rate || 0,
           wallet: user.wallet || 0,
-          completedTrips: user.completedTrips || 23,
-          cancelledTrips: user.cancelledTrips || 10,
           block: user.block || false,
-          trips: [],
-          comments: [],
         };
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -339,32 +275,74 @@ export default {
     },
     async fetchTrips() {
       try {
+        this.isLoading = true;
         const userId = this.$route.params.userId;
-        const response = await axios.post(`https://backend.fego-rides.com/wallet/filterTripsWithMoneyFlow`, {
+        const response = await axios.post(`${this.baseUrl}/wallet/filterTripsWithMoneyFlow`, {
           id: userId,
           type: "user",
           page: 1
         });
 
-        const trips = response.data.trips;
-
-        this.data = trips.map(trip => {
+        this.tripsData = response.data.trips.map(trip => {
           const moneyFlow = trip.driverMoneyFlowId?.flow?.[0] || {};
           return {
             tripId: trip.uniqueId || 'N/A',
-            vehicle: 'Car',
-            orderedTime: trip.date || 'N/A',
-            startLocation: 'N/A',
-            finishLocation: 'N/A',
+            vehicle: trip.vehicleType || 'Car',
+            orderedTime: trip.date,
+            startLocation: trip.startLocation?.address || 'N/A',
+            finishLocation: trip.finishLocation?.address || 'N/A',
             value: moneyFlow.tripCost || 0,
             payment: moneyFlow.payCash > 0 ? 'Cash' : 'Wallet',
             wallet: `${moneyFlow.payWallet || 0} EGP`,
-            status: moneyFlow.payWallet > 0 ? 'COMPLETED' : 'CANCELLED'
+            status: trip.status || 'N/A'
           };
         });
       } catch (error) {
         console.error('Error fetching trips:', error);
         this.error = 'Failed to load trips. Please try again later.';
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    formatDate(dateString) {
+      if (!dateString) return null;
+      const date = new Date(dateString);
+      return date.toLocaleString();
+    },
+    filterTrips(status) {
+      this.filterStatus = status;
+      this.currentPage = 1;
+    },
+    openEditModal(trip) {
+      this.selectedTrip = { ...trip };
+      this.showEditModal = true;
+    },
+    closeEditModal() {
+      this.showEditModal = false;
+      this.selectedTrip = {};
+    },
+    async saveTripChanges() {
+      try {
+        this.isLoading = true;
+        const userId = this.$route.params.userId;
+        await axios.patch(`${this.baseUrl}/user-profile/update-trip/${userId}`, {
+          tripId: this.selectedTrip.tripId,
+          status: this.selectedTrip.status
+        });
+
+        // Update local data
+        const index = this.tripsData.findIndex(t => t.tripId === this.selectedTrip.tripId);
+        if (index !== -1) {
+          this.tripsData[index].status = this.selectedTrip.status;
+        }
+
+        alert('Trip updated successfully');
+        this.closeEditModal();
+      } catch (error) {
+        console.error('Error updating trip:', error);
+        alert('Failed to update trip');
+      } finally {
+        this.isLoading = false;
       }
     },
     async updateField(fieldName, value) {
@@ -377,50 +355,10 @@ export default {
         alert(`${fieldName} updated successfully`);
       } catch (error) {
         console.error(`Error updating ${fieldName}:`, error);
-        this.$toast?.error(`Failed to update ${fieldName}`);
-        await this.fetchUserData();
+        alert(`Failed to update ${fieldName}`);
       } finally {
         this.isLoading = false;
       }
-    },
-    async updateTrip(tripId, fieldName, value) {
-      try {
-        this.isLoading = true;
-        const userId = this.$route.params.userId;
-        const payload = {};
-        if (fieldName === 'all') {
-          payload.trip = value;
-        } else {
-          payload[fieldName] = value;
-        }
-        await axios.patch(`${this.baseUrl}/user-profile/update-trip/${userId}`, {
-          tripId,
-          ...payload
-        });
-        alert(`${fieldName} for trip ${tripId} updated successfully`);
-      } catch (error) {
-        console.error(`Error updating trip ${tripId} ${fieldName}:`, error);
-        this.$toast?.error(`Failed to update trip ${tripId} ${fieldName}`);
-        await this.fetchUserData();
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    openEditModal(trip) {
-      this.selectedTrip = { ...trip };
-      this.showEditModal = true;
-    },
-    closeEditModal() {
-      this.showEditModal = false;
-      this.selectedTrip = {};
-    },
-    saveTripChanges() {
-      this.updateTrip(this.selectedTrip.tripId, 'all', this.selectedTrip);
-      this.closeEditModal();
-    },
-    filterTrips(status) {
-      this.filterStatus = status;
-      this.currentPage = 1;
     }
   },
   created() {
@@ -433,25 +371,26 @@ export default {
 <style scoped>
 /* Base Styles */
 .dashboard {
-  position: relative; /* Allow absolute positioning of children */
+  position: relative;
   min-height: 100vh;
   font-family: 'Arial', sans-serif;
   display: flex;
   justify-content: end;
 }
-.main-content{
+.main-content {
   width: 80%;
 }
+
 /* Sidebar */
 .sidebar {
-  position: absolute; /* Overlay on top of main content */
+  position: absolute;
   top: 0;
   left: 0;
   width: 250px;
   height: 100%;
   transition: width 0.3s ease;
   color: #ffffff;
-  z-index: 1000; /* Ensure sidebar is above main content */
+  z-index: 1000;
 }
 
 .sidebar-collapsed {
@@ -460,10 +399,10 @@ export default {
 
 /* Main Content */
 .main-content {
-  width: 90%; /* Full width */
+  width: 90%;
   background-color: #f5f7fa;
   padding: 24px;
-  min-height: 100vh; /* Ensure it takes full height */
+  min-height: 100vh;
 }
 
 /* Header */
@@ -632,17 +571,17 @@ header {
   text-transform: uppercase;
 }
 
-.trip-history td {
-  font-size: 14px;
-  color: #374151;
-}
+
 
 .status-completed {
-  color: #28c76f;
+  color: #6b48ff;
+  font-weight: 600;
 }
 
 .status-cancelled {
-  color: #ff4d4f;
+  color: red;
+  font-weight: 600;
+  text-decoration: line-through;
 }
 
 .no-data {
@@ -656,6 +595,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 16px;
 }
 
 .table-footer p {
@@ -686,65 +626,6 @@ header {
 .pagination span {
   font-size: 14px;
   color: #374151;
-}
-
-/* Comments Section */
-.comments-section {
-  margin-top: 16px;
-}
-
-.comments-section h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2a44;
-  margin: 0 0 16px 0;
-}
-
-.comment {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-.comment-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.comment-user-image {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-.comment-user-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1f2a44;
-  margin: 0;
-}
-
-.comment-rating {
-  font-size: 12px;
-  color: #f59e0b;
-  margin: 2px 0 0 0;
-}
-
-.comment-text {
-  font-size: 14px;
-  color: #374151;
-  margin: 0;
-}
-
-.no-comments {
-  text-align: center;
-  padding: 20px;
-  color: #888;
 }
 
 /* Error Message */
@@ -879,6 +760,12 @@ header {
   font-weight: 600;
 }
 
+@media (max-width: 2000px){
+  .main-content{
+    width: 80%;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .sidebar {
@@ -916,5 +803,21 @@ header {
   .sidebar {
     width: 250px;
   }
+}
+
+.status-cancelled {
+  color: red;
+}
+.status-completed {
+  color: green;
+}
+.status-ended {
+  color: purple;
+}
+.status-cancelled{
+  color: red;
+}
+.status-end{
+  color: purple;
 }
 </style>
