@@ -107,7 +107,7 @@ export default {
 }
 @media (max-width: 2000px){
   .transactions-container{
-    width: 85%;
+    flex: .7;
   }
 }
 </style>
