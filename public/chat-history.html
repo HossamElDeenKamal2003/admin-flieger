@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Chat History</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+        }
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+        .chat-support {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        /* Sidebar Styles */
+        .chat-list {
+            width: 250px;
+            background-color: purple;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .chat-list h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        .chat-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        .chat-list li {
+            padding: 12px;
+            margin: 5px 0;
+            background-color: #4a4f63;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .chat-list li:hover, .chat-list li.active {
+            background-color: #5f6876;
+        }
+
+        /* Chat Window Styles */
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .chat-header {
+            background-color: #3a3d4c;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .chat-header button[disabled] {
+            background-color: #d6d6d6;
+            cursor: not-allowed;
+        }
+        .chat-header button:hover {
+            background-color: #4cae4c;
+        }
+
+        /* Chat Messages Styles */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message-support, .message-user {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            word-wrap: break-word;
+            background-color: #e1f7d5;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+        .message-user {
+            background-color: #c7e2ff;
+            margin-left: auto;
+        }
+        .message-support img, .message-user img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        /* Input Section Styles */
+        .chat-input {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+        }
+        .chat-input input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+        .chat-input input[type="file"] {
+            margin-right: 10px;
+        }
+        .chat-input button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .chat-input button:hover {
+            background-color: #4cae4c;
+        }
+
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            #app {
+                flex-direction: column;
+            }
+            .chat-list {
+                width: 100%;
+                padding: 10px;
+            }
+            .chat-window {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="chat-support">
+        <div class="chat-list">
+            <h2>Chat History</h2>
+            <ul>
+                <li v-for="chat in chats"
+                    :key="chat._id"
+                    :class="{ active: chat._id === activeChat?.chatId }"
+                    @click="selectChat(chat)">
+<!--                    {{ chat.user.username }}-->
+                </li>
+            </ul>
+        </div>
+
+        <div class="chat-window" v-if="activeChat">
+            <div class="chat-header">
+<!--                <button @click="startChat" :disabled="isChatInProgress">Start Chat</button>-->
+                <button @click="endChat" :disabled="!isChatInProgress">End Chat</button>
+            </div>
+            <div class="chat-messages">
+                <div v-for="message in activeChat.messages"
+                     :key="message.timestamp"
+                     :class="message.sender === 'support' ? 'message-support' : 'message-user'">
+                    <p>{{ message.message }}</p>
+                    <img v-if="message.media.length > 0" :src="message.media[0].url" alt="message image" />
+                </div>
+            </div>
+<!--            <div class="chat-input">-->
+<!--                <input v-model="newMessage"-->
+<!--                       placeholder="Type your message..."-->
+<!--                       @keyup.enter="sendMessage" />-->
+<!--                <input type="file" @change="handleFileChange" />-->
+<!--                <button @click="sendMessage">Send</button>-->
+<!--            </div>-->
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                chats: [],
+                activeChat: null,
+                newMessage: "",
+                socket: null,
+                isChatInProgress: false,
+                selectedFile: null,
+            };
+        },
+        methods: {
+            async fetchChats() {
+                try {
+                    const response = await axios.get("https://backend.fego-rides.com/getAllChats");
+                    this.chats = response.data.chats;
+                    console.log("aaaaaaaaaaaaaaaaaaaaa",this.chats);
+                } catch (error) {
+                    console.error("Error fetching chats:", error);
+                }
+            },
+
+            selectChat(chat) {
+                this.activeChat = chat;
+                this.isChatInProgress = false;
+                if (this.socket) {
+                    this.socket.emit("joinChat", chat._id);
+                }
+            },
+
+            async startChat() {
+                if (!this.activeChat) return;
+                this.isChatInProgress = true;
+
+                try {
+                    await axios.post("https://backend.fego-rides.com/startChat", {
+                        chatId: this.activeChat._id,
+                    });
+                } catch (error) {
+                    console.error("Error starting the chat:", error);
+                }
+
+                if (this.socket) {
+                    this.socket.on("newMessage", (data) => {
+                        if (this.activeChat._id === data.chatId) {
+                            this.activeChat.messages.push(data);
+                        }
+                    });
+                }
+            },
+
+            async sendMessage() {
+                if (!this.newMessage.trim() && !this.selectedFile) return;
+                const formData = new FormData();
+                formData.append('chatId', this.activeChat._id);
+                formData.append('sender', 'support');
+                formData.append('message', this.newMessage);
+                formData.append('adminFCMToken', "jdska");
+                console.log(formData.get('adminFCMToken')); // This will correctly log the value of adminFCMToken
+                if (this.selectedFile) {
+                    formData.append('media', this.selectedFile);
+                }
+
+                try {
+                    const response = await axios.post("https://backend.fego-rides.com/sendMessage", formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+
+                    this.activeChat.messages.push(response.data.message);
+                    this.newMessage = "";
+                    this.selectedFile = null; // Reset the file after sending
+                } catch (error) {
+                    console.error("Error sending message:", error);
+                }
+            },
+
+            handleFileChange(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.selectedFile = file;
+                }
+            },
+
+            async endChat() {
+                if (!this.activeChat) return;
+
+                try {
+                    await axios.post("https://backend.fego-rides.com/endChat", { chatId: this.activeChat._id });
+                    this.isChatInProgress = false;
+                    this.activeChat = null;
+
+                    if (this.chats.length > 0) {
+                        this.selectChat(this.chats[0]);
+                    }
+                } catch (error) {
+                    console.error("Error ending the chat:", error);
+                }
+            },
+        },
+        mounted() {
+            this.socket = io("https://backend.fego-rides.com");
+            this.fetchChats();
+        },
+        beforeDestroy() {
+            if (this.socket) {
+                this.socket.disconnect();
+            }
+        },
+    });
+</script>
+</body>
+</html>
