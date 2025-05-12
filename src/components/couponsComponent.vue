@@ -27,7 +27,7 @@
             <input v-model="driverMessage.text" placeholder="Enter Captains Message Text" />
             <input v-model="driverMessage.sender" placeholder="Enter sender name" />
             <button @click="updateDriverMessage">Confirm</button>
-            <p v-if="driverMessage.updatedAt">Last Updated: {{ formatDate(driverMessage.updatedAt) }}</p>
+            <p>Last Updated: {{userUpdatedMessage}}</p>
           </div>
         </div>
         <div class="ids">
@@ -46,7 +46,7 @@
             <input v-model="updateData.days" type="number" placeholder="Enter Days" />
             <input v-model="updateData.amount" type="number" placeholder="Enter Amount" />
             <button @click="updateDiscountOptions">Confirm</button>
-            <p v-if="offers.length > 0 && offers[0].updatedAt">Last Updated: {{ formatDate(offers[0].updatedAt) }}</p>
+            <p v-if="offers.length > 0 && offers[0].updatedAt">Last Updated: {{ formatDate(driverMessage.updatedAt) }}</p>
           </div>
         </div>
 
@@ -117,7 +117,8 @@ export default {
       updateData: { id: '', days: null, amount: null },
       userBool: false,
       driverBool: false,
-      offers: []
+      offers: [],
+      userUpdatedMessage: null
     };
   },
   components: {
@@ -135,7 +136,8 @@ export default {
 
         const userOffer = this.offers.find(offer => offer.type === 'user');
         const driverOffer = this.offers.find(offer => offer.type === 'driver');
-
+        console.log("userOffer", userOffer.messageUser.updatedAt);
+        this.userUpdatedMessage = this.formatDate(driverOffer.messageUser.updatedAt);
         if (userOffer) {
           this.userMessage = {
             text: userOffer.messageUser?.text || '',

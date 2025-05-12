@@ -105,4 +105,9 @@ export default {
   display: flex;
   justify-content: space-between;
 }
+@media (max-width: 2000px){
+  .transactions-container{
+    width: 85%;
+  }
+}
 </style>
