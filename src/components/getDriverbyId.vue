@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -42,25 +43,37 @@
                     class="profile-image"
                     @click="openImage(driverData.profileImage, 'profileImage')"
                 >
-                <input type="file" @change="uploadImage('profileImage', $event)" class="file-input" />
+                <input type="file" @change="uploadImage('profile_image', $event)" class="file-input" />
               </div>
               <div class="profile-info">
                 <h2><input v-model="profileInfoTitle" @change="updateField('profileInfoTitle', profileInfoTitle)" /></h2>
                 <div class="data-row">
                   <span>Name:</span>
-                  <input v-model="driverData.name" @change="updateField('name', driverData.name)" />
+                  <div class="field-container">
+                    <span v-if="!editingField.username">{{ driverData.username || 'N/A' }}</span>
+                    <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('username')" v-if="!editingField.username" />
+                  </div>
                 </div>
                 <div class="data-row">
                   <span>Phone Number:</span>
-                  <input v-model="driverData.phoneNumber" @change="updateField('phoneNumber', driverData.phoneNumber)" />
+                  <div class="field-container">
+                    <span v-if="!editingField.phoneNumber">{{ driverData.phoneNumber || 'N/A' }}</span>
+                    <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('phoneNumber')" v-if="!editingField.phoneNumber" />
+                  </div>
                 </div>
                 <div class="data-row">
                   <span>National ID:</span>
-                  <input v-model="driverData.nationalId" @change="updateField('nationalId', driverData.nationalId)" />
+                  <div class="field-container">
+                    <span v-if="!editingField.nationalId">{{ driverData.nationalId || 'N/A' }}</span>
+                    <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('nationalId')" v-if="!editingField.nationalId" />
+                  </div>
                 </div>
                 <div class="data-row">
                   <span>Email:</span>
-                  <input v-model="driverData.email" @change="updateField('email', driverData.email)" />
+                  <div class="field-container">
+                    <span v-if="!editingField.email">{{ driverData.email || 'N/A' }}</span>
+                    <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('email')" v-if="!editingField.email" />
+                  </div>
                 </div>
                 <div class="data-row">
                   <span>State:</span>
@@ -96,24 +109,36 @@
             <h2><input v-model="vehicleDataTitle" @change="updateField('vehicleDataTitle', vehicleDataTitle)" /></h2>
             <div class="data-row">
               <span>Vehicle:</span>
-              <input v-model="driverData.vehicle" @change="updateField('vehicle', driverData.vehicle)" />
+              <div class="field-container">
+                <span v-if="!editingField.vehicle">{{ driverData.vehicle || 'N/A' }}</span>
+                <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('vehicle')" v-if="!editingField.vehicle" />
+              </div>
             </div>
             <div class="data-row">
               <span>Brand:</span>
-              <input v-model="driverData.brand" @change="updateField('brand', driverData.brand)" />
+              <span>{{ driverData.brand || 'N/A' }}</span>
             </div>
             <div class="data-row">
               <span>Model:</span>
-              <input v-model="driverData.model" @change="updateField('model', driverData.model)" />
+              <div class="field-container">
+                <span v-if="!editingField.model">{{ driverData.model || 'N/A' }}</span>
+                <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('model')" v-if="!editingField.model" />
+              </div>
             </div>
             <div class="data-row">
               <span>NO Plate:</span>
-              <input v-model="driverData.plate" @change="updateField('plate', driverData.plate)" />
+              <div class="field-container">
+                <span v-if="!editingField.plate">{{ driverData.plate || 'N/A' }}</span>
+                <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('plate')" v-if="!editingField.plate" />
+              </div>
             </div>
             <div class="data-row">
               <span>Color:</span>
-              <input v-model="driverData.color" @change="updateField('color', driverData.color)" />
-              <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
+              <div class="field-container">
+                <span v-if="!editingField.color">{{ driverData.color || 'N/A' }}</span>
+                <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('color')" v-if="!editingField.color" />
+                <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -130,15 +155,23 @@
           </div>
           <div class="stat-item">
             <span class="icon rating"></span>
-            Rate <input v-model.number="driverData.rating" @change="updateField('rating', driverData.rating)" />
+            Rate
+            <div class="field-container">
+              <span v-if="!editingField.rating">{{ driverData.rating || 0 }}</span>
+              <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('rating')" v-if="!editingField.rating" />
+            </div>
           </div>
           <div class="stat-item">
             <span class="icon cash"></span>
-            Cash <input v-model.number="driverData.cash" @change="updateField('cash', driverData.cash)" />
+            Cash <span>{{ driverData.cash || 0 }}</span>
           </div>
           <div class="stat-item">
             <span class="icon wallet"></span>
-            Wallet <input v-model.number="driverData.wallet" @change="updateField('wallet', driverData.wallet)" /> EGP
+            Wallet
+            <div class="field-container">
+              <span v-if="!editingField.wallet">{{ driverData.wallet || 0 }}</span>
+              <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('wallet')" v-if="!editingField.wallet" />
+            </div> EGP
           </div>
         </div>
 
@@ -165,6 +198,26 @@
             <input type="file" ref="imageUpload" @change="updateImage" class="file-input-modal" />
             <button class="update-button" @click="triggerImageUpload">Update Image</button>
             <button class="close-button" @click="closeImage">Close</button>
+          </div>
+        </div>
+
+        <!-- Edit Field Modal -->
+        <div v-if="showEditFieldModal" class="modal-overlay" @click="cancelEdit">
+          <div class="modal-content" @click.stop>
+            <h3>Edit {{ editingFieldLabel }}</h3>
+            <div class="modal-field">
+              <label>{{ editingFieldLabel }}:</label>
+              <input
+                  v-model="editFieldValue"
+                  :type="editingField === 'rating' || editingField === 'wallet' ? 'number' : 'text'"
+                  @keyup.enter="saveEdit"
+                  @blur="saveEdit"
+              />
+            </div>
+            <div class="modal-buttons">
+              <button @click="saveEdit">Save</button>
+              <button @click="cancelEdit">Cancel</button>
+            </div>
           </div>
         </div>
 
@@ -319,6 +372,11 @@ export default {
       selectedTrip: {},
       filterStatus: null,
       imageFieldToUpdate: null,
+      editingField: {}, // Tracks which fields are being edited
+      showEditFieldModal: false,
+      editFieldValue: '',
+      editingFieldName: '',
+      editingFieldLabel: '',
     };
   },
   computed: {
@@ -382,7 +440,7 @@ export default {
       const driverId = this.$route.params.driverId;
       if (!driverId) {
         this.errors.stats = 'No driver ID provided.';
-        this.$toast.error('Invalid driver ID');
+        alert('Invalid driver ID');
         return;
       }
 
@@ -415,7 +473,7 @@ export default {
       } catch (error) {
         console.error('Error fetching driver statistics:', error);
         this.errors.stats = this.getErrorMessage(error, 'Failed to load driver statistics.');
-        this.$toast.error(this.errors.stats);
+        alert(this.errors.stats);
       } finally {
         this.loading.stats = false;
       }
@@ -424,7 +482,7 @@ export default {
       const driverId = this.$route.params.driverId;
       if (!driverId) {
         this.errors.driverData = 'No driver ID provided.';
-        this.$toast.error('Invalid driver ID');
+        alert('Invalid driver ID');
         return;
       }
 
@@ -441,24 +499,24 @@ export default {
         }
 
         this.driverData = {
-          name: driver.username || 'N/A',
+          username: driver.username || 'N/A',
           phoneNumber: driver.phoneNumber || 'N/A',
           nationalId: driver.id || 'N/A',
           email: driver.email || 'N/A',
           status: driver.status || 'offline',
           vehicle: driver.vehicleType || 'N/A',
-          brand: 'N/A',
+          brand: 'N/A', // Not in schema
           model: driver.carModel || 'N/A',
           plate: driver.carNumber || 'N/A',
-          color: 'N/A',
-          confirmedTrips: driver.ctr || 0,
-          cancelledTrips: 0,
+          color: driver.carColor || 'N/A',
+          confirmedTrips: driver.ctr || 0, // Not in schema
+          cancelledTrips: 0, // Not in schema
           rating: driver.rate || 0,
-          cash: driver.dailayEarned || 0,
+          cash: driver.dailayEarned || 0, // Not in schema
           wallet: driver.wallet || 0,
           block: driver.block || false,
           profileImage: driver.profile_image || 'https://via.placeholder.com/150',
-          trips: driver.trips || [],
+          trips: driver.trips || [], // Not in schema
           driver_licence_image: driver.driver_licence_image || 'N/A',
           national_front: driver.national_front || 'N/A',
           national_back: driver.national_back || 'N/A',
@@ -468,7 +526,7 @@ export default {
       } catch (error) {
         console.error('Error fetching driver data:', error);
         this.errors.driverData = this.getErrorMessage(error, 'Failed to load driver data.');
-        this.$toast.error(this.errors.driverData);
+        alert(this.errors.driverData);
       } finally {
         this.loading.driverData = false;
       }
@@ -477,7 +535,7 @@ export default {
       const driverId = this.$route.params.driverId;
       if (!driverId) {
         this.errors.trips = 'No driver ID provided.';
-        this.$toast.error('Invalid driver ID');
+        alert('Invalid driver ID');
         return;
       }
 
@@ -500,21 +558,20 @@ export default {
         }
 
         this.trips = trips;
-        for(let i = 0; i < this.trips.length; i++) {
-          if(this.trips[i].status === 'end'){
+        this.lengthCompleted = 0;
+        this.lengthCanceled = 0;
+        for (let trip of this.trips) {
+          if (trip.status === 'end') {
             this.lengthCompleted++;
-            console.log("end", i.status);
-          }else{
+          } else if (trip.status === 'cancelled') {
             this.lengthCanceled++;
-            console.log("cancelled", i.status);
-
           }
         }
         this.cancelledTrips = cancelledTrips;
       } catch (error) {
         console.error('Error fetching trips:', error);
         this.errors.trips = this.getErrorMessage(error, 'Failed to load trip history.');
-        this.$toast.error(this.errors.trips);
+        alert(this.errors.trips);
       } finally {
         this.loading.trips = false;
       }
@@ -524,23 +581,27 @@ export default {
         this.loading.action = true;
         const driverId = this.$route.params.driverId;
         if (!driverId) {
-          this.$toast.error('Invalid driver ID');
+          alert('Invalid driver ID');
           return;
         }
         const currentBlockStatus = this.driverData.block;
         const newBlockStatus = !currentBlockStatus;
 
-        await axios.patch(
-            `${this.baseUrl}/authdriver/patch-block/${driverId}`,
-            { block: newBlockStatus },
-            { timeout: 10000 }
+        const formData = new FormData();
+        formData.append('driverId', driverId);
+        formData.append('block', newBlockStatus);
+
+        await axios.put(
+            `${this.baseUrl}/authdriver/adminUpdateDriver`,
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
 
         this.driverData.block = newBlockStatus;
-        alert(`Driver ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
+        alert(`Driver ${newBlockStatus ? 'unblocked' : 'blocked'} successfully`);
       } catch (error) {
         console.error('Error toggling block status:', error);
-        this.$toast.error(this.getErrorMessage(error, 'Failed to update block status.'));
+        alert(this.getErrorMessage(error, 'Failed to update block status.'));
       } finally {
         this.loading.action = false;
       }
@@ -551,7 +612,7 @@ export default {
         this.toggleBlock();
       } else {
         const imageFields = {
-          profileimage: 'profileImage',
+          profileimage: 'profile_image',
           licence: 'driver_licence_image',
           nationalidfront: 'national_front',
           nationalidback: 'national_back',
@@ -568,15 +629,24 @@ export default {
       try {
         this.loading.action = true;
         const driverId = this.$route.params.driverId;
-        await axios.patch(
-            `${this.baseUrl}/authdriver/update-field/${driverId}`,
-            { [fieldName]: value },
-            { timeout: 10000 }
+        if (!driverId) {
+          throw new Error('Invalid driver ID');
+        }
+
+        const formData = new FormData();
+        formData.append('driverId', driverId);
+        formData.append(fieldName, value);
+
+        await axios.put(
+            `${this.baseUrl}/authdriver/adminUpdateDriver`,
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
+
         alert(`${fieldName} updated successfully`);
       } catch (error) {
         console.error(`Error updating ${fieldName}:`, error);
-        this.$toast.error(this.getErrorMessage(error, `Failed to update ${fieldName}.`));
+        alert(this.getErrorMessage(error, `Failed to update ${fieldName}.`));
         await this.fetchDriverData();
       } finally {
         this.loading.action = false;
@@ -603,7 +673,7 @@ export default {
         alert(`${fieldName} for trip ${tripId} updated successfully`);
       } catch (error) {
         console.error(`Error updating trip ${tripId} ${fieldName}:`, error);
-        this.$toast.error(this.getErrorMessage(error, `Failed to update trip ${fieldName}.`));
+        alert(this.getErrorMessage(error, `Failed to update trip ${fieldName}.`));
         await this.fetchDriverData();
       } finally {
         this.loading.action = false;
@@ -614,20 +684,39 @@ export default {
         this.loading.action = true;
         const driverId = this.$route.params.driverId;
         const file = event.target.files[0];
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('fieldName', fieldName);
+        if (!file) {
+          throw new Error('No file selected');
+        }
 
-        const response = await axios.post(
-            `${this.baseUrl}/authdriver/upload-image/${driverId}`,
+        const formData = new FormData();
+        formData.append('driverId', driverId);
+        if (fieldName === 'profile_image') {
+          formData.append('profile_image', file);
+        } else if (fieldName === 'driver_licence_image') {
+          formData.append('driver_licence_image', file);
+        } else if (fieldName === 'national_front') {
+          formData.append('national_front', file);
+        } else if (fieldName === 'national_back') {
+          formData.append('national_back', file);
+        } else if (fieldName === 'national_selfie') {
+          formData.append('national_selfie', file);
+        } else if (fieldName === 'licenseImage') {
+          formData.append('licenseImage', file);
+        } else {
+          throw new Error('Invalid image field');
+        }
+
+        const response = await axios.put(
+            `${this.baseUrl}/authdriver/adminUpdateDriver`,
             formData,
             { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
-        this.driverData[fieldName] = response.data.imageUrl;
+
+        this.driverData[fieldName] = response.data.driver[fieldName] || response.data.imageUrl;
         alert(`${fieldName} updated successfully`);
       } catch (error) {
         console.error(`Error uploading ${fieldName}:`, error);
-        this.$toast.error(this.getErrorMessage(error, `Failed to upload ${fieldName}.`));
+        alert(this.getErrorMessage(error, `Failed to upload ${fieldName}.`));
         await this.fetchDriverData();
       } finally {
         this.loading.action = false;
@@ -639,21 +728,26 @@ export default {
         this.loading.action = true;
         const driverId = this.$route.params.driverId;
         const file = event.target.files[0];
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('fieldName', this.imageFieldToUpdate);
+        if (!file) {
+          throw new Error('No file selected');
+        }
 
-        const response = await axios.post(
-            `${this.baseUrl}/authdriver/upload-image/${driverId}`,
+        const formData = new FormData();
+        formData.append('driverId', driverId);
+        formData.append(this.imageFieldToUpdate, file);
+
+        const response = await axios.put(
+            `${this.baseUrl}/authdriver/adminUpdateDriver`,
             formData,
             { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
-        this.driverData[this.imageFieldToUpdate] = response.data.imageUrl;
-        this.currentImageUrl = response.data.imageUrl;
+
+        this.driverData[this.imageFieldToUpdate] = response.data.driver[this.imageFieldToUpdate] || response.data.imageUrl;
+        this.currentImageUrl = this.driverData[this.imageFieldToUpdate];
         alert(`${this.imageFieldToUpdate} updated successfully`);
       } catch (error) {
         console.error(`Error uploading ${this.imageFieldToUpdate}:`, error);
-        this.$toast.error(this.getErrorMessage(error, `Failed to upload ${this.imageFieldToUpdate}.`));
+        alert(this.getErrorMessage(error, `Failed to upload ${this.imageFieldToUpdate}.`));
         await this.fetchDriverData();
       } finally {
         this.loading.action = false;
@@ -666,7 +760,7 @@ export default {
       } else if (error.request) {
         return 'Network error: Please check your internet connection.';
       } else {
-        return defaultMessage;
+        return error.message || defaultMessage;
       }
     },
     retryAll() {
@@ -688,7 +782,7 @@ export default {
       if (!validatedUrl) {
         console.warn('Invalid image URL:', imageUrl);
         this.currentImageUrl = 'https://via.placeholder.com/400';
-        this.$toast.error('Image not available');
+        alert('Image not available');
       } else {
         this.currentImageUrl = validatedUrl;
       }
@@ -704,7 +798,7 @@ export default {
     handleImageError() {
       console.error('Failed to load image:', this.currentImageUrl);
       this.currentImageUrl = 'https://via.placeholder.com/400';
-      this.$toast.error('Failed to load image');
+      alert('Failed to load image');
     },
     triggerImageUpload() {
       this.$refs.imageUpload.click();
@@ -725,9 +819,52 @@ export default {
       this.filterStatus = status;
       this.currentPage = 1;
     },
+    startEditing(field) {
+      const fieldLabels = {
+        username: 'Name',
+        phoneNumber: 'Phone Number',
+        nationalId: 'National ID',
+        email: 'Email',
+        vehicle: 'Vehicle',
+        model: 'Model',
+        plate: 'NO Plate',
+        color: 'Color',
+        rating: 'Rate',
+        wallet: 'Wallet',
+      };
+      this.editingFieldName = field;
+      this.editingFieldLabel = fieldLabels[field] || field;
+      this.editFieldValue = this.driverData[field];
+      this.showEditFieldModal = true;
+      this.editingField[field] = true;
+    },
+    async saveEdit() {
+      const fieldMap = {
+        username: 'username',
+        phoneNumber: 'phoneNumber',
+        nationalId: 'id',
+        email: 'email',
+        vehicle: 'vehicleType',
+        model: 'carModel',
+        plate: 'carNumber',
+        color: 'carColor',
+        rating: 'rate',
+        wallet: 'wallet',
+      };
+      const apiFieldName = fieldMap[this.editingFieldName];
+      await this.updateField(apiFieldName, this.editFieldValue);
+      this.driverData[this.editingFieldName] = this.editFieldValue;
+      this.cancelEdit();
+    },
+    cancelEdit() {
+      this.editingField[this.editingFieldName] = false;
+      this.showEditFieldModal = false;
+      this.editFieldValue = '';
+      this.editingFieldName = '';
+      this.editingFieldLabel = '';
+    },
   },
   created() {
-    console.log('Methods available:', Object.keys(this.$options.methods));
     this.fetchDriverData();
     this.getTrips();
     this.getTarget();
@@ -879,12 +1016,29 @@ export default {
 .data-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin: 10px 0;
   color: #2c3e50;
 }
 
 .data-row span:first-child {
   font-weight: 600;
+}
+
+.field-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-icon {
+  cursor: pointer;
+  color: #6b48ff;
+  font-size: 14px;
+}
+
+.edit-icon:hover {
+  color: #ff4d4f;
 }
 
 .modal-overlay {
@@ -902,10 +1056,10 @@ export default {
 
 .modal-content {
   background: white;
-  padding: 1rem;
+  padding: 20px;
   border-radius: 8px;
   position: relative;
-  max-width: 90%;
+  max-width: 400px;
   max-height: 90%;
   overflow: auto;
   display: flex;
@@ -975,7 +1129,7 @@ export default {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  margin-right: 5px;
+  margin-left: 5px;
 }
 
 .summary-stats {
@@ -1270,3 +1424,4 @@ export default {
   }
 }
 </style>
+```

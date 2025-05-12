@@ -4,19 +4,18 @@ import router from './router/index';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-// import VueSocketIO from 'vue-3-socket.io';
-// import SocketIO from 'socket.io-client';
+// Import Font Awesome
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faPen } from '@fortawesome/free-solid-svg-icons';
+
+// Add the pen icon to the library
+library.add(faPen);
 
 const app = createApp(App);
 
-// app.use(new VueSocketIO({
-//     debug: true,
-//     connection: SocketIO('http://localhost:3000', {}), 
-//     vuex: {
-//         actionPrefix: "SOCKET_",
-//         mutationPrefix: "SOCKET_"
-//     }
-// }));
+// Register the FontAwesomeIcon component globally
+app.component('font-awesome-icon', FontAwesomeIcon);
 
 app.use(router);
 app.mount('#app');
