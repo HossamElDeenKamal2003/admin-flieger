@@ -1,30 +1,32 @@
 <template>
   <div class="parent">
-  <div>
-    <Sidebar />
-  </div>
-  <div class="transactions-container">
-    <waiting-drivers-number />
-    <h2>Successful Transactions</h2>
-    <table class="transactions-table">
-      <thead>
-      <tr>
-        <th>Driver Name</th>
-        <th>Amount</th>
-        <th>Transferred By</th>
-        <th>Status</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr v-for="transaction in transactions" :key="transaction.id">
-        <td>{{ transaction.driverName }}</td>
-        <td>{{ transaction.amount }}</td>
-        <td>{{ transaction.transferredBy }}</td>
-        <td class="success">Success</td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
+    <div class="sidebar-container">
+      <Sidebar />
+    </div>
+    <div class="transactions-container">
+      <waiting-drivers-number />
+      <h2>Successful Transactions</h2>
+      <div class="table-responsive">
+        <table class="transactions-table">
+          <thead>
+          <tr>
+            <th>Driver Name</th>
+            <th>Amount</th>
+            <th>Transferred By</th>
+            <th>Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="transaction in transactions" :key="transaction.id">
+            <td data-label="Driver Name">{{ transaction.driverName }}</td>
+            <td data-label="Amount">{{ transaction.amount }}</td>
+            <td data-label="Transferred By">{{ transaction.transferredBy }}</td>
+            <td class="success" data-label="Status">Success</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -59,55 +61,143 @@ export default {
       ],
     };
   },
-  // Optional: Fetch data from an API
-  async created() {
-    // Example API call (uncomment and modify as needed)
-    /*
-    try {
-      const response = await fetch('/api/successful-transactions');
-      this.transactions = await response.json();
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    }
-    */
-  },
 };
 </script>
 
 <style scoped>
+.parent {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar-container {
+  width: 250px;
+}
+
 .transactions-container {
+  flex: 1;
   padding: 20px;
-  flex: .9;
+  overflow-x: auto;
+}
+
+h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  margin-top: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .transactions-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  min-width: 600px;
 }
 
 .transactions-table th,
 .transactions-table td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 12px 15px;
   text-align: left;
 }
 
 .transactions-table th {
-  background-color: #f2f2f2;
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.transactions-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.transactions-table tr:hover {
+  background-color: #f1f1f1;
 }
 
 .success {
-  color: green;
+  color: #28a745;
   font-weight: bold;
 }
-.parent{
-  display: flex;
-  justify-content: space-between;
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .sidebar-container {
+    width: 200px;
+  }
 }
-@media (max-width: 2000px){
-  .transactions-container{
-    flex: .7;
+
+@media (max-width: 768px) {
+  .parent {
+    flex-direction: column;
+  }
+
+  .sidebar-container {
+    width: 100%;
+  }
+
+  .transactions-container {
+    padding: 15px;
+  }
+
+  .transactions-table {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .transactions-table {
+    display: block;
+    width: 100%;
+  }
+
+  .transactions-table thead {
+    display: none;
+  }
+
+  .transactions-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .transactions-table tr {
+    display: block;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  .transactions-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 8px 15px;
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  .transactions-table td:before {
+    content: attr(data-label);
+    font-weight: bold;
+    margin-right: auto;
+    padding-right: 20px;
+    text-align: left;
+  }
+
+  .transactions-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .success {
+    justify-content: flex-end;
+  }
+
+  .success:before {
+    display: none;
   }
 }
 </style>
