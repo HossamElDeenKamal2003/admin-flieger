@@ -83,8 +83,8 @@
                 </div>
                 <div class="data-row">
                   <span>Block Status:</span>
-                  <span :class="driverData.block ? 'status-blocked' : 'status-enabled'">
-                    {{ driverData.block ? 'Driver is blocked' : 'Driver is unblocked' }}
+                  <span :class="driverData.block ? 'status-enabled' : 'status-blocked'">
+                    {{ driverData.block ? 'Driver is unblocked' : 'Driver is blocked' }}
                   </span>
                 </div>
               </div>
@@ -100,7 +100,7 @@
             </div>
             <div class="data-row">
               <span>Brand:</span>
-              <input v-model="driverData.brand" @change="updateField('brand', driverData.brand)" />
+              <span>{{ driverData.brand || 'N/A' }}</span>
             </div>
             <div class="data-row">
               <span>Model:</span>
@@ -112,7 +112,7 @@
             </div>
             <div class="data-row">
               <span>Color:</span>
-              <input v-model="driverData.color" @change="updateField('color', driverData.color)" />
+              <span>{{ driverData.color || 'N/A' }}</span>
               <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
             </div>
           </div>
@@ -122,11 +122,11 @@
         <div class="summary-stats">
           <div class="stat-item">
             <button class="icon confirmed" @click="filterTrips(['end'])"></button>
-            Completed Trips {{ lengthCompleted }}
+            Completed Trips <span>{{ lengthCompleted }}</span>
           </div>
           <div class="stat-item">
             <button class="icon cancelled" @click="filterTrips('cancelled')"></button>
-            Cancelled Trips {{ lengthCanceled }}
+            Cancelled Trips <span>{{ lengthCanceled }}</span>
           </div>
           <div class="stat-item">
             <span class="icon rating"></span>
@@ -150,7 +150,7 @@
               :class="{ 'tab': true, 'active': activeTab === label.toLowerCase().replace(/\s/g, '') }"
               @click="handleTabClick(label.toLowerCase().replace(/\s/g, ''))"
           >
-            {{ label === 'Block' ? (driverData.block ? 'Unblock' : 'Block') : label }}
+            {{ label === 'Block' ? (driverData.block ? 'Block' : 'Unblock') : label }}
           </button>
         </div>
 
@@ -447,12 +447,12 @@ export default {
           email: driver.email || 'N/A',
           status: driver.status || 'offline',
           vehicle: driver.vehicleType || 'N/A',
-          brand: 'N/A',
+          brand: 'N/A', // Non-schema field
           model: driver.carModel || 'N/A',
           plate: driver.carNumber || 'N/A',
-          color: 'N/A',
-          confirmedTrips: driver.ctr || 0,
-          cancelledTrips: 0,
+          color: 'N/A', // Non-schema field
+          confirmedTrips: driver.ctr || 0, // Non-schema field
+          cancelledTrips: 0, // Non-schema field
           rating: driver.rate || 0,
           cash: driver.dailayEarned || 0,
           wallet: driver.wallet || 0,
@@ -500,14 +500,13 @@ export default {
         }
 
         this.trips = trips;
-        for(let i = 0; i < this.trips.length; i++) {
-          if(this.trips[i].status === 'end'){
+        this.lengthCompleted = 0;
+        this.lengthCanceled = 0;
+        for (let trip of trips) {
+          if (trip.status === 'end') {
             this.lengthCompleted++;
-            console.log("end", i.status);
-          }else{
+          } else if (trip.status === 'cancelled') {
             this.lengthCanceled++;
-            console.log("cancelled", i.status);
-
           }
         }
         this.cancelledTrips = cancelledTrips;
@@ -530,14 +529,18 @@ export default {
         const currentBlockStatus = this.driverData.block;
         const newBlockStatus = !currentBlockStatus;
 
-        await axios.patch(
-            `${this.baseUrl}/authdriver/patch-block/${driverId}`,
-            { block: newBlockStatus },
-            { timeout: 10000 }
+        const formData = new FormData();
+        formData.append('driverId', driverId);
+        formData.append('text', `Request to ${newBlockStatus ? 'block' : 'unblock'} driver`);
+
+        await axios.post(
+            `${this.baseUrl}/authdriver/updateDataRequest`,
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
 
         this.driverData.block = newBlockStatus;
-        alert(`Driver ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
+        this.$toast.success(`Driver ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
       } catch (error) {
         console.error('Error toggling block status:', error);
         this.$toast.error(this.getErrorMessage(error, 'Failed to update block status.'));
@@ -555,7 +558,7 @@ export default {
           licence: 'driver_licence_image',
           nationalidfront: 'national_front',
           nationalidback: 'national_back',
-          selfiewithid: 'national_selfie'
+          selfiewithid: 'national_selfie',
         };
         const field = imageFields[tabName];
         if (field && this.driverData[field]) {
@@ -565,18 +568,32 @@ export default {
       }
     },
     async updateField(fieldName, value) {
+      const schemaFields = [
+        'name', 'phoneNumber', 'nationalId', 'email', 'status', 'vehicle', 'model',
+        'plate', 'rating', 'cash', 'wallet', 'block', 'profileImage', 'driver_licence_image',
+        'national_front', 'national_back', 'national_selfie',
+      ];
+      if (!schemaFields.includes(fieldName)) {
+        this.$toast.error(`Field ${fieldName} cannot be updated as it is not part of the driver schema.`);
+        return;
+      }
       try {
         this.loading.action = true;
         const driverId = this.$route.params.driverId;
-        await axios.patch(
-            `${this.baseUrl}/authdriver/update-field/${driverId}`,
-            { [fieldName]: value },
-            { timeout: 10000 }
+        const formData = new FormData();
+        formData.append('driverId', driverId);
+        formData.append('text', `Request to update ${fieldName} to ${value}`);
+
+        await axios.post(
+            `${this.baseUrl}/authdriver/updateDataRequest`,
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
-        alert(`${fieldName} updated successfully`);
+
+        this.$toast.success(`${fieldName} update request submitted successfully`);
       } catch (error) {
         console.error(`Error updating ${fieldName}:`, error);
-        this.$toast.error(this.getErrorMessage(error, `Failed to update ${fieldName}.`));
+        this.$toast.error(this.getErrorMessage(error, `Failed to submit ${fieldName} update request.`));
         await this.fetchDriverData();
       } finally {
         this.loading.action = false;
@@ -600,7 +617,7 @@ export default {
             { tripId, ...payload },
             { timeout: 10000 }
         );
-        alert(`${fieldName} for trip ${tripId} updated successfully`);
+        this.$toast.success(`${fieldName} for trip ${tripId} updated successfully`);
       } catch (error) {
         console.error(`Error updating trip ${tripId} ${fieldName}:`, error);
         this.$toast.error(this.getErrorMessage(error, `Failed to update trip ${fieldName}.`));
@@ -615,19 +632,22 @@ export default {
         const driverId = this.$route.params.driverId;
         const file = event.target.files[0];
         const formData = new FormData();
-        formData.append('image', file);
-        formData.append('fieldName', fieldName);
+        formData.append('driverId', driverId);
+        formData.append('text', `Request to update ${fieldName}`);
+        formData.append('file', file);
 
         const response = await axios.post(
-            `${this.baseUrl}/authdriver/upload-image/${driverId}`,
+            `${this.baseUrl}/authdriver/updateDataRequest`,
             formData,
             { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
-        this.driverData[fieldName] = response.data.imageUrl;
-        alert(`${fieldName} updated successfully`);
+
+        // Assuming the API returns the new image URL
+        this.driverData[fieldName] = response.data.imageUrl || this.driverData[fieldName];
+        this.$toast.success(`${fieldName} update request submitted successfully`);
       } catch (error) {
         console.error(`Error uploading ${fieldName}:`, error);
-        this.$toast.error(this.getErrorMessage(error, `Failed to upload ${fieldName}.`));
+        this.$toast.error(this.getErrorMessage(error, `Failed to submit ${fieldName} update request.`));
         await this.fetchDriverData();
       } finally {
         this.loading.action = false;
@@ -640,20 +660,22 @@ export default {
         const driverId = this.$route.params.driverId;
         const file = event.target.files[0];
         const formData = new FormData();
-        formData.append('image', file);
-        formData.append('fieldName', this.imageFieldToUpdate);
+        formData.append('driverId', driverId);
+        formData.append('text', `Request to update ${this.imageFieldToUpdate}`);
+        formData.append('file', file);
 
         const response = await axios.post(
-            `${this.baseUrl}/authdriver/upload-image/${driverId}`,
+            `${this.baseUrl}/authdriver/updateDataRequest`,
             formData,
             { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
-        this.driverData[this.imageFieldToUpdate] = response.data.imageUrl;
-        this.currentImageUrl = response.data.imageUrl;
-        alert(`${this.imageFieldToUpdate} updated successfully`);
+
+        this.driverData[this.imageFieldToUpdate] = response.data.imageUrl || this.driverData[this.imageFieldToUpdate];
+        this.currentImageUrl = response.data.imageUrl || this.currentImageUrl;
+        this.$toast.success(`${this.imageFieldToUpdate} update request submitted successfully`);
       } catch (error) {
         console.error(`Error uploading ${this.imageFieldToUpdate}:`, error);
-        this.$toast.error(this.getErrorMessage(error, `Failed to upload ${this.imageFieldToUpdate}.`));
+        this.$toast.error(this.getErrorMessage(error, `Failed to submit ${this.imageFieldToUpdate} update request.`));
         await this.fetchDriverData();
       } finally {
         this.loading.action = false;
@@ -727,7 +749,6 @@ export default {
     },
   },
   created() {
-    console.log('Methods available:', Object.keys(this.$options.methods));
     this.fetchDriverData();
     this.getTrips();
     this.getTarget();

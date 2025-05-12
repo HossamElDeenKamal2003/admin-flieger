@@ -46,7 +46,7 @@ export default {
         { name: 'Chat', icon: 'chat', route: '/chat' },
         {name: "Chat History", icon: "kjsk", route: 'chat-history'}
       ],
-      activeMenu: 'Overview', // Default to Overview
+      activeMenu: 'Overview',
       isCollapsed: false,
     };
   },
