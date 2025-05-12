@@ -1,6 +1,13 @@
 <template>
-    <div class="signup-container">
-        <h2>Driver Signup</h2>
+  <div :class="['sidebar', { 'sidebar-collapsed': !isSidebarExpanded }]">
+  <Sidebar />
+</div>
+
+
+  <div class="signup-container">
+    <WaitingDriversNumber :waiting-captains="waitingCaptains" />
+
+    <h2>Driver Signup</h2>
         <form @submit.prevent="handleSignup" enctype="multipart/form-data">
             <!-- Text Inputs -->
             <input v-model="form.username" type="text" placeholder="Username" required />
@@ -42,9 +49,12 @@
 
 <script>
 import axios from 'axios';
+import Sidebar from "@/components/sidebarComponent.vue";
+import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
     name: 'DriverSignup',
+  components: {WaitingDriversNumber, Sidebar},
     data() {
         return {
             form: {
@@ -183,7 +193,7 @@ export default {
 
 <style scoped>
 .signup-container {
-    max-width: 500px;
+    max-width: 1000px;
     margin: auto;
     padding: 20px;
     border: 1px solid #ccc;

@@ -53,6 +53,8 @@
             <td><input type="number" v-model="currentPrices.level2.compfort" @change="handlePriceChange('level2', 'compfort')"></td>
             <td><input type="number" v-model="currentPrices.level3.compfort" @change="handlePriceChange('level3', 'compfort')"></td>
             <td><input type="number" v-model="currentPrices.level4.compfort" @change="handlePriceChange('level4', 'compfort')"></td>
+            <td><input type="number" v-model="fixedAmounts.fixedAmountcar" @change="handleFixedAmountChange('fixedAmountcar')"></td>
+
             <td></td>
           </tr>
           <tr>
