@@ -762,7 +762,7 @@ header {
 
 @media (max-width: 2000px){
   .main-content{
-    width: 80%;
+    width: 85%;
   }
 }
 
