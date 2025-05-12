@@ -31,7 +31,7 @@
           <div class="card-value">
             {{ propertyForm.time || currentProperty.time }}
             <button class="edit-btn" @click="editProperty('time')">
-              <span>Edit</span>
+              <span><font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" /></span>
             </button>
           </div>
           <form v-if="editing.time" @submit.prevent="updateProperty('time')" class="edit-form">
@@ -55,7 +55,7 @@
           <div class="card-value">
             {{ maxDistance || currentMaxDistance }}
             <button class="edit-btn" @click="editDistance('maxDistance')">
-              <span>Edit</span>
+              <span><font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" /></span>
             </button>
           </div>
           <form v-if="editing.maxDistance" @submit.prevent="updateDistance('maxDistance')" class="edit-form">
@@ -79,7 +79,7 @@
           <div class="card-value">
             {{ distanceInTrip || currentDistanceInTrip }}
             <button class="edit-btn" @click="editDistanceInTrip">
-              <span>Edit</span>
+              <span><font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" /></span>
             </button>
           </div>
           <form v-if="editing.distanceInTrip" @submit.prevent="updateDistanceInTrip" class="edit-form">
@@ -103,7 +103,7 @@
           <div class="card-value">
             {{ maxDistanceOffer || currentMaxDistanceOffer }}
             <button class="edit-btn" @click="editDistance('maxDistanceOffer')">
-              <span>Edit</span>
+              <span><font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" /></span>
             </button>
           </div>
           <form v-if="editing.maxDistanceOffer" @submit.prevent="updateDistance('maxDistanceOffer')" class="edit-form">
@@ -127,7 +127,7 @@
           <div class="card-value">
             {{ targets.daily || currentTargets.daily }}
             <button class="edit-btn" @click="editTarget('daily')">
-              <span>Edit</span>
+              <span><font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" /></span>
             </button>
           </div>
           <form v-if="editing.daily" @submit.prevent="updateTarget('daily')" class="edit-form">
@@ -151,7 +151,7 @@
           <div class="card-value">
             {{ targets.weekly || currentTargets.weekly }}
             <button class="edit-btn" @click="editTarget('weekly')">
-              <span>Edit</span>
+              <span><font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" /></span>
             </button>
           </div>
           <form v-if="editing.weekly" @submit.prevent="updateTarget('weekly')" class="edit-form">
@@ -175,7 +175,7 @@
           <div class="card-value">
             {{ targets.monthly || currentTargets.monthly }}
             <button class="edit-btn" @click="editTarget('monthly')">
-              <span>Edit</span>
+              <span><font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" /></span>
             </button>
           </div>
           <form v-if="editing.monthly" @submit.prevent="updateTarget('monthly')" class="edit-form">

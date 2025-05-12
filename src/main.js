@@ -8,10 +8,10 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faPen } from '@fortawesome/free-solid-svg-icons';
-
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 // Add the pen icon to the library
 library.add(faPen);
-
+library.add(faPenToSquare);
 const app = createApp(App);
 
 // Register the FontAwesomeIcon component globally

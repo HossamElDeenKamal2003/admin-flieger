@@ -46,39 +46,40 @@
                 <input type="file" @change="uploadImage('profile_image', $event)" class="file-input" />
               </div>
               <div class="profile-info">
-                <h2><input v-model="profileInfoTitle" @change="updateField('profileInfoTitle', profileInfoTitle)" /></h2>
+                <h2 style="font-weight: bold; color: #6b5b95; font-size: 1.2em">
+                  {{ profileInfoTitle }}
+                  <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('captain')" />
+                </h2>
                 <div class="data-row">
                   <span>Name:</span>
                   <div class="field-container">
-                    <span v-if="!editingField.username">{{ driverData.username || 'N/A' }}</span>
-                    <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('username')" v-if="!editingField.username" />
+                    <span>{{ driverData.username || 'N/A' }}</span>
                   </div>
                 </div>
                 <div class="data-row">
                   <span>Phone Number:</span>
                   <div class="field-container">
-                    <span v-if="!editingField.phoneNumber">{{ driverData.phoneNumber || 'N/A' }}</span>
-                    <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('phoneNumber')" v-if="!editingField.phoneNumber" />
+                    <span>{{ driverData.phoneNumber || 'N/A' }}</span>
                   </div>
                 </div>
                 <div class="data-row">
                   <span>National ID:</span>
                   <div class="field-container">
-                    <span v-if="!editingField.nationalId">{{ driverData.nationalId || 'N/A' }}</span>
-                    <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('nationalId')" v-if="!editingField.nationalId" />
+                    <span>{{ driverData.nationalId || 'N/A' }}</span>
                   </div>
                 </div>
                 <div class="data-row">
                   <span>Email:</span>
                   <div class="field-container">
-                    <span v-if="!editingField.email">{{ driverData.email || 'N/A' }}</span>
-                    <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('email')" v-if="!editingField.email" />
+                    <span>{{ driverData.email || 'N/A' }}</span>
                   </div>
                 </div>
                 <div class="data-row">
                   <span>State:</span>
-                  <span>{{ driverData.status || 'N/A' }}</span>
-                  <span :class="driverData.status === 'online' ? 'status-online' : 'status-offline'"></span>
+                  <div>
+                    <span :class="driverData.status === 'online' ? 'status-online' : 'status-offline'"></span>
+                    <span>{{ driverData.status || 'N/A' }}</span>
+                  </div>
                 </div>
                 <div class="target-grid">
                   <div class="target-item">
@@ -106,12 +107,14 @@
 
           <!-- Vehicle Data -->
           <div class="data-card">
-            <h2><input v-model="vehicleDataTitle" @change="updateField('vehicleDataTitle', vehicleDataTitle)" /></h2>
+            <h2 style="font-weight: bold; color: #6b5b95; font-size: 1.2em">
+              {{ vehicleDataTitle }}
+              <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" />
+            </h2>
             <div class="data-row">
               <span>Vehicle:</span>
               <div class="field-container">
-                <span v-if="!editingField.vehicle">{{ driverData.vehicle || 'N/A' }}</span>
-                <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('vehicle')" v-if="!editingField.vehicle" />
+                <span>{{ driverData.vehicle || 'N/A' }}</span>
               </div>
             </div>
             <div class="data-row">
@@ -121,22 +124,19 @@
             <div class="data-row">
               <span>Model:</span>
               <div class="field-container">
-                <span v-if="!editingField.model">{{ driverData.model || 'N/A' }}</span>
-                <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('model')" v-if="!editingField.model" />
+                <span>{{ driverData.model || 'N/A' }}</span>
               </div>
             </div>
             <div class="data-row">
               <span>NO Plate:</span>
               <div class="field-container">
-                <span v-if="!editingField.plate">{{ driverData.plate || 'N/A' }}</span>
-                <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('plate')" v-if="!editingField.plate" />
+                <span>{{ driverData.plate || 'N/A' }}</span>
               </div>
             </div>
             <div class="data-row">
               <span>Color:</span>
               <div class="field-container">
-                <span v-if="!editingField.color">{{ driverData.color || 'N/A' }}</span>
-                <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('color')" v-if="!editingField.color" />
+                <span>{{ driverData.color || 'N/A' }}</span>
                 <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
               </div>
             </div>
@@ -158,7 +158,7 @@
             Rate
             <div class="field-container">
               <span v-if="!editingField.rating">{{ driverData.rating || 0 }}</span>
-              <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('rating')" v-if="!editingField.rating" />
+              <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startEditing('rating')" v-if="!editingField.rating" />
             </div>
           </div>
           <div class="stat-item">
@@ -170,7 +170,7 @@
             Wallet
             <div class="field-container">
               <span v-if="!editingField.wallet">{{ driverData.wallet || 0 }}</span>
-              <font-awesome-icon icon="pen" class="edit-icon" @click="startEditing('wallet')" v-if="!editingField.wallet" />
+              <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startEditing('wallet')" v-if="!editingField.wallet" />
             </div> EGP
           </div>
         </div>
@@ -201,7 +201,7 @@
           </div>
         </div>
 
-        <!-- Edit Field Modal -->
+        <!-- Single Field Edit Modal (for rating and wallet) -->
         <div v-if="showEditFieldModal" class="modal-overlay" @click="cancelEdit">
           <div class="modal-content" @click.stop>
             <h3>Edit {{ editingFieldLabel }}</h3>
@@ -217,6 +217,25 @@
             <div class="modal-buttons">
               <button @click="saveEdit">Save</button>
               <button @click="cancelEdit">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Edit Modal (for Captain Data and Vehicle Data) -->
+        <div v-if="showSectionEditModal" class="modal-overlay" @click="cancelSectionEdit">
+          <div class="modal-content" @click.stop>
+            <h3>Edit {{ sectionEditing === 'captain' ? 'Captain Data' : 'Vehicle Data' }}</h3>
+            <div v-for="(value, field) in sectionEditValues" :key="field" class="modal-field">
+              <label>{{ fieldLabels[field] || field }}:</label>
+              <input
+                  v-model="sectionEditValues[field]"
+                  type="text"
+                  @keyup.enter="saveSectionEdit"
+              />
+            </div>
+            <div class="modal-buttons">
+              <button @click="saveSectionEdit">Save</button>
+              <button @click="cancelSectionEdit">Cancel</button>
             </div>
           </div>
         </div>
@@ -372,11 +391,28 @@ export default {
       selectedTrip: {},
       filterStatus: null,
       imageFieldToUpdate: null,
-      editingField: {}, // Tracks which fields are being edited
+      editingField: {}, // Tracks single field being edited (rating, wallet)
       showEditFieldModal: false,
       editFieldValue: '',
       editingFieldName: '',
       editingFieldLabel: '',
+      showSectionEditModal: false, // Tracks section edit modal visibility
+      sectionEditing: null, // Tracks which section is being edited ('captain' or 'vehicle')
+      sectionEditValues: {}, // Stores values for all fields in the section being edited
+      fieldLabels: {
+        username: 'Name',
+        phoneNumber: 'Phone Number',
+        nationalId: 'National ID',
+        email: 'Email',
+        vehicle: 'Vehicle',
+        model: 'Model',
+        plate: 'NO Plate',
+        color: 'Color',
+        profileInfoTitle: 'Captain Data Title',
+        vehicleDataTitle: 'Vehicle Data Title',
+        rating: 'Rate',
+        wallet: 'Wallet',
+      },
     };
   },
   computed: {
@@ -635,14 +671,23 @@ export default {
 
         const formData = new FormData();
         formData.append('driverId', driverId);
-        formData.append(fieldName, value);
+        // Ensure numeric fields are sent as numbers
+        if (fieldName === 'wallet' || fieldName === 'rate') {
+          formData.append(fieldName, Number(value));
+        } else {
+          formData.append(fieldName, value);
+        }
 
-        await axios.put(
+        const response = await axios.put(
             `${this.baseUrl}/authdriver/adminUpdateDriver`,
             formData,
             { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
 
+        // Update local state with response data
+        if (fieldName === 'wallet' || fieldName === 'rate') {
+          this.driverData[fieldName === 'rate' ? 'rating' : fieldName] = Number(response.data.driver[fieldName]);
+        }
         alert(`${fieldName} updated successfully`);
       } catch (error) {
         console.error(`Error updating ${fieldName}:`, error);
@@ -820,21 +865,9 @@ export default {
       this.currentPage = 1;
     },
     startEditing(field) {
-      const fieldLabels = {
-        username: 'Name',
-        phoneNumber: 'Phone Number',
-        nationalId: 'National ID',
-        email: 'Email',
-        vehicle: 'Vehicle',
-        model: 'Model',
-        plate: 'NO Plate',
-        color: 'Color',
-        rating: 'Rate',
-        wallet: 'Wallet',
-      };
       this.editingFieldName = field;
-      this.editingFieldLabel = fieldLabels[field] || field;
-      this.editFieldValue = this.driverData[field];
+      this.editingFieldLabel = this.fieldLabels[field] || field;
+      this.editFieldValue = this[field] || this.driverData[field];
       this.showEditFieldModal = true;
       this.editingField[field] = true;
     },
@@ -850,10 +883,16 @@ export default {
         color: 'carColor',
         rating: 'rate',
         wallet: 'wallet',
+        profileInfoTitle: 'profileInfoTitle',
+        vehicleDataTitle: 'vehicleDataTitle',
       };
       const apiFieldName = fieldMap[this.editingFieldName];
       await this.updateField(apiFieldName, this.editFieldValue);
-      this.driverData[this.editingFieldName] = this.editFieldValue;
+      if (this.editingFieldName === 'profileInfoTitle' || this.editingFieldName === 'vehicleDataTitle') {
+        this[this.editingFieldName] = this.editFieldValue;
+      } else {
+        this.driverData[this.editingFieldName] = this.editFieldValue;
+      }
       this.cancelEdit();
     },
     cancelEdit() {
@@ -862,6 +901,50 @@ export default {
       this.editFieldValue = '';
       this.editingFieldName = '';
       this.editingFieldLabel = '';
+    },
+    startSectionEditing(section) {
+      this.sectionEditing = section;
+      const captainFields = ['profileInfoTitle', 'username', 'phoneNumber', 'nationalId', 'email'];
+      const vehicleFields = ['vehicleDataTitle', 'vehicle', 'model', 'plate', 'color'];
+      const fields = section === 'captain' ? captainFields : vehicleFields;
+
+      this.sectionEditValues = {};
+      fields.forEach(field => {
+        this.sectionEditValues[field] = this[field] || this.driverData[field] || '';
+      });
+
+      this.showSectionEditModal = true;
+    },
+    async saveSectionEdit() {
+      const fieldMap = {
+        username: 'username',
+        phoneNumber: 'phoneNumber',
+        nationalId: 'id',
+        email: 'email',
+        vehicle: 'vehicleType',
+        model: 'carModel',
+        plate: 'carNumber',
+        color: 'carColor',
+        profileInfoTitle: 'profileInfoTitle',
+        vehicleDataTitle: 'vehicleDataTitle',
+      };
+
+      for (const [field, value] of Object.entries(this.sectionEditValues)) {
+        const apiFieldName = fieldMap[field];
+        await this.updateField(apiFieldName, value);
+        if (field === 'profileInfoTitle' || field === 'vehicleDataTitle') {
+          this[field] = value;
+        } else {
+          this.driverData[field] = value;
+        }
+      }
+
+      this.cancelSectionEdit();
+    },
+    cancelSectionEdit() {
+      this.showSectionEditModal = false;
+      this.sectionEditing = null;
+      this.sectionEditValues = {};
     },
   },
   created() {
@@ -996,6 +1079,9 @@ export default {
   font-size: 18px;
   margin-top: 0;
   margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .data-card h2 input,
