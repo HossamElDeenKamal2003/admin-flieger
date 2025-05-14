@@ -36,25 +36,48 @@
           <h2>Users Data</h2>
           <div class="data-row">
             <span>Name:</span>
-            <input v-model="userData.name" @change="updateField('name', userData.name)" />
+            <span>{{ userData.name || 'N/A' }}</span>
           </div>
           <div class="data-row">
             <span>Phone Number:</span>
-            <input v-model="userData.phoneNumber" @change="updateField('phoneNumber', userData.phoneNumber)" />
+            <span>{{ userData.phoneNumber || 'N/A' }}</span>
           </div>
           <div class="data-row">
             <span>Rate:</span>
-            <span class="stars">★ <input v-model.number="userData.rating" @change="updateField('rating', userData.rating)" /></span>
+            <span class="stars">★ {{ userData.rating || 0 }}</span>
           </div>
           <div class="data-row">
             <span>Wallet:</span>
-            <input v-model.number="userData.wallet" @change="updateField('wallet', userData.wallet)" /> EGP
+            <div class="field-container">
+              <span>{{ userData.wallet || 0 }} EGP</span>
+              <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startEditing('wallet')" />
+            </div>
           </div>
           <div class="data-row">
             <span>Block Status:</span>
-            <span :class="userData.block ? 'status-blocked' : 'status-enabled'">
-              {{ userData.block ? 'User is blocked' : 'User is unblocked' }}
+            <span :class="userData.block ? 'status-enabled' : 'status-blocked'">
+              {{ userData.block ? 'User is unblocked' : 'User is blocked' }}
             </span>
+          </div>
+        </div>
+
+        <!-- Edit Wallet Modal -->
+        <div v-if="showEditModal" class="modal-overlay" @click="cancelEdit">
+          <div class="modal-content" @click.stop>
+            <h3>Edit Wallet</h3>
+            <div class="modal-field">
+              <label>Wallet (EGP):</label>
+              <input
+                  v-model.number="editWalletValue"
+                  type="number"
+                  @keyup.enter="saveEdit"
+                  @blur="saveEdit"
+              />
+            </div>
+            <div class="modal-buttons">
+              <button @click="saveEdit">Save</button>
+              <button @click="cancelEdit">Cancel</button>
+            </div>
           </div>
         </div>
 
@@ -134,7 +157,7 @@
         </div>
 
         <!-- Edit Trip Modal -->
-        <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
+        <div v-if="showEditTripModal" class="modal-overlay" @click="closeEditModal">
           <div class="modal-content" @click.stop>
             <h3>Edit Trip - {{ selectedTrip.tripId }}</h3>
             <div class="modal-field">
@@ -179,8 +202,10 @@ export default {
       baseUrl: 'https://backend.fego-rides.com',
       activeTab: null,
       filterStatus: null,
-      showEditModal: false,
+      showEditModal: false, // For wallet edit modal
+      showEditTripModal: false, // For trip edit modal
       selectedTrip: {},
+      editWalletValue: null,
       waitingCaptains: 0,
     };
   },
@@ -206,7 +231,6 @@ export default {
     paginatedData() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      console.log("filtered Trips",this.filteredTrips)
       return this.filteredTrips.slice(start, end);
     },
     totalItems() {
@@ -315,10 +339,10 @@ export default {
     },
     openEditModal(trip) {
       this.selectedTrip = { ...trip };
-      this.showEditModal = true;
+      this.showEditTripModal = true;
     },
     closeEditModal() {
-      this.showEditModal = false;
+      this.showEditTripModal = false;
       this.selectedTrip = {};
     },
     async saveTripChanges() {
@@ -359,6 +383,21 @@ export default {
       } finally {
         this.isLoading = false;
       }
+    },
+    startEditing() {
+      this.editWalletValue = this.userData.wallet;
+      this.showEditModal = true;
+    },
+    async saveEdit() {
+      if (this.editWalletValue !== null) {
+        await this.updateField('wallet', this.editWalletValue);
+        this.userData.wallet = this.editWalletValue;
+      }
+      this.cancelEdit();
+    },
+    cancelEdit() {
+      this.showEditModal = false;
+      this.editWalletValue = null;
     }
   },
   created() {
@@ -376,9 +415,6 @@ export default {
   font-family: 'Arial', sans-serif;
   display: flex;
   justify-content: end;
-}
-.main-content {
-  width: 80%;
 }
 
 /* Sidebar */
@@ -476,8 +512,87 @@ header {
   width: 60%;
 }
 
+.field-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-icon {
+  cursor: pointer;
+  color: #6b48ff;
+  font-size: 14px;
+}
+
+.edit-icon:hover {
+  color: #ff4d4f;
+}
+
 .stars {
   color: #f59e0b;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-field {
+  margin-bottom: 15px;
+}
+
+.modal-field label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.modal-field input,
+.modal-field select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-buttons button:first-child {
+  background-color: #6b48ff;
+  color: white;
+}
+
+.modal-buttons button:last-child {
+  background-color: #ff4d4f;
+  color: white;
 }
 
 /* Trip Stats */
@@ -570,8 +685,6 @@ header {
   background-color: #f9fafb;
   text-transform: uppercase;
 }
-
-
 
 .status-completed {
   color: #6b48ff;
@@ -675,69 +788,6 @@ header {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 400px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.modal-field {
-  margin-bottom: 15px;
-}
-
-.modal-field label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.modal-field input,
-.modal-field select {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.modal-buttons button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.modal-buttons button:first-child {
-  background-color: #6b48ff;
-  color: white;
-}
-
-.modal-buttons button:last-child {
-  background-color: #ff4d4f;
-  color: white;
 }
 
 .trip-history table td button {

@@ -21,7 +21,11 @@
             <input v-model="form.licence_expire_date" type="date" required />
             <input v-model="form.password" type="password" placeholder="Password" required />
             <input v-model="form.walletType" type="text" placeholder="Wallet Type" required />
-            <!-- File Uploads -->
+            <input v-model="form.vehicleCategory" type="text" placeholder="Vehicle Category" required>
+            <input v-model="form.vehicleSubCategory" type="text" placeholder="vehicle Sub Category" required>
+            <input v-model="form.vehicleProductionDate" type="date" placeholder="vehicleProductionDate" required>
+
+          <!-- File Uploads -->
             <div v-for="(label, key) in fileFields" :key="key">
                 <label>{{ label }}</label>
                 <input type="file" @change="handleFileUpload($event, key)" required />
@@ -75,7 +79,10 @@ export default {
                 national_back: null,
                 national_selfie: null,
                 location: null,
-                walletType: ""
+                walletType: "",
+                vehicleCategory: "",
+                vehicleSubCategory: "",
+                vehicleProductionDate: ""
             },
             fileFields: {
                 licenseImage: 'License Image',
@@ -84,7 +91,9 @@ export default {
                 national_front: 'National ID Front',
                 national_back: 'National ID Back',
                 national_selfie: 'Selfie with National ID',
-            },
+                vehicleNumberImage: 'vehicle Number Image'
+
+      },
             errorMessage: '',
             successMessage: '',
             loading: false,

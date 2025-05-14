@@ -51,7 +51,12 @@
               </tr>
               </thead>
               <tbody>
-              <tr v-for="user in filteredUsers" :key="user.id">
+              <tr
+                  v-for="user in filteredUsers"
+                  :key="user._id"
+                  @click="goToUser(user._id)"
+                  style="cursor: pointer"
+              >
                 <td>
                   <div class="user-info">
                     <img :src="user.image || 'https://via.placeholder.com/40'" alt="User" class="user-image" />
@@ -69,27 +74,22 @@
                   <span class="stars">★ {{ user.rating || '0.0' }}</span>
                 </td>
                 <td>
-                  <i class="fas fa-trash-alt delete-icon" @click="deleteUser(user._id)"></i>
+                  <i
+                      class="fas fa-trash-alt delete-icon"
+                      @click.stop="deleteUser(user._id)"
+                  ></i>
                 </td>
-                <td>
-                  <router-link
-                      v-if="user._id"
-                      :to="{ path: `/user/${user._id}` }"
-                      class="action-open"
-                  >
-                    View Details
-                  </router-link>
-                  <span v-else class="action-open disabled">N/A</span>
-                </td>
+                <td>View Details</td>
               </tr>
+
               <tr v-if="filteredUsers.length === 0">
                 <td colspan="8" class="no-data">No users found</td>
               </tr>
               </tbody>
             </table>
-          </div>
 
-          <!-- Footer with Pagination -->
+
+            <!-- Footer with Pagination -->
           <div class="users-footer">
             <p>Total users: {{ filteredUsersCount }}</p>
             <div class="pagination">
@@ -119,6 +119,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>
 
@@ -169,6 +170,9 @@ export default {
   methods: {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
+    },
+    goToUser(id) {
+      this.$router.push(`/user/${id}`);
     },
     async fetchUsers() {
       this.isLoading = true;

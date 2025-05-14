@@ -371,4 +371,30 @@ export default {
 .role-descriptions h3 {
   margin-bottom: 15px;
 }
+
+.form {
+  position: fixed; /* Use fixed to position relative to the viewport */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the form */
+  max-width: 500px;
+  width: 90%; /* Responsive width */
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000; /* Ensure it appears above other content */
+}
+
+/* Optional: Add a backdrop to dim the background */
+.form::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+  z-index: -1; /* Behind the form */
+}
 </style>

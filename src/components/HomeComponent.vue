@@ -1,13 +1,14 @@
+```vue
 <template>
   <div class="dashboard">
-    <!-- Sidebar (unchanged) -->
+    <!-- Sidebar -->
     <div :class="['sidebar', { 'sidebar-collapsed': !isSidebarExpanded }]">
-      <Sidebar/>
+      <Sidebar />
     </div>
 
     <!-- Main Content -->
-    <div :class="['main-content', { 'main-content-expanded': isSidebarExpanded }]">
-      <!-- Header (unchanged) -->
+    <div :class="['main-content', { 'main-content-expanded': !isSidebarExpanded }]">
+      <!-- Header -->
       <header>
         <div class="header-left">
           <i class="fas fa-bars" @click="handleSidebarToggle"></i>
@@ -18,48 +19,53 @@
         </div>
       </header>
 
-      <!-- Knowledge Base (unchanged) -->
+      <!-- Knowledge Base -->
       <div class="knowledge-base">
         <div class="card">
           <div class="card-header">
             <span>Total Orders</span>
             <i class="fas fa-chevron-right"></i>
           </div>
-          <p class="card-value">{{this.totalTrips}}</p>
+          <p class="card-value">{{ totalTrips }}</p>
         </div>
         <div class="card">
           <div class="card-header">
             <span>Total Earnings</span>
             <i class="fas fa-chevron-right"></i>
           </div>
-          <p class="card-value">{{totalEarnings}}</p>
+          <p class="card-value">{{ totalEarnings }}</p>
         </div>
         <div class="card">
           <div class="card-header">
             <span>Profit</span>
             <i class="fas fa-chevron-right"></i>
           </div>
-          <p class="card-value">{{profit}}</p>
+          <p class="card-value">{{ profit }}</p>
         </div>
       </div>
 
       <!-- Main Content Grid -->
       <div class="content-grid">
-        <!-- Trips Progress Chart (unchanged) -->
-        <div class="trips-progress">
-          <div class="chart-header">
-            <h2>Trips Progress</h2>
-            <select>
-              <option>2025</option>
-            </select>
-          </div>
-          <div class="chart-legend">
-            <span class="legend-item"><span class="dot orange"></span>Long Trips</span>
-            <span class="legend-item"><span class="dot blue"></span>Intermediate Trips</span>
-            <span class="legend-item"><span class="dot green"></span>Short Trips</span>
-          </div>
-          <div class="chart-placeholder">
-            <p>Chart: Long Trips, Intermediate Trips, Short Trips (Jan-Dec)</p>
+        <!-- Level Counters -->
+        <div class="level-counters">
+          <h2>Driver Levels</h2>
+          <div class="counters-grid">
+            <div class="counter-card">
+              <span class="counter-label">Level 1 Drivers</span>
+              <p class="counter-value">{{ counter.levelOneCount || 0 }}</p>
+            </div>
+            <div class="counter-card">
+              <span class="counter-label">Level 2 Drivers</span>
+              <p class="counter-value">{{ counter.levelTwoCount || 0 }}</p>
+            </div>
+            <div class="counter-card">
+              <span class="counter-label">Level 3 Drivers</span>
+              <p class="counter-value">{{ counter.levelThreeCount || 0 }}</p>
+            </div>
+            <div class="counter-card">
+              <span class="counter-label">Level 4 Drivers</span>
+              <p class="counter-value">{{ counter.levelFourCount || 0 }}</p>
+            </div>
           </div>
         </div>
 
@@ -93,9 +99,9 @@
                 <th><input type="checkbox" /></th>
                 <th>User</th>
                 <th>Phone number</th>
-                <th>no of complete trip</th>
-                <th>no of cancelled trip</th>
-                <th>wallet</th>
+                <th>No of complete trips</th>
+                <th>No of cancelled trips</th>
+                <th>Wallet</th>
                 <th>Rate</th>
               </tr>
               </thead>
@@ -149,6 +155,7 @@ export default {
       topUsers: [],
       totalTrips: 0,
       profit: 0,
+      counter: {},
       totalEarnings: 0,
       adminUsername: localStorage.getItem('username'),
     };
@@ -161,37 +168,50 @@ export default {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
     },
+    async fetchLevelData() {
+      try {
+        const response = await axios.get("https://backend.fego-rides.com/book/levelCounter");
+        this.counter = response.data;
+      } catch (error) {
+        console.error(error);
+        alert("Error fetching level data");
+      }
+    },
     async fetchData() {
-      axios.get('https://backend.fego-rides.com/book/totalOrders').then(response => {
+      try {
+        const response = await axios.get('https://backend.fego-rides.com/book/totalOrders');
         this.totalTrips = response.data.totalTrips;
         this.profit = response.data.profit;
         this.totalEarnings = response.data.totalCommission;
-      }).catch(error => {
-        console.log(error);
-      });
+      } catch (error) {
+        console.error(error);
+        alert("Error fetching total orders");
+      }
     },
     async fetchTopCaptains() {
       try {
         const response = await axios.get('https://backend.fego-rides.com/admin/get-drivers');
-        // Assuming response.data is an array of drivers
-        this.topCaptains = response.data
-            .filter(driver => driver.ctr <= 10) // Filter drivers with exactly 10 trips
-            .slice(0, 1) // Take the first one
-            .map(driver => ({
-              id: driver.id || 'N/A',
-              name: driver.username || 'Unknown',
-              image: driver.profile_image || 'https://via.placeholder.com/40',
-              trips: driver.ctr || 10,
-              income: driver.income || '0 EGP',
-              rating: driver.rating || '0.0',
-            }));
+        const drivers = response.data;
+        // Sort drivers by ctr in descending order
+        const sortedDrivers = drivers.sort((a, b) => (b.ctr || 0) - (a.ctr || 0));
+        // Determine how many captains to show
+        const limit = drivers.length < 10 ? 5 : 10;
+        // Map to topCaptains format
+        this.topCaptains = sortedDrivers.slice(0, limit).map(driver => ({
+          id: driver.id || 'N/A',
+          name: driver.username || 'Unknown',
+          image: driver.profile_image || 'https://via.placeholder.com/40',
+          trips: driver.ctr || 0,
+          income: driver.income || '0 EGP',
+          rating: driver.rating || '0.0',
+        }));
       } catch (error) {
         console.error('Error fetching drivers:', error);
         this.topCaptains = [{
           id: 'N/A',
           name: 'No Driver Found',
           image: 'https://via.placeholder.com/40',
-          trips: 10,
+          trips: 0,
           income: '0 EGP',
           rating: '0.0',
         }];
@@ -200,12 +220,11 @@ export default {
     async fetchTopUsers() {
       try {
         const response = await axios.get('https://backend.fego-rides.com/admin/get-users');
-        // Assuming response.data is an array of users
         this.topUsers = response.data
-            .sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0)) // Sort by rating descending
-            .slice(0, 10) // Take top 10
+            .sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0))
+            .slice(0, 10)
             .map(user => ({
-              id: user.id || Date.now() + Math.random(), // Fallback ID
+              id: user.id || Date.now() + Math.random(),
               name: user.username || 'Unknown',
               image: user.profile_image || 'https://via.placeholder.com/40',
               phone: user.phoneNumber || 'N/A',
@@ -229,8 +248,9 @@ export default {
       }
     },
   },
-  created(){
-    this.fetchData()
+  created() {
+    this.fetchData();
+    this.fetchLevelData();
   },
   async mounted() {
     await Promise.all([this.fetchTopCaptains(), this.fetchTopUsers()]);
@@ -239,7 +259,7 @@ export default {
 </script>
 
 <style scoped>
-/* Unchanged styles */
+/* Dashboard Layout */
 .dashboard {
   display: flex;
   min-height: 100vh;
@@ -250,6 +270,7 @@ export default {
 .sidebar {
   width: 250px;
   transition: width 0.3s ease;
+  background-color: #1f2a44;
   color: #ffffff;
 }
 
@@ -257,51 +278,6 @@ export default {
   width: 80px;
 }
 
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-}
-
-.sidebar-header .logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.sidebar-header span {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.sidebar-menu {
-  margin-top: 16px;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  cursor: pointer;
-}
-
-.menu-item i {
-  margin-right: 12px;
-  font-size: 18px;
-}
-
-.menu-item span {
-  font-size: 16px;
-}
-
-.menu-item.active {
-  background-color: #ffffff;
-  color: #6b48ff;
-  border-left: 4px solid #6b48ff;
-}
-
-/* Main Content */
 .main-content {
   flex: 1;
   background-color: #f5f7fa;
@@ -309,8 +285,7 @@ export default {
   transition: margin-left 0.3s ease;
 }
 
-
-.main-content-expanded.sidebar-collapsed {
+.main-content-expanded {
   margin-left: 80px;
 }
 
@@ -332,20 +307,6 @@ header {
   color: #6b7280;
   margin-right: 16px;
   cursor: pointer;
-}
-
-.header-left h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2a44;
-  margin: 0;
-}
-
-.header-left p {
-  font-size: 14px;
-  color: #2563eb;
-  cursor: pointer;
-  margin: 4px 0 0 0;
 }
 
 .header-right i {
@@ -400,78 +361,47 @@ header {
   gap: 16px;
 }
 
-/* Trips Progress */
-.trips-progress {
+/* Level Counters */
+.level-counters {
   background-color: #ffffff;
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.chart-header h2 {
+.level-counters h2 {
   font-size: 18px;
   font-weight: 600;
   color: #1f2a44;
-  margin: 0;
+  margin: 0 0 16px 0;
 }
 
-.chart-header select {
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 14px;
-  color: #374151;
-}
-
-.chart-legend {
-  display: flex;
+.counters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
-  margin-bottom: 16px;
 }
 
-.legend-item {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.dot.orange {
-  background-color: #f97316;
-}
-
-.dot.blue {
-  background-color: #2563eb;
-}
-
-.dot.green {
-  background-color: #10b981;
-}
-
-.chart-placeholder {
-  height: 200px;
+.counter-card {
   background-color: #f9fafb;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.counter-label {
   font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.counter-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2a44;
+  margin: 0;
 }
 
 /* Top Captains */
@@ -598,9 +528,7 @@ td {
 }
 
 /* Pagination */
-.pagination
-
-{
+.pagination {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -633,7 +561,7 @@ td {
   border-color: #2563eb;
 }
 
-/* Responsive adjustments */
+/* Responsive Adjustments */
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
@@ -670,3 +598,4 @@ td {
   }
 }
 </style>
+```

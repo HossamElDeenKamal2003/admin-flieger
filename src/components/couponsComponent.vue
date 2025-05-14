@@ -44,9 +44,9 @@
             <h3>Offer Management</h3>
             <input v-model="updateData.id" placeholder="Enter Offer ID" />
             <input v-model="updateData.days" type="number" placeholder="Enter Days" />
+            <input v-model="updateData.numberOftrip" type="number" placeholder="Enter number of trips" />
             <input v-model="updateData.amount" type="number" placeholder="Enter Amount" />
             <button @click="updateDiscountOptions">Confirm</button>
-            <p v-if="offers.length > 0 && offers[0].updatedAt">Last Updated: {{ formatDate(driverMessage.updatedAt) }}</p>
           </div>
         </div>
 
@@ -114,11 +114,12 @@ export default {
       ],
       userMessage: { text: '', sender: '', updatedAt: null },
       driverMessage: { text: '', sender: '', updatedAt: null },
-      updateData: { id: '', days: null, amount: null },
+      updateData: { id: '', days: null, amount: null, numberOftrip: null },
       userBool: false,
       driverBool: false,
       offers: [],
-      userUpdatedMessage: null
+      userUpdatedMessage: null,
+      updateOffer: null
     };
   },
   components: {
@@ -137,6 +138,8 @@ export default {
         const userOffer = this.offers.find(offer => offer.type === 'user');
         const driverOffer = this.offers.find(offer => offer.type === 'driver');
         console.log("userOffer", userOffer.messageUser.updatedAt);
+        this.updateOffer = this.formatDate(this.offers.updatedAt);
+        console.log("update offer", this.updateOffer);
         this.userUpdatedMessage = this.formatDate(driverOffer.messageUser.updatedAt);
         if (userOffer) {
           this.userMessage = {
@@ -195,6 +198,7 @@ export default {
         const response = await axios.put(`${baseUrl}/update`, {
           id: this.updateData.id,
           days: this.updateData.days,
+          numberOftrip: this.updateData.numberOftrip,
           amount: this.updateData.amount
         });
         console.log(response);

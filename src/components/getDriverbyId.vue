@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -41,7 +40,7 @@
                     :src="driverData.profileImage"
                     alt="Captain Profile"
                     class="profile-image"
-                    @click="openImage(driverData.profileImage, 'profileImage')"
+                    @click="openImage(driverData.profileImage, 'profileimage')"
                 >
                 <input type="file" @change="uploadImage('profile_image', $event)" class="file-input" />
               </div>
@@ -105,38 +104,53 @@
             </div>
           </div>
           <!-- Vehicle Data -->
-          <div class="data-card">
-            <h2 style="font-weight: bold; color: #6b5b95; font-size: 1.2em">
-              {{ vehicleDataTitle }}
-              <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" />
-            </h2>
-            <div class="data-row">
-              <span>Vehicle:</span>
-              <div class="field-container">
-                <span>{{ driverData.vehicle || 'N/A' }}</span>
+          <div class="data-card vehicle-card">
+            <div class="profile-section">
+              <div class="profile-image-container">
+                <img
+                    :src="driverData.vehicleNumberImage || 'https://via.placeholder.com/150'"
+                    alt="Vehicle Number Image"
+                    class="profile-image"
+                    @click="openImage(driverData.vehicleNumberImage, 'vehiclenumberimage')"
+                >
+                <input type="file" @change="uploadImage('vehicleNumberImage', $event)" class="file-input" />
               </div>
-            </div>
-            <div class="data-row">
-              <span>Brand:</span>
-              <span>{{ driverData.brand || 'N/A' }}</span>
-            </div>
-            <div class="data-row">
-              <span>Model:</span>
-              <div class="field-container">
-                <span>{{ driverData.model || 'N/A' }}</span>
-              </div>
-            </div>
-            <div class="data-row">
-              <span>NO Plate:</span>
-              <div class="field-container">
-                <span>{{ driverData.plate || 'N/A' }}</span>
-              </div>
-            </div>
-            <div class="data-row">
-              <span>Color:</span>
-              <div class="field-container">
-                <span>{{ driverData.color || 'N/A' }}</span>
-                <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
+              <div class="profile-info">
+                <h2 style="font-weight: bold; color: #6b5b95; font-size: 1.2em">
+                  {{ vehicleDataTitle }}
+                  <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" />
+                </h2>
+                <div class="data-row">
+                  <span>Vehicle:</span>
+                  <div class="field-container">
+                    <span>{{ driverData.vehicle || 'N/A' }}</span>
+                  </div>
+                </div>
+                <div class="data-row">
+                  <span>Brand:</span>
+                  <div class="field-container">
+                    <span>{{ driverData.brand || 'N/A' }}</span>
+                  </div>
+                </div>
+                <div class="data-row">
+                  <span>Model:</span>
+                  <div class="field-container">
+                    <span>{{ driverData.model || 'N/A' }}</span>
+                  </div>
+                </div>
+                <div class="data-row">
+                  <span>NO Plate:</span>
+                  <div class="field-container">
+                    <span>{{ driverData.plate || 'N/A' }}</span>
+                  </div>
+                </div>
+                <div class="data-row">
+                  <span>Color:</span>
+                  <div class="field-container">
+                    <span>{{ driverData.color || 'N/A' }}</span>
+                    <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -249,9 +263,11 @@
               <th>{{ tripHeaders[2] }}</th>
               <th>{{ tripHeaders[3] }}</th>
               <th>{{ tripHeaders[4] }}</th>
-              <th>{{ tripHeaders[5] }}</th>
-              <th>{{ tripHeaders[6] }}</th>
+<!--              <th>{{ tripHeaders[5] }}</th>-->
+<!--              <th>{{ tripHeaders[6] }}</th>-->
               <th>{{ tripHeaders[7] }}</th>
+              <th>{{ tripHeaders[8] }}</th>
+              <th>{{ tripHeaders[9] }}</th>
               <th>Actions</th>
             </tr>
             </thead>
@@ -262,13 +278,15 @@
               <td>{{ trip.uniqueId || 'N/A' }}</td>
               <td>{{ trip.comment || 'N/A' }}</td>
               <td>{{ trip.cost || 0 }}</td>
-              <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.payCash || 'N/A' }}</td>
-              <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.payWallet || 'N/A' }}</td>
+<!--              <td>{{ trip.userMoneyFlowId?.flow?.[0]?.payCash || 'N/A' }}</td>-->
+<!--              <td>{{ trip.userMoneyFlowId?.flow?.[0]?.payWallet || 'N/A' }}</td>-->
+              <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.walletBefore || 'N/A' }}</td>
+              <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.walletAfter || 'N/A' }}</td>
               <td :class="{'status-end': trip.status === 'end', 'status-cancelled': trip.status === 'cancelled'}">{{ trip.status || 'N/A' }}</td>
               <td><button @click="openEditModal(trip)">Edit</button></td>
             </tr>
             <tr v-if="paginatedTrips.length === 0">
-              <td colspan="9" class="no-data">No trip history found</td>
+              <td colspan="11" class="no-data">No trip history found</td>
             </tr>
             </tbody>
           </table>
@@ -311,12 +329,20 @@
               <input v-model.number="selectedTrip.cost" @change="updateTrip(selectedTrip._id, 'cost', selectedTrip.cost)" />
             </div>
             <div class="modal-field">
-              <label>Pay Cash:</label>
-              <input v-model.number="selectedTrip.driverMoneyFlowId.flow[0].payCash" @change="updateTrip(selectedTrip._id, 'payCash', selectedTrip.driverMoneyFlowId.flow[0].payCash)" />
+              <label>User Pay Cash:</label>
+              <input v-model.number="selectedTrip.userMoneyFlowId.flow[0].payCash" @change="updateTrip(selectedTrip._id, 'userPayCash', selectedTrip.userMoneyFlowId.flow[0].payCash)" />
             </div>
             <div class="modal-field">
-              <label>Pay Wallet:</label>
-              <input v-model.number="selectedTrip.driverMoneyFlowId.flow[0].payWallet" @change="updateTrip(selectedTrip._id, 'payWallet', selectedTrip.driverMoneyFlowId.flow[0].payWallet)" />
+              <label>User Pay Wallet:</label>
+              <input v-model.number="selectedTrip.userMoneyFlowId.flow[0].payWallet" @change="updateTrip(selectedTrip._id, 'userPayWallet', selectedTrip.userMoneyFlowId.flow[0].payWallet)" />
+            </div>
+            <div class="modal-field">
+              <label>Wallet Before:</label>
+              <input v-model.number="selectedTrip.driverMoneyFlowId.flow[0].walletBefore" @change="updateTrip(selectedTrip._id, 'walletBefore', selectedTrip.driverMoneyFlowId.flow[0].walletBefore)" />
+            </div>
+            <div class="modal-field">
+              <label>Wallet After:</label>
+              <input v-model.number="selectedTrip.driverMoneyFlowId.flow[0].walletAfter" @change="updateTrip(selectedTrip._id, 'walletAfter', selectedTrip.driverMoneyFlowId.flow[0].walletAfter)" />
             </div>
             <div class="modal-field">
               <label>Status:</label>
@@ -380,8 +406,20 @@ export default {
       activeTab: null,
       profileInfoTitle: 'Captain Data',
       vehicleDataTitle: 'Vehicle Data',
-      tripHeaders: ['Nº', 'Date', 'Trip ID', 'Comment', 'Value', 'Cash', 'Wallet', 'Trip State'],
-      tabLabels: ['Profile Image', 'Licence', 'National ID Front', 'National ID Back', 'Selfie With ID', 'Block'],
+      tripHeaders: [
+        'Nº',
+        'Date',
+        'Trip ID',
+        'Comment',
+        'Value',
+        'User Pay Cash',
+        'User Pay Wallet',
+        'Wallet Before',
+        'Wallet After',
+        'Trip State',
+        'Actions'
+      ],
+      tabLabels: ['Profile Image', 'Licence', 'National ID Front', 'National ID Back', 'Selfie With ID', 'Vehicle Number Image', 'Block'],
       totalTrips: 0,
       paginationStart: 0,
       paginationEnd: 0,
@@ -390,20 +428,21 @@ export default {
       selectedTrip: {},
       filterStatus: null,
       imageFieldToUpdate: null,
-      editingField: {}, // Tracks single field being edited (rating, wallet)
+      editingField: {},
       showEditFieldModal: false,
       editFieldValue: '',
       editingFieldName: '',
       editingFieldLabel: '',
-      showSectionEditModal: false, // Tracks section edit modal visibility
-      sectionEditing: null, // Tracks which section is being edited ('captain' or 'vehicle')
-      sectionEditValues: {}, // Stores values for all fields in the section being edited
+      showSectionEditModal: false,
+      sectionEditing: null,
+      sectionEditValues: {},
       fieldLabels: {
         username: 'Name',
         phoneNumber: 'Phone Number',
         nationalId: 'National ID',
         email: 'Email',
         vehicle: 'Vehicle',
+        brand: 'Brand',
         model: 'Model',
         plate: 'NO Plate',
         color: 'Color',
@@ -524,14 +563,58 @@ export default {
       this.loading.driverData = true;
       this.errors.driverData = null;
       try {
-        const response = await axios.get(`${this.baseUrl}/authdriver/driver/${driverId}`, {
+        const response = await axios.get(`${this.baseUrl}/admin/get-driver/${driverId}`, {
           timeout: 10000,
         });
 
-        const driver = response.data.driver;
+        const { driver, moneyFlow } = response.data;
         if (!driver) {
           throw new Error('Driver data not found');
         }
+
+        // Fetch user money flow for each trip
+        const tripsWithUserFlow = await Promise.all(
+            moneyFlow.map(async (flow) => {
+              let userMoneyFlow = { flow: [{ payCash: 'N/A', payWallet: 'N/A' }] };
+              if (flow.flow[0]?.tripId?.userMoneyFlowId) {
+                try {
+                  const userFlowResponse = await axios.get(
+                      `${this.baseUrl}/wallet/moneyFlow/${flow.flow[0].tripId.userMoneyFlowId}`,
+                      { timeout: 5000 }
+                  );
+                  userMoneyFlow = userFlowResponse.data || { flow: [{ payCash: 'N/A', payWallet: 'N/A' }] };
+                } catch (error) {
+                  console.error(`Error fetching user money flow ${flow.flow[0].tripId.userMoneyFlowId}:`, error);
+                }
+              }
+              return {
+                _id: flow._id,
+                date: flow.flow[0]?.tripId?.date || 'N/A',
+                uniqueId: flow.flow[0]?.tripId?.uniqueId || 'N/A',
+                comment: flow.flow[0]?.tripId?.comment || 'N/A',
+                cost: flow.flow[0]?.tripId?.cost || 0,
+                status: flow.flow[0]?.tripId?.status || 'N/A',
+                driverMoneyFlowId: {
+                  flow: [
+                    {
+                      payCash: flow.flow[0]?.payCash || 0,
+                      payWallet: flow.flow[0]?.payWallet || 0,
+                      walletBefore: flow.flow[0]?.walletBefore || 0,
+                      walletAfter: flow.flow[0]?.walletAfter || 0,
+                    },
+                  ],
+                },
+                userMoneyFlowId: {
+                  flow: [
+                    {
+                      payCash: userMoneyFlow.flow[0]?.payCash || 'N/A',
+                      payWallet: userMoneyFlow.flow[0]?.payWallet || 'N/A',
+                    },
+                  ],
+                },
+              };
+            })
+        );
 
         this.driverData = {
           username: driver.username || 'N/A',
@@ -540,24 +623,25 @@ export default {
           email: driver.email || 'N/A',
           status: driver.status || 'offline',
           vehicle: driver.vehicleType || 'N/A',
-          brand: 'N/A', // Not in schema
+          brand: driver.brand || 'N/A',
           model: driver.carModel || 'N/A',
           plate: driver.carNumber || 'N/A',
           color: driver.carColor || 'N/A',
-          confirmedTrips: driver.ctr || 0, // Not in schema
-          cancelledTrips: 0, // Not in schema
+          confirmedTrips: driver.ctr || 0,
+          cancelledTrips: 0,
           rating: driver.rate || 0,
-          cash: driver.dailayEarned || 0, // Not in schema
+          cash: driver.dailayEarned || 0,
           wallet: driver.wallet || 0,
           block: driver.block || false,
           profileImage: driver.profile_image || 'https://via.placeholder.com/150',
-          trips: driver.trips || [], // Not in schema
-          driver_licence_image: driver.driver_licence_image || 'N/A',
-          national_front: driver.national_front || 'N/A',
-          national_back: driver.national_back || 'N/A',
-          national_selfie: driver.national_selfie || 'N/A',
+          driver_licence_image: driver.driver_licence_image || 'https://via.placeholder.com/150',
+          national_front: driver.national_front || 'https://via.placeholder.com/150',
+          national_back: driver.national_back || 'https://via.placeholder.com/150',
+          national_selfie: driver.national_selfie || 'https://via.placeholder.com/150',
+          vehicleNumberImage: driver.vehicleNumberImage || 'https://via.placeholder.com/150',
+          trips: tripsWithUserFlow,
         };
-        this.trips = driver.trips || [];
+        this.trips = this.driverData.trips;
       } catch (error) {
         console.error('Error fetching driver data:', error);
         this.errors.driverData = this.getErrorMessage(error, 'Failed to load driver data.');
@@ -651,7 +735,8 @@ export default {
           licence: 'driver_licence_image',
           nationalidfront: 'national_front',
           nationalidback: 'national_back',
-          selfiewithid: 'national_selfie'
+          selfiewithid: 'national_selfie',
+          vehiclenumberimage: 'vehicleNumberImage'
         };
         const field = imageFields[tabName];
         if (field && this.driverData[field]) {
@@ -670,7 +755,6 @@ export default {
 
         const formData = new FormData();
         formData.append('driverId', driverId);
-        // Ensure numeric fields are sent as numbers
         if (fieldName === 'wallet' || fieldName === 'rate') {
           formData.append(fieldName, Number(value));
         } else {
@@ -683,7 +767,6 @@ export default {
             { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 10000 }
         );
 
-        // Update local state with response data
         if (fieldName === 'wallet' || fieldName === 'rate') {
           this.driverData[fieldName === 'rate' ? 'rating' : fieldName] = Number(response.data.driver[fieldName]);
         }
@@ -703,9 +786,10 @@ export default {
         const payload = {};
         if (fieldName === 'all') {
           payload.trip = value;
-        } else if (fieldName.includes('.')) {
-          const [parent, child] = fieldName.split('.');
-          payload[parent] = { [child]: value };
+        } else if (fieldName === 'userPayCash' || fieldName === 'userPayWallet') {
+          payload.userMoneyFlow = {
+            [fieldName === 'userPayCash' ? 'payCash' : 'payWallet']: value,
+          };
         } else {
           payload[fieldName] = value;
         }
@@ -734,21 +818,7 @@ export default {
 
         const formData = new FormData();
         formData.append('driverId', driverId);
-        if (fieldName === 'profile_image') {
-          formData.append('profile_image', file);
-        } else if (fieldName === 'driver_licence_image') {
-          formData.append('driver_licence_image', file);
-        } else if (fieldName === 'national_front') {
-          formData.append('national_front', file);
-        } else if (fieldName === 'national_back') {
-          formData.append('national_back', file);
-        } else if (fieldName === 'national_selfie') {
-          formData.append('national_selfie', file);
-        } else if (fieldName === 'licenseImage') {
-          formData.append('licenseImage', file);
-        } else {
-          throw new Error('Invalid image field');
-        }
+        formData.append(fieldName, file);
 
         const response = await axios.put(
             `${this.baseUrl}/authdriver/adminUpdateDriver`,
@@ -825,7 +895,7 @@ export default {
       const validatedUrl = this.validateImageUrl(imageUrl);
       if (!validatedUrl) {
         console.warn('Invalid image URL:', imageUrl);
-        this.currentImageUrl = 'https://via.placeholder.com/400';
+        this.currentImageUrl = 'https://via.placeholder.com/150';
         alert('Image not available');
       } else {
         this.currentImageUrl = validatedUrl;
@@ -841,7 +911,7 @@ export default {
     },
     handleImageError() {
       console.error('Failed to load image:', this.currentImageUrl);
-      this.currentImageUrl = 'https://via.placeholder.com/400';
+      this.currentImageUrl = 'https://via.placeholder.com/150';
       alert('Failed to load image');
     },
     triggerImageUpload() {
@@ -877,6 +947,7 @@ export default {
         nationalId: 'id',
         email: 'email',
         vehicle: 'vehicleType',
+        brand: 'brand',
         model: 'carModel',
         plate: 'carNumber',
         color: 'carColor',
@@ -904,7 +975,7 @@ export default {
     startSectionEditing(section) {
       this.sectionEditing = section;
       const captainFields = ['profileInfoTitle', 'username', 'phoneNumber', 'nationalId', 'email'];
-      const vehicleFields = ['vehicleDataTitle', 'vehicle', 'model', 'plate', 'color'];
+      const vehicleFields = ['vehicleDataTitle', 'vehicle', 'brand', 'model', 'plate', 'color'];
       const fields = section === 'captain' ? captainFields : vehicleFields;
 
       this.sectionEditValues = {};
@@ -921,6 +992,7 @@ export default {
         nationalId: 'id',
         email: 'email',
         vehicle: 'vehicleType',
+        brand: 'brand',
         model: 'carModel',
         plate: 'carNumber',
         color: 'carColor',
@@ -962,7 +1034,7 @@ export default {
 </script>
 
 <style scoped>
-/* Existing styles unchanged, included for completeness */
+/* Same as fixed in previous response to avoid Unclosed block error */
 .dashboard {
   display: flex;
   height: 100vh;
@@ -1027,7 +1099,8 @@ export default {
   border-radius: 8px;
 }
 
-.captain-card {
+.captain-card,
+.vehicle-card {
   display: flex;
 }
 
@@ -1081,21 +1154,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.data-card h2 input,
-.greeting h1 input,
-.greeting p input,
-.data-row input,
-.summary-stats input,
-.trip-history td input,
-.modal-field input,
-.modal-field select {
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 60%;
-  margin: 0 5px;
 }
 
 .data-row {
@@ -1250,10 +1308,15 @@ export default {
 .stat-item:nth-child(5) { background-color: #7f8c8d; }
 .stat-item:nth-child(5) .icon { background-color: white; }
 
+.trip-history {
+  overflow-x: auto;
+}
+
 .trip-history table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
+  min-width: 1200px;
 }
 
 .trip-history th,
@@ -1267,6 +1330,11 @@ export default {
   background-color: #f8f9fa;
   font-weight: 600;
   color: #34495e;
+  white-space: nowrap;
+}
+
+.trip-history td {
+  white-space: nowrap;
 }
 
 .status-end {
@@ -1362,6 +1430,10 @@ export default {
   .stat-item {
     flex: 1 1 45%;
     justify-content: center;
+  }
+
+  .trip-history table {
+    min-width: 100%;
   }
 }
 
@@ -1509,4 +1581,3 @@ export default {
   }
 }
 </style>
-```

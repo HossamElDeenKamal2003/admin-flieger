@@ -11,7 +11,6 @@
       <header>
         <div class="header-left">
           <i class="fas fa-bars" @click="handleSidebarToggle"></i>
-
           <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-right">
@@ -25,62 +24,68 @@
         <div class="card">
           <h3>Wallet System 2</h3>
           <div class="form-group">
-            <label for="wallet-limit">Set Limit Amount</label>
+            <label>Title</label>
+            <input
+                type="text"
+                v-model="wallet2.title"
+                placeholder="Enter title"
+                class="form-control"
+            />
+
+            <label>Description</label>
+            <textarea
+                v-model="wallet2.description"
+                placeholder="Enter description"
+                class="form-control"
+            ></textarea>
+
+            <label>Subscription Amount</label>
             <input
                 type="number"
-                id="wallet-limit"
-                v-model.number="walletLimit"
-                placeholder="Enter amount"
+                v-model.number="wallet2.subScription"
+                placeholder="Enter subscription amount"
                 class="form-control"
                 min="0"
                 step="1"
-                @input="validateWalletLimit"
             />
-            <div v-if="walletLimitError" class="error-message">{{ walletLimitError }}</div>
 
-            <label for="percentage">Set Percentage</label>
+            <label>Profit Percentage</label>
             <input
                 type="number"
-                id="percentage"
-                v-model.number="percentage"
-                placeholder="Enter percentage"
+                v-model.number="wallet2.profit"
+                placeholder="Enter profit percentage"
                 class="form-control"
                 min="0"
                 max="100"
                 step="0.1"
-                @input="validatePercentage"
             />
-            <div v-if="percentageError" class="error-message">{{ percentageError }}</div>
-            <label for="percentage">Days</label>
+            <label>Days</label>
             <input
                 type="number"
-                id="percentage"
-                v-model.number="percentage"
-                placeholder="Enter percentage"
+                v-model.number="wallet2.days"
+                placeholder="Enter profit percentage"
                 class="form-control"
                 min="0"
                 max="100"
                 step="0.1"
-                @input="validatePercentage"
             />
-            <div v-if="percentageError" class="error-message">{{ percentageError }}</div>
 
             <div class="toggle-group">
-              <span :class="{ 'active-label': isWalletActive, 'inactive-label': !isWalletActive }">
-                {{ isWalletActive ? 'Active' : 'Inactive' }}
+              <span :class="{ 'active-label': wallet2.isActive, 'inactive-label': !wallet2.isActive }">
+                {{ wallet2.isActive ? 'Active' : 'Inactive' }}
               </span>
               <label class="switch">
-                <input type="checkbox" v-model="isWalletActive" />
+                <input type="checkbox" v-model="wallet2.isActive" />
                 <span class="slider round"></span>
               </label>
             </div>
             <button
                 class="btn btn-primary"
-                @click="saveWalletLimit"
-                :disabled="isSavingWallet || hasWalletErrors"
+                @click="saveWalletSettings(2)"
+                :disabled="isSaving"
             >
-              <span v-if="isSavingWallet">Saving...</span>
-              <span v-else>Save Limit</span>
+              <span v-if="isSaving">Saving...</span>
+              <span v-else>Save Settings</span>
             </button>
           </div>
         </div>
@@ -89,36 +94,48 @@
         <div class="card">
           <h3>Wallet System 3</h3>
           <div class="form-group">
-            <label for="transaction-fee">Set Fee Percentage</label>
+            <label>Title</label>
+            <input
+                type="text"
+                v-model="wallet3.title"
+                placeholder="Enter title"
+                class="form-control"
+            />
+
+            <label>Description</label>
+            <textarea
+                v-model="wallet3.description"
+                placeholder="Enter description"
+                class="form-control"
+            ></textarea>
+
+            <label>Profit Percentage</label>
             <input
                 type="number"
-                id="transaction-fee"
-                v-model.number="transactionFee"
-                placeholder="Enter percentage"
+                v-model.number="wallet3.profit"
+                placeholder="Enter profit percentage"
                 class="form-control"
                 min="0"
                 max="100"
                 step="0.1"
-                @input="validateTransactionFee"
             />
-            <div v-if="transactionFeeError" class="error-message">{{ transactionFeeError }}</div>
 
             <div class="toggle-group">
-              <span :class="{ 'active-label': isFeeActive, 'inactive-label': !isFeeActive }">
-                {{ isFeeActive ? 'Active' : 'Inactive' }}
+              <span :class="{ 'active-label': wallet3.isActive, 'inactive-label': !wallet3.isActive }">
+                {{ wallet3.isActive ? 'Active' : 'Inactive' }}
               </span>
               <label class="switch">
-                <input type="checkbox" v-model="isFeeActive" />
+                <input type="checkbox" v-model="wallet3.isActive" />
                 <span class="slider round"></span>
               </label>
             </div>
             <button
                 class="btn btn-primary"
-                @click="saveTransactionFee"
-                :disabled="isSavingFee || hasFeeErrors"
+                @click="saveWalletSettings(3)"
+                :disabled="isSaving"
             >
-              <span v-if="isSavingFee">Saving...</span>
-              <span v-else>Save Fee</span>
+              <span v-if="isSaving">Saving...</span>
+              <span v-else>Save Settings</span>
             </button>
           </div>
         </div>
@@ -130,9 +147,10 @@
 <script>
 import Sidebar from './sidebarComponent.vue';
 import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
-// import axios from "axios";
+import axios from "axios";
+
 export default {
-  name: "walletSystems",
+  name: "WalletSystems",
   components: {
     WaitingDriversNumber,
     Sidebar
@@ -140,139 +158,119 @@ export default {
   data() {
     return {
       isSidebarExpanded: true,
-      walletLimit: null,
-      percentage: null,
-      transactionFee: null,
-      isWalletActive: false,
-      isFeeActive: false,
-      adminUsername: localStorage.getItem('username'),
+      isSaving: false,
       waitingCaptains: 0,
-      walletLimitError: null,
-      percentageError: null,
-      transactionFeeError: null,
-      isSavingWallet: false,
-      isSavingFee: false,
       wallet2: {
-        subScription: "",
-        profit: "",
-        isActive: "",
-        walletType: "",
+        _id: "",
+        subScription: null,
+        profit: null,
+        isActive: false,
+        walletType: "2",
         title: "",
         description: "",
-
+        days: null
       },
       wallet3: {
-        subScription: "",
-        profit: "",
-        isActive: "",
-        walletType: "",
+        _id: "",
+        profit: null,
+        isActive: false,
+        walletType: "3",
         title: "",
         description: ""
       }
     };
-  },
-  computed: {
-    hasWalletErrors() {
-      return this.walletLimitError || this.percentageError;
-    },
-    hasFeeErrors() {
-      return this.transactionFeeError;
-    }
   },
   methods: {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
     },
 
-    validateWalletLimit() {
-      if (this.walletLimit < 0) {
-        this.walletLimitError = "Limit cannot be negative";
-      } else {
-        this.walletLimitError = null;
-      }
-    },
-
-    validatePercentage() {
-      if (this.percentage < 0 || this.percentage > 100) {
-        this.percentageError = "Percentage must be between 0 and 100";
-      } else {
-        this.percentageError = null;
-      }
-    },
-
-    validateTransactionFee() {
-      if (this.transactionFee < 0 || this.transactionFee > 100) {
-        this.transactionFeeError = "Fee must be between 0 and 100";
-      } else {
-        this.transactionFeeError = null;
-      }
-    },
-
-    // async getWalletsDataSystem2(type){
-    //   axios.get("https://backend.fego-rides.com/getWalletSystems",)
-    // },
-
-    async saveWalletLimit() {
-      if (this.hasWalletErrors) return;
-
-      this.isSavingWallet = true;
+    async fetchWalletSettings() {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('Saved wallet settings:', {
-          limit: this.walletLimit,
-          percentage: this.percentage,
-          isActive: this.isWalletActive
-        });
-        this.$notify({
-          title: 'Success',
-          message: 'Wallet settings saved successfully',
-          type: 'success'
-        });
+        const response = await axios.get(
+            "https://backend.fego-rides.com/admin/getWalletSystems?admin=true",
+            {
+            }
+        );
+
+        const systems = response.data.systems || [];
+
+        // Find and set Wallet System 2
+        const system2 = systems.find(s => s.walletType === "2");
+        if (system2) {
+          this.wallet2 = {
+            _id: system2._id,
+            subScription: system2.subScription || null,
+            profit: system2.profit || null,
+            isActive: system2.isActive || false,
+            walletType: "2",
+            title: system2.title || "",
+            days: system2.days,
+            description: system2.description || ""
+          };
+        }
+
+        // Find and set Wallet System 3
+        const system3 = systems.find(s => s.walletType === "3");
+        if (system3) {
+          this.wallet3 = {
+            _id: system3._id,
+            profit: system3.profit || null,
+            isActive: system3.isActive || false,
+            walletType: "3",
+            title: system3.title || "",
+            description: system3.description || ""
+          };
+        }
+
       } catch (error) {
-        this.$notify({
-          title: 'Error',
-          message: 'Failed to save wallet settings',
-          type: 'error'
-        });
-        console.error(error);
-      } finally {
-        this.isSavingWallet = false;
+        console.error("Error fetching wallet settings:", error);
       }
     },
 
-    async saveTransactionFee() {
-      if (this.hasFeeErrors) return;
-
-      this.isSavingFee = true;
+    async saveWalletSettings(type) {
+      this.isSaving = true;
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('Saved transaction fee:', {
-          fee: this.transactionFee,
-          isActive: this.isFeeActive
-        });
-        this.$notify({
-          title: 'Success',
-          message: 'Transaction fee saved successfully',
-          type: 'success'
-        });
+        const walletData = type === 2 ? this.wallet2 : this.wallet3;
+
+        // Prepare the exact request body structure
+        const requestBody = {
+          subScription: walletData.subScription,
+          profit: walletData.profit,
+          isActive: walletData.isActive,
+          walletType: walletData.walletType,
+          title: walletData.title,
+          description: walletData.description
+        };
+
+        await axios.patch(
+            `https://backend.fego-rides.com/admin/updateSystemwallet`,
+            requestBody,
+            {
+              params: {
+                _id: walletData._id
+              }
+            }
+        );
+
+        alert('success update');
+
       } catch (error) {
-        this.$notify({
-          title: 'Error',
-          message: 'Failed to save transaction fee',
-          type: 'error'
-        });
-        console.error(error);
+        console.error("Error saving wallet settings:", error);
+        alert("failed");
       } finally {
-        this.isSavingFee = false;
+        this.isSaving = false;
       }
     }
+  },
+  created() {
+    this.fetchWalletSettings();
   }
 };
 </script>
 
 <style scoped>
+/* Your existing styles remain unchanged */
 .parent {
   display: flex;
   height: 100vh;
@@ -320,12 +318,6 @@ header {
   gap: 15px;
 }
 
-.header-left h1 {
-  margin: 0;
-  color: #2D3748;
-  font-size: 1.5rem;
-}
-
 .header-right i {
   font-size: 24px;
   color: #4C51BF;
@@ -369,6 +361,10 @@ header {
   border: 1px solid #DDD;
   border-radius: 5px;
   margin-bottom: 5px;
+}
+
+textarea.form-control {
+  min-height: 80px;
 }
 
 .error-message {

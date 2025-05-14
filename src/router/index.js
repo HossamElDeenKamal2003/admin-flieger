@@ -19,7 +19,19 @@ import WaitingDrivers from '@/components/waitingDrivers.vue';
 import walletSystems from "@/components/walletSystems.vue";
 import confirmRequest from '@/components/confirmRequests.vue';
 import sucessTransactions from "@/components/getRequests.vue";
+import ContactsComponent from "@/components/getContacts.vue";
+import DriverRequestsComponent from "@/components/getChangeReqs.vue";
 const routes = [
+    {
+        path: "/change-reqs",
+        name: "change-reqs",
+        component: DriverRequestsComponent
+    },
+    {
+      path: '/get-contact',
+      name: "getContact",
+      component: ContactsComponent
+    },
     {
       path: '/sucesstrans',
       name: "Sucesstrans",
