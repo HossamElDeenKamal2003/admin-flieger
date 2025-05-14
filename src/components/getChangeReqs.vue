@@ -401,7 +401,7 @@ td {
   right: 8px;
   background: none;
   border: none;
-  color: #6b7280;
+  color: red;
   font-size: 20px;
   cursor: pointer;
   font-weight: bold;
