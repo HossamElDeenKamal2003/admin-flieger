@@ -167,6 +167,10 @@
             Cancelled Trips {{ lengthCanceled }}
           </div>
           <div class="stat-item">
+            <button class="icon cancelled" @click="filterTrips('cancelledByDriver')"></button>
+            Cancelled by Driver {{ cancelledTrips.length }}
+          </div>
+          <div class="stat-item">
             <span class="icon rating"></span>
             Rate
             <div class="field-container">
@@ -258,16 +262,15 @@
           <table>
             <thead>
             <tr>
-              <th>{{ tripHeaders[0] }}</th>
-              <th>{{ tripHeaders[1] }}</th>
-              <th>{{ tripHeaders[2] }}</th>
-              <th>{{ tripHeaders[3] }}</th>
-              <th>{{ tripHeaders[4] }}</th>
-<!--              <th>{{ tripHeaders[5] }}</th>-->
-<!--              <th>{{ tripHeaders[6] }}</th>-->
-              <th>{{ tripHeaders[7] }}</th>
-              <th>{{ tripHeaders[8] }}</th>
-              <th>{{ tripHeaders[9] }}</th>
+              <th>{{ tripHeaders[0] }}</th> <!-- Nº -->
+              <th>{{ tripHeaders[1] }}</th> <!-- Date -->
+              <th>{{ tripHeaders[2] }}</th> <!-- Trip ID -->
+              <th>Username</th> <!-- New Username Column -->
+              <th>{{ tripHeaders[3] }}</th> <!-- Comment -->
+              <th>{{ tripHeaders[4] }}</th> <!-- Value -->
+              <th>{{ tripHeaders[7] }}</th> <!-- Wallet Before -->
+              <th>{{ tripHeaders[8] }}</th> <!-- Wallet After -->
+              <th>{{ tripHeaders[9] }}</th> <!-- Trip State -->
               <th>Actions</th>
             </tr>
             </thead>
@@ -276,17 +279,16 @@
               <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
               <td>{{ trip.date || 'N/A' }}</td>
               <td>{{ trip.uniqueId || 'N/A' }}</td>
+              <td>{{ trip.userId?.username || 'N/A' }}</td>
               <td>{{ trip.comment || 'N/A' }}</td>
               <td>{{ trip.cost || 0 }}</td>
-<!--              <td>{{ trip.userMoneyFlowId?.flow?.[0]?.payCash || 'N/A' }}</td>-->
-<!--              <td>{{ trip.userMoneyFlowId?.flow?.[0]?.payWallet || 'N/A' }}</td>-->
               <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.walletBefore || 'N/A' }}</td>
               <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.walletAfter || 'N/A' }}</td>
               <td :class="{'status-end': trip.status === 'end', 'status-cancelled': trip.status === 'cancelled'}">{{ trip.status || 'N/A' }}</td>
               <td><button @click="openEditModal(trip)">Edit</button></td>
             </tr>
             <tr v-if="paginatedTrips.length === 0">
-              <td colspan="11" class="no-data">No trip history found</td>
+              <td colspan="10" class="no-data">No trip history found</td>
             </tr>
             </tbody>
           </table>
@@ -313,6 +315,10 @@
           <div class="modal-content" @click.stop>
             <h3>Edit Trip - {{ selectedTrip.uniqueId }}</h3>
             <div class="modal-field">
+              <label>Username:</label>
+              <input v-model="selectedTrip.userId.username" disabled />
+            </div>
+            <div class="modal-field">
               <label>Date:</label>
               <input v-model="selectedTrip.date" @change="updateTrip(selectedTrip._id, 'date', selectedTrip.date)" />
             </div>
@@ -328,19 +334,19 @@
               <label>Cost:</label>
               <input v-model.number="selectedTrip.cost" @change="updateTrip(selectedTrip._id, 'cost', selectedTrip.cost)" />
             </div>
-            <div class="modal-field">
+            <div class="modal-field" v-if="selectedTrip.userMoneyFlowId">
               <label>User Pay Cash:</label>
               <input v-model.number="selectedTrip.userMoneyFlowId.flow[0].payCash" @change="updateTrip(selectedTrip._id, 'userPayCash', selectedTrip.userMoneyFlowId.flow[0].payCash)" />
             </div>
-            <div class="modal-field">
+            <div class="modal-field" v-if="selectedTrip.userMoneyFlowId">
               <label>User Pay Wallet:</label>
               <input v-model.number="selectedTrip.userMoneyFlowId.flow[0].payWallet" @change="updateTrip(selectedTrip._id, 'userPayWallet', selectedTrip.userMoneyFlowId.flow[0].payWallet)" />
             </div>
-            <div class="modal-field">
+            <div class="modal-field" v-if="selectedTrip.driverMoneyFlowId">
               <label>Wallet Before:</label>
               <input v-model.number="selectedTrip.driverMoneyFlowId.flow[0].walletBefore" @change="updateTrip(selectedTrip._id, 'walletBefore', selectedTrip.driverMoneyFlowId.flow[0].walletBefore)" />
             </div>
-            <div class="modal-field">
+            <div class="modal-field" v-if="selectedTrip.driverMoneyFlowId">
               <label>Wallet After:</label>
               <input v-model.number="selectedTrip.driverMoneyFlowId.flow[0].walletAfter" @change="updateTrip(selectedTrip._id, 'walletAfter', selectedTrip.driverMoneyFlowId.flow[0].walletAfter)" />
             </div>
@@ -455,17 +461,19 @@ export default {
   },
   computed: {
     paginatedTrips() {
-      let filteredTrips = this.trips;
-      if (this.filterStatus) {
+      let tripsToDisplay = this.trips;
+      if (this.filterStatus === 'cancelledByDriver') {
+        tripsToDisplay = this.cancelledTrips;
+      } else if (this.filterStatus) {
         if (Array.isArray(this.filterStatus)) {
-          filteredTrips = this.trips.filter(trip => this.filterStatus.includes(trip.status));
+          tripsToDisplay = this.trips.filter(trip => this.filterStatus.includes(trip.status));
         } else {
-          filteredTrips = this.trips.filter(trip => trip.status === this.filterStatus);
+          tripsToDisplay = this.trips.filter(trip => trip.status === this.filterStatus);
         }
       }
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return filteredTrips.slice(start, end) || [];
+      return tripsToDisplay.slice(start, end) || [];
     },
     paginationStartComputed() {
       return (this.currentPage - 1) * this.itemsPerPage + 1;
@@ -475,7 +483,9 @@ export default {
       return Math.min(end, this.totalItemsComputed || 0);
     },
     totalItemsComputed() {
-      if (this.filterStatus) {
+      if (this.filterStatus === 'cancelledByDriver') {
+        return this.cancelledTrips.length;
+      } else if (this.filterStatus) {
         if (Array.isArray(this.filterStatus)) {
           return this.trips.filter(trip => this.filterStatus.includes(trip.status)).length;
         }
@@ -572,10 +582,10 @@ export default {
           throw new Error('Driver data not found');
         }
 
-        // Fetch user money flow for each trip
         const tripsWithUserFlow = await Promise.all(
             moneyFlow.map(async (flow) => {
               let userMoneyFlow = { flow: [{ payCash: 'N/A', payWallet: 'N/A' }] };
+              let userInfo = { username: 'N/A' };
               if (flow.flow[0]?.tripId?.userMoneyFlowId) {
                 try {
                   const userFlowResponse = await axios.get(
@@ -587,6 +597,17 @@ export default {
                   console.error(`Error fetching user money flow ${flow.flow[0].tripId.userMoneyFlowId}:`, error);
                 }
               }
+              if (flow.flow[0]?.tripId?.userId) {
+                try {
+                  const userResponse = await axios.get(
+                      `${this.baseUrl}/admin/get-user/${flow.flow[0].tripId.userId}`,
+                      { timeout: 5000 }
+                  );
+                  userInfo = userResponse.data.user || { username: 'N/A' };
+                } catch (error) {
+                  console.error(`Error fetching user ${flow.flow[0].tripId.userId}:`, error);
+                }
+              }
               return {
                 _id: flow._id,
                 date: flow.flow[0]?.tripId?.date || 'N/A',
@@ -594,6 +615,9 @@ export default {
                 comment: flow.flow[0]?.tripId?.comment || 'N/A',
                 cost: flow.flow[0]?.tripId?.cost || 0,
                 status: flow.flow[0]?.tripId?.status || 'N/A',
+                userId: {
+                  username: userInfo.username || 'N/A',
+                },
                 driverMoneyFlowId: {
                   flow: [
                     {
@@ -676,17 +700,36 @@ export default {
           throw new Error('Invalid trips data structure');
         }
 
+        // Normalize cancelledTrips to match trips structure
+        this.cancelledTrips = cancelledTrips.map(cTrip => ({
+          _id: cTrip._id,
+          date: cTrip.tripId?.date || 'N/A',
+          uniqueId: cTrip.tripId?.uniqueId || 'N/A',
+          comment: cTrip.tripId?.comment || 'N/A',
+          cost: cTrip.tripId?.cost || 0,
+          status: cTrip.tripId?.status || 'cancelled',
+          userId: {
+            username: cTrip.userId?.username || 'N/A',
+          },
+          driverMoneyFlowId: {
+            flow: [{
+              walletBefore: 'N/A',
+              walletAfter: 'N/A',
+              payCash: 0,
+              payWallet: 0,
+            }],
+          },
+          userMoneyFlowId: {
+            flow: [{
+              payCash: 'N/A',
+              payWallet: 'N/A',
+            }],
+          },
+        }));
+
         this.trips = trips;
-        this.lengthCompleted = 0;
-        this.lengthCanceled = 0;
-        for (let trip of this.trips) {
-          if (trip.status === 'end') {
-            this.lengthCompleted++;
-          } else if (trip.status === 'cancelled') {
-            this.lengthCanceled++;
-          }
-        }
-        this.cancelledTrips = cancelledTrips;
+        this.lengthCompleted = this.trips.filter(trip => trip.status === 'end').length;
+        this.lengthCanceled = this.trips.filter(trip => trip.status === 'cancelled').length;
       } catch (error) {
         console.error('Error fetching trips:', error);
         this.errors.trips = this.getErrorMessage(error, 'Failed to load trip history.');
@@ -918,7 +961,7 @@ export default {
       this.$refs.imageUpload.click();
     },
     openEditModal(trip) {
-      this.selectedTrip = { ...trip };
+      this.selectedTrip = { ...trip, userId: { ...trip.userId } };
       this.showEditModal = true;
     },
     closeEditModal() {
@@ -1034,7 +1077,6 @@ export default {
 </script>
 
 <style scoped>
-/* Same as fixed in previous response to avoid Unclosed block error */
 .dashboard {
   display: flex;
   height: 100vh;
@@ -1279,6 +1321,8 @@ export default {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .stat-item {
@@ -1288,6 +1332,7 @@ export default {
   border-radius: 8px;
   font-weight: 600;
   color: white;
+  flex: 1 1 auto;
 }
 
 .stat-item .icon {
@@ -1301,12 +1346,14 @@ export default {
 .stat-item:nth-child(1) .icon { background-color: white; }
 .stat-item:nth-child(2) { background-color: #ff4d4f; }
 .stat-item:nth-child(2) .icon { background-color: white; }
-.stat-item:nth-child(3) { background-color: #8e44ad; }
+.stat-item:nth-child(3) { background-color: #e74c3c; }
 .stat-item:nth-child(3) .icon { background-color: white; }
-.stat-item:nth-child(4) { background-color: #2ecc71; }
+.stat-item:nth-child(4) { background-color: #8e44ad; }
 .stat-item:nth-child(4) .icon { background-color: white; }
-.stat-item:nth-child(5) { background-color: #7f8c8d; }
+.stat-item:nth-child(5) { background-color: #2ecc71; }
 .stat-item:nth-child(5) .icon { background-color: white; }
+.stat-item:nth-child(6) { background-color: #7f8c8d; }
+.stat-item:nth-child(6) .icon { background-color: white; }
 
 .trip-history {
   overflow-x: auto;
@@ -1316,7 +1363,7 @@ export default {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
-  min-width: 1200px;
+  min-width: 1100px; /* Adjusted for new column */
 }
 
 .trip-history th,
@@ -1513,6 +1560,11 @@ export default {
 .modal-field label {
   display: block;
   margin-bottom: 5px;
+}
+
+.modal-field input:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
 }
 
 .modal-buttons {

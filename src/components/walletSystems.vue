@@ -109,7 +109,7 @@
                 class="form-control"
             ></textarea>
 
-            <label>Profit Percentage</label>
+            <label>Fixed Profit</label>
             <input
                 type="number"
                 v-model.number="wallet3.profit"
