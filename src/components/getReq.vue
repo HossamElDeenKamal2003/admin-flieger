@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
-      <Sidebar />
+    <Sidebar />
 
     <!-- Main Content -->
     <main class="main-content">
@@ -30,34 +30,28 @@
             <th>Captain</th>
             <th>Phone Number</th>
             <th>National ID</th>
+            <th>Amount</th>
             <th>Wallet</th>
             <th>View Details</th>
-            <th>Action</th>
           </tr>
           </thead>
           <tbody>
-          <tr v-for="(request, index) in paginatedRequests" :key="request._id">
+          <tr
+              v-for="(request, index) in paginatedRequests"
+              :key="request._id"
+              @click="navigateToConfirmRequest(request.driverId._id)"
+              class="clickable-row"
+          >
             <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
             <td>{{ request.driverId?.username || 'N/A' }}</td>
             <td>{{ request.driverId?.phoneNumber || 'N/A' }}</td>
             <td>{{ request.driverId?.nationalId || 'N/A' }}</td>
             <td>{{ request.amount || 0 }} EGP</td>
-            <td>
-              <router-link
-                  :to="{ name: 'DriverDetails', params: { driverId: request.driverId?._id } }"
-                  class="view-details"
-              >
-                View Details
-              </router-link>
-            </td>
-            <td>
-              <button class="btn-confirm" @click="confirmRequest(request._id)">
-                Confirm
-              </button>
-            </td>
+            <td>{{ request.driverId?.wallet }}</td>
+            <td>View Details</td>
           </tr>
           <tr v-if="paginatedRequests.length === 0">
-            <td colspan="7" class="no-data">No requests found</td>
+            <td colspan="6" class="no-data">No requests found</td>
           </tr>
           </tbody>
         </table>
@@ -72,9 +66,9 @@
               {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, requests.length) }}
               of {{ requests.length }} items
             </span>
-            <button :disabled="currentPage === 1" @click="currentPage--">Click</button>
-            <button>{{ currentPage }}</button>
-            <button :disabled="currentPage >= totalPages" @click="currentPage++">></button>
+            <button :disabled="currentPage === 1" @click="currentPage--">prev</button>
+            <button disabled>{{ currentPage }}</button>
+            <button :disabled="currentPage >= totalPages" @click="currentPage++">next</button>
           </div>
         </div>
       </section>
@@ -90,7 +84,7 @@ export default {
   name: "GetReqComponent",
   components: {
     WaitingDriversNumber,
-    Sidebar
+    Sidebar,
   },
   data() {
     return {
@@ -99,7 +93,8 @@ export default {
       adminName: localStorage.getItem('username') || 'Admin',
       newRequestsCount: 0,
       currentPage: 1,
-      itemsPerPage: 3
+      itemsPerPage: 3,
+      waitingCaptains: 0, // Added to avoid prop error, adjust based on your needs
     };
   },
   computed: {
@@ -108,9 +103,10 @@ export default {
       const end = start + this.itemsPerPage;
       return this.requests.slice(start, end);
     },
+
     totalPages() {
       return Math.ceil(this.requests.length / this.itemsPerPage);
-    }
+    },
   },
   async created() {
     await this.fetchRequests();
@@ -124,8 +120,6 @@ export default {
           throw new Error("Failed to fetch requests");
         }
         const data = await response.json();
-        console.log(data);
-
         this.requests = data.requests.map((request) => ({
           _id: request._id,
           amount: request.amount,
@@ -134,13 +128,14 @@ export default {
             username: request.driverId?.username || 'N/A',
             phoneNumber: request.driverId?.phoneNumber || 'N/A',
             nationalId: request.driverId?.id || 'N/A',
+            wallet: request.driverId?.wallet || 'N/A',
             createdAt: request.driverId?.createdAt || '',
-            ctr: request.driverId?.ctr || 0
-          }
+            ctr: request.driverId?.ctr || 0,
+          },
         }));
       } catch (error) {
         console.error("Error fetching requests:", error);
-        alert("Failed to fetch requests. Please try again.");
+        alert(error.message);
       } finally {
         this.loading = false;
       }
@@ -167,12 +162,23 @@ export default {
         alert("Failed to confirm request. Please try again.");
       }
     },
+    navigateToConfirmRequest(driverId) {
+      if (!driverId) {
+        console.error('Driver ID is missing');
+        alert('Cannot navigate: Driver ID is missing');
+        return;
+      }
+      this.$router.push({
+        name: 'confirmRequest',
+        params: { id: driverId },
+      });
+    },
     formatDate(dateString) {
       if (!dateString) return "N/A";
       const date = new Date(dateString);
       return date.toLocaleString();
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -188,11 +194,10 @@ export default {
   display: flex;
   height: 100vh;
   font-family: 'Arial', sans-serif;
-  position: relative;
   justify-content: center;
 }
 
-/* Sidebar Styles (Assuming Sidebar.vue uses these) */
+/* Sidebar Styles */
 .sidebar {
   width: var(--sidebar-width);
   background-color: #2f1c6a;
@@ -210,36 +215,12 @@ export default {
 
 /* Main Content */
 .main-content {
-  margin-left: var(--sidebar-width); /* Match sidebar width */
-  background-color: #f5f7fa;
-  padding: 20px;
-  border-radius: 20px 0 0 20px;
-  box-sizing: border-box;
-  overflow-x: auto; /* Allow horizontal scrolling if content overflows */
-}
-.dashboard {
-  display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr;
-  height: 100vh;
-}
-
-.main-content {
-  /* No need for margins with grid */
-}
-
-.sidebar-container {
-  width: var(--sidebar-width);
-  flex-shrink: 0; /* Prevent sidebar from shrinking */
-}
-
-.main-content {
-  flex-grow: 1; /* Take remaining space */
+  margin-left: var(--sidebar-width);
   background-color: #f5f7fa;
   padding: 20px;
   border-radius: 20px 0 0 20px;
   box-sizing: border-box;
   overflow-x: auto;
-  /* Remove margin-left */
 }
 
 /* Header */
@@ -259,10 +240,6 @@ export default {
 .greeting p {
   color: #7f8c8d;
   margin: 5px 0 0;
-}
-
-.wave {
-  font-size: 1.2rem;
 }
 
 .header-icons i {
@@ -303,28 +280,13 @@ export default {
   color: #2c3e50;
 }
 
-.view-details {
-  color: #6b48ff;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.view-details:hover {
-  text-decoration: underline;
-}
-
-.btn-confirm {
-  padding: 5px 10px;
-  border: none;
-  border-radius: 50px;
-  background-color: #ff4d4f;
-  color: white;
+.clickable-row {
   cursor: pointer;
-  font-weight: 500;
+  transition: background-color 0.2s;
 }
 
-.btn-confirm:hover {
-  background-color: #e04345;
+.clickable-row:hover {
+  background-color: #f0f0f0;
 }
 
 .no-data {
@@ -366,31 +328,6 @@ export default {
 .pagination button:disabled {
   background-color: #ddd;
   cursor: not-allowed;
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.tab {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.tab.active {
-  background-color: #ff4d4f;
-  color: white;
-}
-
-.tab:not(.active) {
-  background-color: #ecf0f1;
-  color: #34495e;
 }
 
 /* Loading Overlay */
@@ -442,7 +379,7 @@ export default {
 
 @media (min-width: 769px) {
   .main-content {
-    margin-left: var(--sidebar-width) !important;
+    margin-left: var(--sidebar-width);
   }
 }
 </style>

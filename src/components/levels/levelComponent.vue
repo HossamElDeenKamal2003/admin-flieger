@@ -8,8 +8,18 @@
       <WaitingDriversNumber :waiting-captains="waitingCaptains" />
 
       <div class="levels-prices">
-        <h2>Egypt Prices</h2>
-        <h3>All Levels</h3>
+        <h2>Pricing Management</h2>
+        <div class="country-selector">
+          <label>Select Country</label>
+          <select v-model="selectedCountry" @change="fetchCountryPrices">
+            <option v-for="country in countries" :key="country.code" :value="country.code">{{ country.name }}</option>
+          </select>
+        </div>
+        <h3>{{ selectedCountry.toUpperCase() }} Prices - All Levels</h3>
+
+        <div v-if="loading" class="loading-overlay">
+          <div class="loading-spinner"></div>
+        </div>
 
         <table class="prices-table">
           <thead>
@@ -29,15 +39,15 @@
             <td><input type="number" v-model="currentPrices.level2.priceCar" @change="handlePriceChange('level2', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level3.priceCar" @change="handlePriceChange('level3', 'priceCar')"></td>
             <td><input type="number" v-model="currentPrices.level4.priceCar" @change="handlePriceChange('level4', 'priceCar')"></td>
-            <td><input type="number" v-model="fixedAmounts.fixedAmountcar" @change="handleFixedAmountChange('fixedAmountcar')"></td>
+            <td><input type="number" v-model="fixedAmounts.fixedAmountCar" @change="handleFixedAmountChange('fixedAmountCar')"></td>
           </tr>
           <tr>
             <td>Motorcycle</td>
-            <td><input type="number" v-model="currentPrices.level1.motorocycle" @change="handlePriceChange('level1', 'motorocycle')"></td>
-            <td><input type="number" v-model="currentPrices.level2.motorocycle" @change="handlePriceChange('level2', 'motorocycle')"></td>
-            <td><input type="number" v-model="currentPrices.level3.motorocycle" @change="handlePriceChange('level3', 'motorocycle')"></td>
-            <td><input type="number" v-model="currentPrices.level4.motorocycle" @change="handlePriceChange('level4', 'motorocycle')"></td>
-            <td><input type="number" v-model="fixedAmounts.fixedAmountMotorocycle" @change="handleFixedAmountChange('fixedAmountMotorocycle')"></td>
+            <td><input type="number" v-model="currentPrices.level1.motorcycle" @change="handlePriceChange('level1', 'motorcycle')"></td>
+            <td><input type="number" v-model="currentPrices.level2.motorcycle" @change="handlePriceChange('level2', 'motorcycle')"></td>
+            <td><input type="number" v-model="currentPrices.level3.motorcycle" @change="handlePriceChange('level3', 'motorcycle')"></td>
+            <td><input type="number" v-model="currentPrices.level4.motorcycle" @change="handlePriceChange('level4', 'motorcycle')"></td>
+            <td><input type="number" v-model="fixedAmounts.fixedAmountMotorcycle" @change="handleFixedAmountChange('fixedAmountMotorcycle')"></td>
           </tr>
           <tr>
             <td>Van</td>
@@ -45,57 +55,111 @@
             <td><input type="number" v-model="currentPrices.level2.priceVan" @change="handlePriceChange('level2', 'priceVan')"></td>
             <td><input type="number" v-model="currentPrices.level3.priceVan" @change="handlePriceChange('level3', 'priceVan')"></td>
             <td><input type="number" v-model="currentPrices.level4.priceVan" @change="handlePriceChange('level4', 'priceVan')"></td>
-            <td><input type="number" v-model="fixedAmounts.fixedAmountvan" @change="handleFixedAmountChange('fixedAmountvan')"></td>
+            <td><input type="number" v-model="fixedAmounts.fixedAmountVan" @change="handleFixedAmountChange('fixedAmountVan')"></td>
           </tr>
           <tr>
             <td>Comfort</td>
-            <td><input type="number" v-model="currentPrices.level1.compfort" @change="handlePriceChange('level1', 'compfort')"></td>
-            <td><input type="number" v-model="currentPrices.level2.compfort" @change="handlePriceChange('level2', 'compfort')"></td>
-            <td><input type="number" v-model="currentPrices.level3.compfort" @change="handlePriceChange('level3', 'compfort')"></td>
-            <td><input type="number" v-model="currentPrices.level4.compfort" @change="handlePriceChange('level4', 'compfort')"></td>
-            <td><input type="number" v-model="fixedAmounts.fixedAmountcar" @change="handleFixedAmountChange('fixedAmountcar')"></td>
-
-            <td></td>
+            <td><input type="number" v-model="currentPrices.level1.comfort" @change="handlePriceChange('level1', 'comfort')"></td>
+            <td><input type="number" v-model="currentPrices.level2.comfort" @change="handlePriceChange('level2', 'comfort')"></td>
+            <td><input type="number" v-model="currentPrices.level3.comfort" @change="handlePriceChange('level3', 'comfort')"></td>
+            <td><input type="number" v-model="currentPrices.level4.comfort" @change="handlePriceChange('level4', 'comfort')"></td>
+            <td><input type="number" v-model="fixedAmounts.fixedAmountComfort" @change="handleFixedAmountChange('fixedAmountComfort')"></td>
           </tr>
           <tr>
             <td>Commission Car</td>
-            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level1.carComission" @change="handlePriceChange('level1', 'carComission')"></td>
+            <td><input type="number" v-model="currentPrices.level2.carComission" @change="handlePriceChange('level2', 'carComission')"></td>
+            <td><input type="number" v-model="currentPrices.level3.carComission" @change="handlePriceChange('level3', 'carComission')"></td>
+            <td><input type="number" v-model="currentPrices.level4.carComission" @change="handlePriceChange('level4', 'carComission')"></td>
             <td></td>
           </tr>
           <tr>
             <td>Commission Motorcycle</td>
-            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level1.motorcycleComission" @change="handlePriceChange('level1', 'motorcycleComission')"></td>
+            <td><input type="number" v-model="currentPrices.level2.motorcycleComission" @change="handlePriceChange('level2', 'motorcycleComission')"></td>
+            <td><input type="number" v-model="currentPrices.level3.motorcycleComission" @change="handlePriceChange('level3', 'motorcycleComission')"></td>
+            <td><input type="number" v-model="currentPrices.level4.motorcycleComission" @change="handlePriceChange('level4', 'motorcycleComission')"></td>
             <td></td>
           </tr>
           <tr>
             <td>Commission Van</td>
-            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level1.vanComission" @change="handlePriceChange('level1', 'vanComission')"></td>
+            <td><input type="number" v-model="currentPrices.level2.vanComission" @change="handlePriceChange('level2', 'vanComission')"></td>
+            <td><input type="number" v-model="currentPrices.level3.vanComission" @change="handlePriceChange('level3', 'vanComission')"></td>
+            <td><input type="number" v-model="currentPrices.level4.vanComission" @change="handlePriceChange('level4', 'vanComission')"></td>
             <td></td>
           </tr>
           <tr>
             <td>Commission Comfort</td>
-            <td><input type="number" v-model="currentPrices.level1.penfits" @change="handlePriceChange('level1', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level2.penfits" @change="handlePriceChange('level2', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level3.penfits" @change="handlePriceChange('level3', 'penfits')"></td>
-            <td><input type="number" v-model="currentPrices.level4.penfits" @change="handlePriceChange('level4', 'penfits')"></td>
+            <td><input type="number" v-model="currentPrices.level1.comfortComission" @change="handlePriceChange('level1', 'comfortComission')"></td>
+            <td><input type="number" v-model="currentPrices.level2.comfortComission" @change="handlePriceChange('level2', 'comfortComission')"></td>
+            <td><input type="number" v-model="currentPrices.level3.comfortComission" @change="handlePriceChange('level3', 'comfortComission')"></td>
+            <td><input type="number" v-model="currentPrices.level4.comfortComission" @change="handlePriceChange('level4', 'comfortComission')"></td>
             <td></td>
           </tr>
           </tbody>
         </table>
       </div>
       <button class="save-btn" @click="saveAllPrices">Save All</button>
+
+      <!-- Add Country Pricing Form -->
+      <div class="add-country">
+        <h3>Add Pricing for Country</h3>
+        <form @submit.prevent="addCountryPricing">
+          <div class="form-group">
+            <label>Country</label>
+            <select v-model="newCountry.country" required>
+              <option v-for="country in countries" :key="country.code" :value="country.code">{{ country.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Level</label>
+            <select v-model="newCountry.level" required>
+              <option value="1">Level 1</option>
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Car Price</label>
+            <input v-model.number="newCountry.priceCar" type="number" min="0" required />
+          </div>
+          <div class="form-group">
+            <label>Van Price</label>
+            <input v-model.number="newCountry.priceVan" type="number" min="0" required />
+          </div>
+          <div class="form-group">
+            <label>Motorcycle Price</label>
+            <input v-model.number="newCountry.motorcycle" type="number" min="0" required />
+          </div>
+          <div class="form-group">
+            <label>Comfort Price</label>
+            <input v-model.number="newCountry.comfort" type="number" min="0" required />
+          </div>
+          <div class="form-group">
+            <label>Car Commission</label>
+            <input v-model.number="newCountry.carComission" type="number" min="0" required />
+          </div>
+          <div class="form-group">
+            <label>Van Commission</label>
+            <input v-model.number="newCountry.vanComission" type="number" min="0" required />
+          </div>
+          <div class="form-group">
+            <label>Motorcycle Commission</label>
+            <input v-model.number="newCountry.motorcycleComission" type="number" min="0" required />
+          </div>
+          <div class="form-group">
+            <label>Comfort Commission</label>
+            <input v-model.number="newCountry.comfortComission" type="number" min="0" required />
+          </div>
+          <button type="submit" class="save-btn">Add Pricing</button>
+        </form>
+      </div>
     </div>
   </div>
 </template>
+
 <script>
 import axios from 'axios';
 import Sidebar from "@/components/sidebarComponent.vue";
@@ -109,81 +173,122 @@ export default {
   },
   data() {
     return {
+      waitingCaptains: 0,
+      selectedCountry: 'egypt',
+      countries: [
+        { code: 'egypt', name: 'Egypt' },
+        { code: 'us', name: 'United States' },
+        { code: 'uk', name: 'United Kingdom' },
+        { code: 'sa', name: 'Saudi Arabia' }
+      ],
       currentPrices: {
-        level1: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
-        level2: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
-        level3: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 },
-        level4: { priceCar: 0, motorocycle: 0, priceVan: 0, penfits: 0, compfort: 0 }
+        level1: { priceCar: 0, motorcycle: 0, priceVan: 0, comfort: 0, carComission: 0, vanComission: 0, motorcycleComission: 0, comfortComission: 0 },
+        level2: { priceCar: 0, motorcycle: 0, priceVan: 0, comfort: 0, carComission: 0, vanComission: 0, motorcycleComission: 0, comfortComission: 0 },
+        level3: { priceCar: 0, motorcycle: 0, priceVan: 0, comfort: 0, carComission: 0, vanComission: 0, motorcycleComission: 0, comfortComission: 0 },
+        level4: { priceCar: 0, motorcycle: 0, priceVan: 0, comfort: 0, carComission: 0, vanComission: 0, motorcycleComission: 0, comfortComission: 0 }
       },
       fixedAmounts: {
-        fixedAmountcar: 0,
-        fixedAmountvan: 0,
-        fixedAmountMotorocycle: 0
+        fixedAmountCar: 0,
+        fixedAmountVan: 0,
+        fixedAmountMotorcycle: 0,
+        fixedAmountComfort: 0
       },
       changes: {},
-      fixedAmountChanges: {}
+      fixedAmountChanges: {},
+      newCountry: {
+        country: 'egypt',
+        level: '1',
+        priceCar: 0,
+        priceVan: 0,
+        motorcycle: 0,
+        comfort: 0,
+        carComission: 0,
+        vanComission: 0,
+        motorcycleComission: 0,
+        comfortComission: 0
+      },
+      loading: false,
+      error: null
     };
   },
   created() {
-    this.fetchEgyptPrices();
+    this.fetchCountryPrices();
     this.fetchFixedPrices();
   },
   methods: {
-    async fetchEgyptPrices() {
+    async fetchCountryPrices() {
+      this.loading = true;
+      this.error = null;
       try {
-        const [level1, level2, level3, level4] = await Promise.all([
-          axios.get('https://backend.fego-rides.com/prices/level1/getprices'),
-          axios.get('https://backend.fego-rides.com/prices/level2/getprices'),
-          axios.get('https://backend.fego-rides.com/prices/level3/getprices'),
-          axios.get('https://backend.fego-rides.com/prices/level4/getprices')
-        ]);
+        const response = await axios.get(`https://backend.fego-rides.com/levels/${this.selectedCountry}`);
+        const data = response.data;
 
         this.currentPrices = {
           level1: {
-            priceCar: level1.data[0]?.priceCar || 0,
-            motorocycle: level1.data[0]?.motorocycle || 0,
-            priceVan: level1.data[0]?.priceVan || 0,
-            penfits: level1.data[0]?.penfits || 0,
-            compfort: level1.data[0]?.compfort || 0
+            priceCar: data.levelOne?.[0]?.priceCar || 0,
+            motorcycle: data.levelOne?.[0]?.motorocycle || 0,
+            priceVan: data.levelOne?.[0]?.priceVan || 0,
+            comfort: data.levelOne?.[0]?.comfort || 0,
+            carComission: data.levelOne?.[0]?.carComission || 0,
+            vanComission: data.levelOne?.[0]?.vanComission || 0,
+            motorcycleComission: data.levelOne?.[0]?.motorocycleComission || 0,
+            comfortComission: data.levelOne?.[0]?.comfortComission || 0
           },
           level2: {
-            priceCar: level2.data[0]?.priceCar || 0,
-            motorocycle: level2.data[0]?.motorocycle || 0,
-            priceVan: level2.data[0]?.priceVan || 0,
-            penfits: level2.data[0]?.penfits || 0,
-            compfort: level2.data[0]?.compfort || 0
+            priceCar: data.levelTwo?.[0]?.priceCar || 0,
+            motorcycle: data.levelTwo?.[0]?.motorocycle || 0,
+            priceVan: data.levelTwo?.[0]?.priceVan || 0,
+            comfort: data.levelTwo?.[0]?.comfort || 0,
+            carComission: data.levelTwo?.[0]?.carComission || 0,
+            vanComission: data.levelTwo?.[0]?.vanComission || 0,
+            motorcycleComission: data.levelTwo?.[0]?.motorocycleComission || 0,
+            comfortComission: data.levelTwo?.[0]?.comfortComission || 0
           },
           level3: {
-            priceCar: level3.data[0]?.priceCar || 0,
-            motorocycle: level3.data[0]?.motorocycle || 0,
-            priceVan: level3.data[0]?.priceVan || 0,
-            penfits: level3.data[0]?.penfits || 0,
-            compfort: level3.data[0]?.compfort || 0
+            priceCar: data.levelThree?.[0]?.priceCar || 0,
+            motorcycle: data.levelThree?.[0]?.motorocycle || 0,
+            priceVan: data.levelThree?.[0]?.priceVan || 0,
+            comfort: data.levelThree?.[0]?.comfort || 0,
+            carComission: data.levelThree?.[0]?.carComission || 0,
+            vanComission: data.levelThree?.[0]?.vanComission || 0,
+            motorcycleComission: data.levelThree?.[0]?.motorocycleComission || 0,
+            comfortComission: data.levelThree?.[0]?.comfortComission || 0
           },
           level4: {
-            priceCar: level4.data[0]?.priceCar || 0,
-            motorocycle: level4.data[0]?.motorocycle || 0,
-            priceVan: level4.data[0]?.priceVan || 0,
-            penfits: level4.data[0]?.penfits || 0,
-            compfort: level4.data[0]?.compfort || 0
+            priceCar: data.levelFour?.[0]?.priceCar || 0,
+            motorcycle: data.levelFour?.[0]?.motorocycle || 0,
+            priceVan: data.levelFour?.[0]?.priceVan || 0,
+            comfort: data.levelFour?.[0]?.comfort || 0,
+            carComission: data.levelFour?.[0]?.carComission || 0,
+            vanComission: data.levelFour?.[0]?.vanComission || 0,
+            motorcycleComission: data.levelFour?.[0]?.motorocycleComission || 0,
+            comfortComission: data.levelFour?.[0]?.comfortComission || 0
           }
         };
       } catch (error) {
-        console.error('Error fetching Egypt prices:', error);
+        console.error(`Error fetching ${this.selectedCountry} prices:`, error);
+        this.error = `Error fetching ${this.selectedCountry} prices: ${error.response?.data?.message || error.message}`;
+      } finally {
+        this.loading = false;
       }
     },
     async fetchFixedPrices() {
+      this.loading = true;
+      this.error = null;
       try {
         const response = await axios.get('https://backend.fego-rides.com/prices/getFixedPrices');
-        this.fixedAmounts = response.data.fixedAmounts; // Stores all three fixed amounts
-        console.log(this.fixedAmounts)
+        this.fixedAmounts = {
+          fixedAmountCar: response.data.fixedAmountCar || 0,
+          fixedAmountVan: response.data.fixedAmountVan || 0,
+          fixedAmountMotorcycle: response.data.fixedAmountMotorcycle || 0,
+          fixedAmountComfort: response.data.fixedAmountComfort || 0
+        };
       } catch (error) {
-        console.error('Error fetching Fixed Prices:', error);
-        alert('Error fetching Fixed Prices');
+        console.error('Error fetching fixed prices:', error);
+        this.error = 'Error fetching fixed prices: ' + (error.response?.data?.message || error.message);
+      } finally {
+        this.loading = false;
       }
-    },
-    handleFixedAmountChange(field) {
-      this.fixedAmountChanges[field] = this.fixedAmounts[field];
     },
     handlePriceChange(level, field) {
       if (!this.changes[level]) {
@@ -191,32 +296,41 @@ export default {
       }
       this.changes[level][field] = this.currentPrices[level][field];
     },
+    handleFixedAmountChange(field) {
+      this.fixedAmountChanges[field] = this.fixedAmounts[field];
+    },
     async saveAllPrices() {
+      this.loading = true;
+      this.error = null;
       try {
         const updates = [];
 
-        // Process price changes - send complete level data for each changed level
         for (const level in this.changes) {
+          const levelNumber = parseInt(level.replace('level', ''));
           const updateData = {
-            country: 'egypt',
+            level: levelNumber,
+            country: this.selectedCountry,
             priceCar: this.currentPrices[level].priceCar || 0,
             priceVan: this.currentPrices[level].priceVan || 0,
-            motorocycle: this.currentPrices[level].motorocycle || 0,
-            penfits: this.currentPrices[level].penfits || 0,
-            compfort: this.currentPrices[level].compfort || 0
+            motorocycle: this.currentPrices[level].motorcycle || 0,
+            comfort: this.currentPrices[level].comfort || 0,
+            carComission: this.currentPrices[level].carComission || 0,
+            vanComission: this.currentPrices[level].vanComission || 0,
+            motorocycleComission: this.currentPrices[level].motorcycleComission || 0,
+            comfortComission: this.currentPrices[level].comfortComission || 0
           };
 
           updates.push(
-              axios.patch(`https://backend.fego-rides.com/prices/${level}/updateprices`, updateData)
+              axios.patch('https://backend.fego-rides.com/levels', updateData)
           );
         }
 
-        // Process fixed amount changes - always send all three fixed amounts if any change exists
         if (Object.keys(this.fixedAmountChanges).length > 0) {
           const fixedAmountUpdate = {
-            fixedAmountcar: this.fixedAmounts.fixedAmountcar || 0,
-            fixedAmountvan: this.fixedAmounts.fixedAmountvan || 0,
-            fixedAmountMotorocycle: this.fixedAmounts.fixedAmountMotorocycle || 0
+            fixedAmountCar: this.fixedAmounts.fixedAmountCar || 0,
+            fixedAmountVan: this.fixedAmounts.fixedAmountVan || 0,
+            fixedAmountMotorcycle: this.fixedAmounts.fixedAmountMotorcycle || 0,
+            fixedAmountComfort: this.fixedAmounts.fixedAmountComfort || 0
           };
 
           updates.push(
@@ -224,20 +338,62 @@ export default {
           );
         }
 
-        // Only proceed if there are actual updates
         if (updates.length > 0) {
           await Promise.all(updates);
           alert('Prices updated successfully!');
           this.changes = {};
           this.fixedAmountChanges = {};
-          this.fetchEgyptPrices(); // Refresh data
-          this.fetchFixedPrices(); // Refresh fixed amounts
+          await this.fetchCountryPrices();
+          await this.fetchFixedPrices();
         } else {
           alert('No changes detected to save.');
         }
       } catch (error) {
-        console.error('Error updating prices:', error.response?.data || error.message);
-        alert('Error updating prices: ' + (error.response?.data?.message || error.message));
+        console.error('Error updating prices:', error);
+        this.error = 'Error updating prices: ' + (error.response?.data?.message || error.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async addCountryPricing() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const payload = {
+          level: parseInt(this.newCountry.level),
+          country: this.newCountry.country.toLowerCase(),
+          priceCar: this.newCountry.priceCar || 0,
+          priceVan: this.newCountry.priceVan || 0,
+          motorocycle: this.newCountry.motorcycle || 0,
+          comfort: this.newCountry.comfort || 0,
+          carComission: this.newCountry.carComission || 0,
+          vanComission: this.newCountry.vanComission || 0,
+          motorocycleComission: this.newCountry.motorcycleComission || 0,
+          comfortComission: this.newCountry.comfortComission || 0
+        };
+
+        await axios.post('https://backend.fego-rides.com/levels', payload);
+        alert(`Pricing for ${this.newCountry.country} (Level ${this.newCountry.level}) added successfully!`);
+        this.newCountry = {
+          country: this.selectedCountry,
+          level: '1',
+          priceCar: 0,
+          priceVan: 0,
+          motorcycle: 0,
+          comfort: 0,
+          carComission: 0,
+          vanComission: 0,
+          motorcycleComission: 0,
+          comfortComission: 0
+        };
+        if (this.newCountry.country === this.selectedCountry) {
+          await this.fetchCountryPrices();
+        }
+      } catch (error) {
+        console.error('Error adding country pricing:', error);
+        this.error = 'Error adding country pricing: ' + (error.response?.data?.message || error.message);
+      } finally {
+        this.loading = false;
       }
     }
   }
@@ -245,51 +401,6 @@ export default {
 </script>
 
 <style scoped>
-.vehicle-commission-table {
-  font-family: Arial, sans-serif;
-  width: 100%;
-  max-width: 800px;
-  margin: 20px auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1px solid #8e44ad; /* Purple border to match your previous theme */
-}
-
-th, td {
-  padding: 10px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-th {
-  background-color: #8e44ad; /* Purple header background */
-  color: white;
-  font-weight: bold;
-}
-
-tbody tr:nth-child(odd) {
-  background-color: #ffffff; /* White for odd rows */
-}
-
-tbody tr:nth-child(even) {
-  background-color: #e8ecef; /* Light grey for even rows */
-}
-
-input[type="number"] {
-  width: 60px;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  text-align: center;
-}
-
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  opacity: 1;
-}
 .fego-dashboard {
   display: flex;
   min-height: 100vh;
@@ -314,6 +425,32 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.add-country {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.country-selector {
+  margin-bottom: 20px;
+}
+
+.country-selector label {
+  display: inline-block;
+  margin-right: 10px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.country-selector select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
 }
 
 h2 {
@@ -333,7 +470,8 @@ h3 {
   margin-bottom: 20px;
 }
 
-.prices-table th, .prices-table td {
+.prices-table th,
+.prices-table td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #ecf0f1;
@@ -353,6 +491,26 @@ h3 {
   text-align: center;
 }
 
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  max-width: 200px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
 .save-btn {
   padding: 10px 20px;
   background-color: #6b5b95;
@@ -368,7 +526,6 @@ h3 {
   background-color: #5a4a7d;
 }
 
-/* Row styling */
 .row-grey {
   background-color: #f8f9fa;
 }
@@ -377,12 +534,43 @@ h3 {
   background-color: rgba(107, 91, 149, 0.1);
 }
 
-.row-grey:hover, .row-purple:hover {
+.row-grey:hover,
+.row-purple:hover {
   background-color: #e9ecef;
 }
 
 .table-header {
   background-color: #6b5b95 !important;
   color: white;
+}
+
+.loading-overlay {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  min-height: 100px;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #6b5b95;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  color: #dc3545;
+  text-align: center;
+  margin-bottom: 20px;
 }
 </style>

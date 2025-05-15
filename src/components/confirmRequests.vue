@@ -11,21 +11,21 @@
       <!-- Transaction Form -->
       <div class="transaction-form">
         <div class="input-wrapper">
-          <input v-model="transaction.idDriver" placeholder="Enter ID Driver" class="form-input" />
+          <input v-model="idDriver" placeholder="Enter ID Driver" class="form-input" />
         </div>
         <div class="input-wrapper">
           <input v-model="transaction.transferBy" placeholder="Transfer by" class="form-input transfer-by" />
         </div>
         <div class="input-wrapper">
-          <input v-model="transaction.transferBy" placeholder="Sender Name" class="form-input transfer-by" />
+          <input v-model="sender" placeholder="Sender Name" class="form-input transfer-by" :disabled="true" />
         </div>
         <div class="input-wrapper">
-          <input v-model="transaction.transferBy" placeholder="Enter an Amount" class="form-input transfer-by" />
+          <input v-model="transaction.amount" placeholder="Enter an Amount" class="form-input transfer-by" />
         </div>
         <div class="input-wrapper">
           <input v-model="transaction.transactionNumber" placeholder="Enter Transaction Number" class="form-input" />
         </div>
-        <button @click="confirmTransaction" class="confirm-button">Confirm</button>
+        <button @click="applyTransfer" class="confirm-button">Confirm</button>
         <button @click="copyAllText" class="copy-button">📋</button>
         <p v-if="transaction.updatedAt" class="timestamp">Transfer Time: {{ formatDate(transaction.updatedAt) }}</p>
       </div>
@@ -37,20 +37,61 @@
 import { defineComponent } from "vue";
 import sidebarComponent from "@/components/sidebarComponent.vue";
 import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
-
+import axios from 'axios';
 export default defineComponent({
   components: { WaitingDriversNumber, sidebarComponent },
   data() {
     return {
       transaction: {
-        idDriver: '',
+        idDriver: this.$route.params.id || '',
         transferBy: '',
+        sender: '',
+        amount: 0,
         transactionNumber: '',
         updatedAt: null
       }
     };
   },
+  computed: {
+    sender: {
+      get() {
+        return this.transaction.sender;
+      },
+      set(value) {
+        this.transaction.sender = value;
+      }
+    },
+    idDriver: {
+      get() {
+        return this.transaction.idDriver;
+      },
+      set(value) {
+        this.transaction.idDriver = value;
+      }
+    }
+  },
+  created() {
+    this.idDriver = this.$route.params.id || '';
+    this.sender = localStorage.getItem("username") || 'Unknown';
+  },
   methods: {
+    applyTransfer(){
+      axios.post('http://localhost:3000/applyReq',{
+        driverId: this.transaction.idDriver,
+        amount: this.transaction.amount,
+        transactionId: this.transaction.transactionNumber,
+        transferBy: this.transaction.transferBy,
+        sender: this.transaction.sender
+      }).then(response=>{
+        if(response.status === 200 || response.status === 201){
+          alert(response.data.message);
+        }
+      }).catch(error=>{
+        console.log(error);
+        alert(error.message)
+      });
+    },
+
     confirmTransaction() {
       this.transaction.updatedAt = new Date();
     },
@@ -67,7 +108,7 @@ export default defineComponent({
       }).replace(',', '');
     },
     copyAllText() {
-      const allText = `${this.transaction.idDriver}\n${this.transaction.transferBy}\n${this.transaction.transactionNumber}`;
+      const allText = `${this.transaction.idDriver}\n${this.transaction.sender}\n${this.transaction.transferBy}\n${this.transaction.amount}\n${this.transaction.transactionNumber}`;
       if (allText.trim()) {
         navigator.clipboard.writeText(allText)
             .then(() => {
@@ -126,6 +167,11 @@ export default defineComponent({
   border-radius: 25px;
   font-size: 16px;
   background-color: #f5f5ff;
+}
+
+.form-input:disabled {
+  background-color: #e0e0e0;
+  cursor: not-allowed;
 }
 
 .transfer-by {

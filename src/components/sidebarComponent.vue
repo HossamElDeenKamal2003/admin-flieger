@@ -44,7 +44,7 @@ export default {
         { name: 'Level', icon: 'settings', route: '/levels' },
         { name: 'Get Requests', icon: 'get req', route: '/get-req' },
         { name: 'Get Change Requests', icon: "sd", route: '/change-reqs' },
-        { name: 'Confirm Requests', icon: 'confirm req', route: '/confirm-requests'},
+        // { name: 'Confirm Requests', icon: 'confirm req', route: '/confirm-requests'},
         { name: 'Driver Signup', icon: "sdfdf", route: '/driver-signup' },
         { name: 'Chat', icon: 'chat', route: '/chat' },
         {name: "Chat History", icon: "kjsk", route: 'chat-history'}

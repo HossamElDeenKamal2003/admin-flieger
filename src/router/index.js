@@ -38,7 +38,7 @@ const routes = [
       component: sucessTransactions,
     },
     {
-        path: '/confirm-requests',
+        path: '/confirm-requests/:id',
         name: 'confirmRequest',
         component: confirmRequest,
         beforeEnter: (to, from, next) => {

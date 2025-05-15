@@ -6,22 +6,39 @@
     <div class="transactions-container">
       <waiting-drivers-number />
       <h2>Successful Transactions</h2>
+      <div class="search-container">
+        <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search by Driver Name or National ID"
+            class="search-input"
+        />
+      </div>
       <div class="table-responsive">
         <table class="transactions-table">
           <thead>
           <tr>
             <th>Driver Name</th>
+            <th>National ID</th>
             <th>Amount</th>
+            <th>Wallet</th>
+            <th>Sender</th>
             <th>Transferred By</th>
             <th>Status</th>
           </tr>
           </thead>
           <tbody>
-          <tr v-for="transaction in transactions" :key="transaction.id">
+          <tr v-for="transaction in filteredTransactions" :key="transaction.id">
             <td data-label="Driver Name">{{ transaction.driverName }}</td>
-            <td data-label="Amount">{{ transaction.amount }}</td>
+            <td data-label="National ID">{{ transaction.nationalId }}</td>
+            <td data-label="Amount">{{ transaction.amount }} EGP</td>
+            <td data-label="Wallet">{{ transaction.wallet }} EGP</td>
+            <td data-label="Sender">{{ transaction.sender }}</td>
             <td data-label="Transferred By">{{ transaction.transferredBy }}</td>
             <td class="success" data-label="Status">Success</td>
+          </tr>
+          <tr v-if="filteredTransactions.length === 0">
+            <td colspan="7" class="no-data">No transactions found</td>
           </tr>
           </tbody>
         </table>
@@ -33,33 +50,55 @@
 <script>
 import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 import Sidebar from "@/components/sidebarComponent.vue";
+import axios from 'axios';
+
 export default {
   name: "SuccessfulTransactions",
-  components: {WaitingDriversNumber, Sidebar},
+  components: { WaitingDriversNumber, Sidebar },
   data() {
     return {
-      transactions: [
-        // Mock data; replace with API call or dynamic data
-        {
-          id: 1,
-          driverName: "John Doe",
-          amount: "$150.00",
-          transferredBy: "Jane Smith",
-        },
-        {
-          id: 2,
-          driverName: "Alice Johnson",
-          amount: "$200.00",
-          transferredBy: "Bob Wilson",
-        },
-        {
-          id: 3,
-          driverName: "Mike Brown",
-          amount: "$175.00",
-          transferredBy: "Sarah Davis",
-        },
-      ],
+      transactions: [],
+      searchQuery: '',
+      loading: false,
     };
+  },
+  computed: {
+    filteredTransactions() {
+      if (!this.searchQuery.trim()) {
+        return this.transactions;
+      }
+      const query = this.searchQuery.trim().toLowerCase();
+      return this.transactions.filter(
+          (transaction) =>
+              transaction.driverName.toLowerCase().includes(query) ||
+              transaction.nationalId.toLowerCase().includes(query)
+      );
+    },
+  },
+  created() {
+    this.fetchSuccessTransfer();
+  },
+  methods: {
+    async fetchSuccessTransfer() {
+      this.loading = true;
+      try {
+        const response = await axios.get('https://backend.fego-rides.com/get-success-transfer');
+        this.transactions = response.data.map((item) => ({
+          id: item._id,
+          driverName: item.driverId?.username || 'N/A',
+          nationalId: item.driverId?.id || 'N/A',
+          amount: item.amount || 0,
+          wallet: item.driverId?.wallet || 0,
+          sender: item.sender || 'N/A',
+          transferredBy: item.transferBy || 'N/A',
+        }));
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        alert('Failed to fetch transactions. Please try again.');
+      } finally {
+        this.loading = false;
+      }
+    },
   },
 };
 </script>
@@ -83,6 +122,25 @@ export default {
 h2 {
   margin-bottom: 20px;
   color: #333;
+}
+
+.search-container {
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #6b48ff;
+  box-shadow: 0 0 5px rgba(107, 72, 255, 0.3);
 }
 
 .table-responsive {
@@ -123,6 +181,12 @@ h2 {
   font-weight: bold;
 }
 
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
 /* Responsive styles */
 @media (max-width: 992px) {
   .sidebar-container {
@@ -145,6 +209,10 @@ h2 {
 
   .transactions-table {
     min-width: 100%;
+  }
+
+  .search-input {
+    max-width: 100%;
   }
 }
 
