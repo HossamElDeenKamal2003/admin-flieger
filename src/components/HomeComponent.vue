@@ -41,7 +41,7 @@
       <div class="content-grid">
         <!-- Level Counters -->
         <div class="level-counters">
-          <h2>Driver Levels</h2>
+          <h2>Total Trips In Levels</h2>
           <div class="counters-grid">
             <div class="counter-card">
               <span class="counter-label">Level 1 Drivers</span>
