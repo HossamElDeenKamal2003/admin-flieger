@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -60,6 +61,9 @@
             <th>Completed Trips</th>
             <th>State</th>
             <th>Wallet</th>
+            <th>Daily Target</th>
+            <th>Weekly Target</th>
+            <th>Monthly Target</th>
             <th>Date Of Certain License</th>
             <th>Captains Account</th>
             <th>Block Status</th>
@@ -67,9 +71,13 @@
           </thead>
           <tbody>
           <tr
-              v-for="captain in paginatedCaptains"
+              v-for="captain in filteredCaptains"
               :key="captain.id"
               class="clickable-row"
+              :class="{
+                'target-daily-weekly': (captain.earnings['1_day'].totalEarnings >= target.daily || captain.earnings['7_days'].totalEarnings >= target.weekly) && captain.earnings['30_days'].totalEarnings < target.monthly,
+                'target-monthly': captain.earnings['30_days'].totalEarnings >= target.monthly
+              }"
               @click="goToDriverDetails(captain._id)"
           >
             <td @click.stop><input type="checkbox" /></td>
@@ -87,14 +95,18 @@
             <td>{{ captain.phoneNumber || 'N/A' }}</td>
             <td>{{ captain.ctr || 0 }}</td>
             <td>
-              <span class="status-container">
-                <span :class="captain.status?.toLowerCase() === 'online' ? 'status-dot-online' : 'status-dot-offline'" :title="`Status: ${captain.status}`"></span>
-                <span class="status-text">{{ captain.status || 'Offline' }}</span>
-              </span>
+                <span class="status-container">
+                  <span :class="captain.status?.toLowerCase() === 'online' ? 'status-dot-online' : 'status-dot-offline'" :title="`Status: ${captain.status}`"></span>
+                  <span class="status-text">{{ captain.status || 'Offline' }}</span>
+                </span>
             </td>
             <td>
               <input type="number" v-model="captain.wallet" />
-            </td>            <td>{{ captain.licence_expire_date || 'N/A' }}</td>
+            </td>
+            <td>{{ captain.earnings['1_day'].totalEarnings || 0 }} EGP</td>
+            <td>{{ captain.earnings['7_days'].totalEarnings || 0 }} EGP</td>
+            <td>{{ captain.earnings['30_days'].totalEarnings || 0 }} EGP</td>
+            <td>{{ captain.licence_expire_date || 'N/A' }}</td>
             <td @click.stop>
               <router-link
                   :to="{ name: 'DriverDetails', params: { driverId: captain._id } }"
@@ -104,13 +116,13 @@
               </router-link>
             </td>
             <td @click.stop>
-              <span :class="captain.block ? 'status-enabled' : 'status-blocked'">
-                {{ captain.block ? 'ENABLED' : 'BLOCKED' }}
-              </span>
+                <span :class="captain.block ? 'status-enabled' : 'status-blocked'">
+                  {{ captain.block ? 'ENABLED' : 'BLOCKED' }}
+                </span>
             </td>
           </tr>
-          <tr v-if="paginatedCaptains.length === 0">
-            <td colspan="14" class="no-data">No captains found</td>
+          <tr v-if="filteredCaptains.length === 0">
+            <td colspan="16" class="no-data">No captains found</td>
           </tr>
           </tbody>
         </table>
@@ -118,16 +130,16 @@
         <!-- Table Footer -->
         <div class="table-footer">
           <div>
-            <p>Total Captains: {{ captains.length }}</p>
+            <p>Total Captains: {{ pagination.totalDrivers }}</p>
           </div>
           <div class="pagination">
             <span>
-              {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredCaptains.length) }}
-              of {{ filteredCaptains.length }} items
+              {{ paginationStart }}-{{ paginationEnd }}
+              of {{ pagination.totalDrivers }} items
             </span>
-            <button :disabled="currentPage === 1" @click="currentPage--">❮</button>
-            <button>{{ currentPage }}</button>
-            <button :disabled="currentPage >= totalPages" @click="currentPage++">❯</button>
+            <button :disabled="pagination.currentPage === 1" @click="changePage(pagination.currentPage - 1)">❮</button>
+            <button>{{ pagination.currentPage }}</button>
+            <button :disabled="pagination.currentPage >= pagination.totalPages" @click="changePage(pagination.currentPage + 1)">❯</button>
           </div>
         </div>
       </section>
@@ -138,12 +150,12 @@
 <script>
 import Sidebar from './sidebarComponent.vue';
 import axios from 'axios';
-import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
+import WaitingDriversNumber from '@/components/waitingDriversNumber.vue';
 
 export default {
   components: {
     WaitingDriversNumber,
-    Sidebar
+    Sidebar,
   },
   data() {
     return {
@@ -153,12 +165,22 @@ export default {
       adminName: localStorage.getItem('username'),
       filter: 'All Captains',
       sortBy: 'none',
-      currentPage: 1,
-      itemsPerPage: 10,
-      baseUrl: 'https://backend.fego-rides.com/admin',
+      pagination: {
+        currentPage: 1,
+        limit: 10,
+        totalDrivers: 0,
+        totalPages: 1,
+      },
+      target: {
+        daily: 50,
+        weekly: 500,
+        monthly: 2000,
+      },
+      baseUrl: 'https://backend.fego-rides.com',
       activeCap: 0,
       loading: false,
-      error: null
+      error: null,
+      waitingCaptains: 0,
     };
   },
   computed: {
@@ -184,14 +206,13 @@ export default {
       }
       return filtered;
     },
-    paginatedCaptains() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredCaptains.slice(start, end);
+    paginationStart() {
+      return this.pagination.totalDrivers === 0 ? 0 : (this.pagination.currentPage - 1) * this.pagination.limit + 1;
     },
-    totalPages() {
-      return Math.ceil(this.filteredCaptains.length / this.itemsPerPage);
-    }
+    paginationEnd() {
+      const end = this.pagination.currentPage * this.pagination.limit;
+      return Math.min(end, this.pagination.totalDrivers);
+    },
   },
   methods: {
     handleSidebarToggle(collapsed) {
@@ -204,41 +225,77 @@ export default {
         this.isSidebarCollapsed = false;
       }
     },
-    async getDrivers() {
+    async getDrivers(page = 1) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get(`${this.baseUrl}/get-drivers`);
-        this.captains = [];
-        this.activeCap = 0;
-        response.data.forEach(driver => {
-          if (driver.block || (!driver.block && (driver.ctr || 0) > 0)) {
-            this.captains.push(driver);
-            if (driver.status?.toLowerCase() === 'online') {
-              this.activeCap++;
-            }
-          }
+        const response = await axios.get(`${this.baseUrl}/wallet/getAllDriversEarnings`, {
+          params: {
+            page,
+            limit: this.pagination.limit,
+          },
         });
+
+        this.captains = response.data.drivers.map(driver => ({
+          _id: driver.driver.driverId,
+          id: driver.driver.nationalId || 'N/A',
+          username: driver.driver.name || 'N/A',
+          phoneNumber: driver.driver.phone || 'N/A',
+          profile_image: driver.driver.profile_image || null,
+          status: driver.driver.status || 'Offline',
+          city: driver.driver.city || 'N/A',
+          vehicleType: driver.driver.vehicleType || 'N/A',
+          ctr: driver.earnings['30_days'].tripCount || 0,
+          wallet: driver.driver.wallet || 0,
+          licence_expire_date: driver.driver.expiredDate || 'N/A',
+          block: driver.driver.block || false,
+          earnings: {
+            '1_day': driver.earnings['1_day'] || { totalEarnings: 0 },
+            '7_days': driver.earnings['7_days'] || { totalEarnings: 0 },
+            '30_days': driver.earnings['30_days'] || { totalEarnings: 0 },
+          },
+        }));
+
+        this.target = {
+          daily: response.data.target.daily || 50,
+          weekly: response.data.target.weekly || 500,
+          monthly: response.data.target.monthly || 2000,
+        };
+
+        this.pagination = {
+          currentPage: response.data.pagination.currentPage || 1,
+          limit: response.data.pagination.limit || this.pagination.limit,
+          totalDrivers: response.data.pagination.totalDrivers || 0,
+          totalPages: response.data.pagination.totalPages || 1,
+        };
+
+        this.activeCap = this.captains.filter(captain => captain.status?.toLowerCase() === 'online').length;
       } catch (err) {
+        console.error('Error fetching drivers:', err);
         this.error = 'Failed to load drivers. Please try again later.';
       } finally {
         this.loading = false;
       }
     },
+    async changePage(page) {
+      if (page < 1 || page > this.pagination.totalPages) return;
+      this.pagination.currentPage = page;
+      await this.getDrivers(page);
+    },
     goToDriverDetails(driverId) {
       this.$router.push({ name: 'DriverDetails', params: { driverId } });
-    }
+    },
   },
   watch: {
     filter() {
-      this.currentPage = 1;
+      this.pagination.currentPage = 1;
     },
     sortBy() {
-      this.currentPage = 1;
+      this.pagination.currentPage = 1;
     },
     searchQuery() {
-      this.currentPage = 1;
-    }
+      this.pagination.currentPage = 1;
+    },
   },
   created() {
     this.getDrivers();
@@ -249,7 +306,7 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
-  }
+  },
 };
 </script>
 
@@ -345,6 +402,14 @@ th {
 
 .clickable-row:hover {
   background-color: #f5f7fa;
+}
+
+.target-daily-weekly {
+  background-color: #e6f7e6 !important;
+}
+
+.target-monthly {
+  background-color: #f0e6fa !important;
 }
 
 .captain-photo {
@@ -505,3 +570,4 @@ th {
   margin-left: 250px;
 }
 </style>
+```

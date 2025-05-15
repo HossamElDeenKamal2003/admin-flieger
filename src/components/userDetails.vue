@@ -130,7 +130,6 @@
               <th>Payment</th>
               <th>Wallet</th>
               <th>Trip State</th>
-              <th>Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -150,7 +149,6 @@
                 }">
                 {{ trip.status || 'N/A' }}
               </td>
-              <td><button @click="openEditModal(trip)">Edit</button></td>
             </tr>
             <tr v-if="paginatedData.length === 0">
               <td colspan="10" class="no-data">No trip history found</td>

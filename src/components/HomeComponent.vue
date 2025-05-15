@@ -30,13 +30,6 @@
         </div>
         <div class="card">
           <div class="card-header">
-            <span>Total Earnings</span>
-            <i class="fas fa-chevron-right"></i>
-          </div>
-          <p class="card-value">{{ totalEarnings }}</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
             <span>Profit</span>
             <i class="fas fa-chevron-right"></i>
           </div>
@@ -165,9 +158,7 @@ export default {
     Sidebar
   },
   methods: {
-    handleSidebarToggle() {
-      this.isSidebarExpanded = !this.isSidebarExpanded;
-    },
+
     async fetchLevelData() {
       try {
         const response = await axios.get("https://backend.fego-rides.com/book/levelCounter");

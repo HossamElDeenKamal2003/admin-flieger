@@ -271,7 +271,6 @@
               <th>{{ tripHeaders[7] }}</th> <!-- Wallet Before -->
               <th>{{ tripHeaders[8] }}</th> <!-- Wallet After -->
               <th>{{ tripHeaders[9] }}</th> <!-- Trip State -->
-              <th>Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -285,7 +284,6 @@
               <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.walletBefore || 'N/A' }}</td>
               <td>{{ trip.driverMoneyFlowId?.flow?.[0]?.walletAfter || 'N/A' }}</td>
               <td :class="{'status-end': trip.status === 'end', 'status-cancelled': trip.status === 'cancelled'}">{{ trip.status || 'N/A' }}</td>
-              <td><button @click="openEditModal(trip)">Edit</button></td>
             </tr>
             <tr v-if="paginatedTrips.length === 0">
               <td colspan="10" class="no-data">No trip history found</td>
