@@ -76,7 +76,7 @@ export default defineComponent({
   },
   methods: {
     applyTransfer(){
-      axios.post('http://localhost:3000/applyReq',{
+      axios.post('https://backend.fego-rides.com/applyReq',{
         driverId: this.transaction.idDriver,
         amount: this.transaction.amount,
         transactionId: this.transaction.transactionNumber,
@@ -84,7 +84,7 @@ export default defineComponent({
         sender: this.transaction.sender
       }).then(response=>{
         if(response.status === 200 || response.status === 201){
-          alert(response.data.message);
+          alert("Successful Transfer");
         }
       }).catch(error=>{
         console.log(error);

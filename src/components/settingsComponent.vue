@@ -101,7 +101,7 @@
         <div class="setting-card">
           <label class="card-label">Max. Distance to captain see another offer (M)</label>
           <div class="card-value">
-            {{ maxDistanceOffer || currentMaxDistanceOffer }}
+            {{ currentMaxDistanceOffer }}
             <button class="edit-btn" @click="editDistance('maxDistanceOffer')">
               <span><font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startSectionEditing('vehicle')" /></span>
             </button>
@@ -109,7 +109,7 @@
           <form v-if="editing.maxDistanceOffer" @submit.prevent="updateDistance('maxDistanceOffer')" class="edit-form">
             <input
                 type="number"
-                v-model="maxDistanceOffer"
+                v-model="currentMaxDistanceOffer"
                 class="form-control"
                 placeholder="Enter Max Distance"
                 required

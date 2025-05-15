@@ -120,7 +120,7 @@
             <td>{{ trip.uniqueId || trip.tripId?.uniqueId || 'N/A' }}</td>
 
             <!-- Ordered Time -->
-            <td>{{ formatDate(trip.date || trip.tripId?.date) }}</td>
+            <td>{{ formatDate(trip.createdAt || trip.tripId?.createdAt) }}</td>
 
             <!-- Start Location -->
             <td>{{ trip.pickupLocationName || trip.tripId?.pickupLocationName || 'N/A' }}</td>
@@ -348,9 +348,16 @@ export default {
     },
     formatDate(dateString) {
       if (!dateString) return "N/A";
+
       const date = new Date(dateString);
-      return date.toLocaleString();
-    },
+
+      // Extract day, month, and year
+      const day = String(date.getDate()).padStart(2, '0');  // Ensures 2 digits (e.g., 05)
+      const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+      const year = String(date.getFullYear()); // Gets last 2 digits (e.g., 24 for 2024)
+
+      return `${day}/${month}/${year}`;
+    }
   },
 };
 </script>
