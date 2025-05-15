@@ -34,30 +34,42 @@
         <!-- User Data -->
         <div class="user-data">
           <h2>Users Data</h2>
-          <div class="data-row">
-            <span>Name:</span>
-            <span>{{ userData.name || 'N/A' }}</span>
-          </div>
-          <div class="data-row">
-            <span>Phone Number:</span>
-            <span>{{ userData.phoneNumber || 'N/A' }}</span>
-          </div>
-          <div class="data-row">
-            <span>Rate:</span>
-            <span class="stars">★ {{ userData.rating || 0 }}</span>
-          </div>
-          <div class="data-row">
-            <span>Wallet:</span>
-            <div class="field-container">
-              <span>{{ userData.wallet || 0 }} EGP</span>
-              <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startEditing('wallet')" />
+          <div class="user-data-container">
+            <div class="profile-image-container">
+              <img
+                  :src="userData.profileImage || defaultProfileImage"
+                  alt="User Profile"
+                  class="profile-image"
+                  @error="handleImageError"
+              />
             </div>
-          </div>
-          <div class="data-row">
-            <span>Block Status:</span>
-            <span :class="userData.block ? 'status-enabled' : 'status-blocked'">
-              {{ userData.block ? 'User is unblocked' : 'User is blocked' }}
-            </span>
+            <div class="user-data-details">
+              <div class="data-row">
+                <span>Name:</span>
+                <span>{{ userData.name || 'N/A' }}</span>
+              </div>
+              <div class="data-row">
+                <span>Phone Number:</span>
+                <span>{{ userData.phoneNumber || 'N/A' }}</span>
+              </div>
+              <div class="data-row">
+                <span>Rate:</span>
+                <span class="stars">★ {{ userData.rating || 0 }}</span>
+              </div>
+              <div class="data-row">
+                <span>Wallet:</span>
+                <div class="field-container">
+                  <span>{{ userData.wallet || 0 }} EGP</span>
+                  <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startEditing('wallet')" />
+                </div>
+              </div>
+              <div class="data-row">
+                <span>Block Status:</span>
+                <span :class="userData.block ? 'status-enabled' : 'status-blocked'">
+                  {{ userData.block ? 'User is unblocked' : 'User is blocked' }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -202,11 +214,12 @@ export default {
       baseUrl: 'https://backend.fego-rides.com',
       activeTab: null,
       filterStatus: null,
-      showEditModal: false, // For wallet edit modal
-      showEditTripModal: false, // For trip edit modal
+      showEditModal: false,
+      showEditTripModal: false,
       selectedTrip: {},
       editWalletValue: null,
       waitingCaptains: 0,
+      defaultProfileImage: '/assets/default-avatar.png', // Fallback image
     };
   },
   computed: {
@@ -289,6 +302,7 @@ export default {
           rating: user.rate || 0,
           wallet: user.wallet || 0,
           block: user.block || false,
+          profileImage: user.profileImage || null
         };
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -398,6 +412,9 @@ export default {
     cancelEdit() {
       this.showEditModal = false;
       this.editWalletValue = null;
+    },
+    handleImageError(event) {
+      event.target.src = this.defaultProfileImage;
     }
   },
   created() {
@@ -487,6 +504,27 @@ header {
   font-weight: 600;
   color: #1f2a44;
   margin: 0 0 16px 0;
+}
+
+.user-data-container {
+  display: flex;
+  gap: 24px;
+}
+
+.profile-image-container {
+  flex: 0 0 auto;
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid #8e44ad;
+  object-fit: cover;
+}
+
+.user-data-details {
+  flex: 1;
 }
 
 .data-row {
@@ -810,8 +848,8 @@ header {
   font-weight: 600;
 }
 
-@media (max-width: 2000px){
-  .main-content{
+@media (max-width: 2000px) {
+  .main-content {
     width: 85%;
   }
 }
@@ -847,6 +885,15 @@ header {
   .trip-history td {
     padding: 8px;
   }
+
+  .user-data-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-image-container {
+    margin-bottom: 16px;
+  }
 }
 
 @media (min-width: 769px) {
@@ -864,10 +911,10 @@ header {
 .status-ended {
   color: purple;
 }
-.status-cancelled{
+.status-cancelled {
   color: red;
 }
-.status-end{
+.status-end {
   color: purple;
 }
 </style>

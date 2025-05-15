@@ -63,7 +63,7 @@
             <input
                 type="number"
                 v-model.number="wallet2.days"
-                placeholder="Enter profit percentage"
+                placeholder="Enter Days"
                 class="form-control"
                 min="0"
                 max="100"
