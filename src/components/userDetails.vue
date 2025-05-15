@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -66,7 +67,7 @@
               <div class="data-row">
                 <span>Block Status:</span>
                 <span :class="userData.block ? 'status-enabled' : 'status-blocked'">
-                  {{ userData.block ? 'User is unblocked' : 'User is blocked' }}
+                  {{ userData.block ? 'User is blocked' : 'User is unblocked' }}
                 </span>
               </div>
             </div>
@@ -142,7 +143,13 @@
               <td>{{ trip.value || 0 }} EGP</td>
               <td>{{ trip.payment || 'N/A' }}</td>
               <td>{{ trip.wallet || '0 EGP' }}</td>
-              <td :class="{'status-end': trip.status === 'end', 'status-cancelled': trip.status === 'cancelled'}">{{ trip.status || 'N/A' }}</td>
+              <td :class="{
+                  'status-end': trip.status === 'END',
+                  'status-completed': trip.status === 'COMPLETED',
+                  'status-cancelled': trip.status === 'CANCELLED'
+                }">
+                {{ trip.status || 'N/A' }}
+              </td>
               <td><button @click="openEditModal(trip)">Edit</button></td>
             </tr>
             <tr v-if="paginatedData.length === 0">
@@ -194,10 +201,10 @@
 <script>
 import axios from 'axios';
 import Sidebar from './sidebarComponent.vue';
-import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
+import WaitingDriversNumber from '@/components/waitingDriversNumber.vue';
 
 export default {
-  name: "UserDetails",
+  name: 'UserDetails',
   components: {
     WaitingDriversNumber,
     Sidebar,
@@ -219,7 +226,7 @@ export default {
       selectedTrip: {},
       editWalletValue: null,
       waitingCaptains: 0,
-      defaultProfileImage: '/assets/default-avatar.png', // Fallback image
+      defaultProfileImage: '/assets/default-avatar.png',
     };
   },
   computed: {
@@ -233,7 +240,6 @@ export default {
     },
     filteredTrips() {
       if (!this.filterStatus) return this.tripsData;
-
       if (this.filterStatus === 'COMPLETED') {
         return this.tripsData.filter(trip =>
             trip.status === 'COMPLETED' || trip.status === 'END'
@@ -253,12 +259,12 @@ export default {
       return Math.ceil(this.totalItems / this.itemsPerPage);
     },
     paginationStart() {
-      return (this.currentPage - 1) * this.itemsPerPage + 1;
+      return this.totalItems === 0 ? 0 : (this.currentPage - 1) * this.itemsPerPage + 1;
     },
     paginationEnd() {
       const end = this.currentPage * this.itemsPerPage;
       return Math.min(end, this.totalItems);
-    }
+    },
   },
   methods: {
     handleSidebarToggle() {
@@ -277,7 +283,7 @@ export default {
         const newBlockStatus = !this.userData.block;
 
         await axios.patch(`${this.baseUrl}/user-profile/patch-block/${userId}`, {
-          block: newBlockStatus
+          block: newBlockStatus,
         });
 
         this.userData.block = newBlockStatus;
@@ -297,12 +303,12 @@ export default {
         const response = await axios.get(`${this.baseUrl}/user-profile/getUser/${userId}`);
         const user = response.data.user || response.data;
         this.userData = {
-          name: user.username || `${user.firstName} ${user.lastName}` || 'N/A',
+          name: user.username || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A',
           phoneNumber: user.phoneNumber || user.mobile || 'N/A',
           rating: user.rate || 0,
           wallet: user.wallet || 0,
           block: user.block || false,
-          profileImage: user.profileImage || null
+          profileImage: user.profileImage || null,
         };
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -317,22 +323,22 @@ export default {
         const userId = this.$route.params.userId;
         const response = await axios.post(`${this.baseUrl}/wallet/filterTripsWithMoneyFlow`, {
           id: userId,
-          type: "user",
-          page: 1
+          type: 'user',
+          page: 1,
         });
 
         this.tripsData = response.data.trips.map(trip => {
-          const moneyFlow = trip.driverMoneyFlowId?.flow?.[0] || {};
+          const moneyFlow = trip.userMoneyFlowId?.flow?.[0] || {};
           return {
             tripId: trip.uniqueId || 'N/A',
-            vehicle: trip.vehicleType || 'Car',
-            orderedTime: trip.date,
-            startLocation: trip.startLocation?.address || 'N/A',
-            finishLocation: trip.finishLocation?.address || 'N/A',
-            value: moneyFlow.tripCost || 0,
-            payment: moneyFlow.payCash > 0 ? 'Cash' : 'Wallet',
+            vehicle: trip.vehicleType || 'N/A',
+            orderedTime: trip.date || 'N/A',
+            startLocation: trip.pickupLocationName || 'N/A',
+            finishLocation: trip.destination || 'N/A',
+            value: moneyFlow.tripCost || trip.cost || 0,
+            payment: moneyFlow.payCash > 0 ? 'Cash' : moneyFlow.payWallet > 0 ? 'Wallet' : 'N/A',
             wallet: `${moneyFlow.payWallet || 0} EGP`,
-            status: trip.status || 'N/A'
+            status: trip.status === 'end' ? 'END' : trip.status?.toUpperCase() || 'N/A',
           };
         });
       } catch (error) {
@@ -343,9 +349,21 @@ export default {
       }
     },
     formatDate(dateString) {
-      if (!dateString) return null;
-      const date = new Date(dateString);
-      return date.toLocaleString();
+      if (!dateString) return 'N/A';
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'N/A';
+        return date.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+      } catch {
+        return 'N/A';
+      }
     },
     filterTrips(status) {
       this.filterStatus = status;
@@ -365,10 +383,9 @@ export default {
         const userId = this.$route.params.userId;
         await axios.patch(`${this.baseUrl}/user-profile/update-trip/${userId}`, {
           tripId: this.selectedTrip.tripId,
-          status: this.selectedTrip.status
+          status: this.selectedTrip.status,
         });
 
-        // Update local data
         const index = this.tripsData.findIndex(t => t.tripId === this.selectedTrip.tripId);
         if (index !== -1) {
           this.tripsData[index].status = this.selectedTrip.status;
@@ -388,7 +405,7 @@ export default {
         this.isLoading = true;
         const userId = this.$route.params.userId;
         await axios.patch(`${this.baseUrl}/user-profile/update-field/${userId}`, {
-          [fieldName]: value
+          [fieldName]: value,
         });
         alert(`${fieldName} updated successfully`);
       } catch (error) {
@@ -403,7 +420,7 @@ export default {
       this.showEditModal = true;
     },
     async saveEdit() {
-      if (this.editWalletValue !== null) {
+      if (this.editWalletValue !== null && !isNaN(this.editWalletValue)) {
         await this.updateField('wallet', this.editWalletValue);
         this.userData.wallet = this.editWalletValue;
       }
@@ -415,12 +432,12 @@ export default {
     },
     handleImageError(event) {
       event.target.src = this.defaultProfileImage;
-    }
+    },
   },
   created() {
     this.fetchUserData();
     this.fetchTrips();
-  }
+  },
 };
 </script>
 
@@ -725,14 +742,18 @@ header {
 }
 
 .status-completed {
+  color: #28c76f;
+  font-weight: 600;
+}
+
+.status-end {
   color: #6b48ff;
   font-weight: 600;
 }
 
 .status-cancelled {
-  color: red;
+  color: #ff4d4f;
   font-weight: 600;
-  text-decoration: line-through;
 }
 
 .no-data {
@@ -848,13 +869,13 @@ header {
   font-weight: 600;
 }
 
+/* Responsive adjustments */
 @media (max-width: 2000px) {
   .main-content {
     width: 85%;
   }
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .sidebar {
     width: 80px;
@@ -901,20 +922,5 @@ header {
     width: 250px;
   }
 }
-
-.status-cancelled {
-  color: red;
-}
-.status-completed {
-  color: green;
-}
-.status-ended {
-  color: purple;
-}
-.status-cancelled {
-  color: red;
-}
-.status-end {
-  color: purple;
-}
 </style>
+```
