@@ -100,7 +100,7 @@
               </p>
               <div class="pagination-buttons">
                 <button :disabled="currentPage === 1" @click="currentPage--">
-                  <i class="fas fa-chevron-left"></i>
+                  prev
                 </button>
                 <button
                     v-for="page in totalPages"
@@ -111,7 +111,7 @@
                   {{ page }}
                 </button>
                 <button :disabled="currentPage === totalPages" @click="currentPage++">
-                  <i class="fas fa-chevron-right"></i>
+                  next
                 </button>
               </div>
             </div>

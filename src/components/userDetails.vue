@@ -128,7 +128,7 @@
               <th>Finish Location</th>
               <th>Value</th>
               <th>Payment</th>
-              <th>Wallet</th>
+              <th>Wallet After Trip</th>
               <th>Trip State</th>
             </tr>
             </thead>
@@ -335,7 +335,7 @@ export default {
             finishLocation: trip.destination || 'N/A',
             value: moneyFlow.tripCost || trip.cost || 0,
             payment: moneyFlow.payCash > 0 ? 'Cash' : moneyFlow.payWallet > 0 ? 'Wallet' : 'N/A',
-            wallet: `${moneyFlow.payWallet || 0} EGP`,
+            wallet: `${moneyFlow.walletAfter || 0} EGP`,
             status: trip.status === 'end' ? 'END' : trip.status?.toUpperCase() || 'N/A',
           };
         });
