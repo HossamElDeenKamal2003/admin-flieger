@@ -20,6 +20,93 @@
 
       <!-- Cards Section -->
       <div class="cards-container">
+        <!-- Wallet System 1 Card -->
+        <div class="card">
+          <h3>Wallet System 1</h3>
+          <div class="form-group">
+            <!-- Car -->
+            <label>Car Title</label>
+            <input
+                type="text"
+                v-model="wallet1.car.title"
+                placeholder="Enter car title"
+                class="form-control"
+            />
+            <label>Car Description</label>
+            <textarea
+                v-model="wallet1.car.description"
+                placeholder="Enter car description"
+                class="form-control"
+            ></textarea>
+
+            <!-- Motorcycle -->
+            <label>Motorcycle Title</label>
+            <input
+                type="text"
+                v-model="wallet1.motorcycle.title"
+                placeholder="Enter motorcycle title"
+                class="form-control"
+            />
+            <label>Motorcycle Description</label>
+            <textarea
+                v-model="wallet1.motorcycle.description"
+                placeholder="Enter motorcycle description"
+                class="form-control"
+            ></textarea>
+
+            <!-- Van -->
+            <label>Van Title</label>
+            <input
+                type="text"
+                v-model="wallet1.van.title"
+                placeholder="Enter van title"
+                class="form-control"
+            />
+            <label>Van Description</label>
+            <textarea
+                v-model="wallet1.van.description"
+                placeholder="Enter van description"
+                class="form-control"
+            ></textarea>
+
+            <!-- Comfort -->
+            <label>Comfort Title</label>
+            <input
+                type="text"
+                v-model="wallet1.comfort.title"
+                placeholder="Enter comfort title"
+                class="form-control"
+            />
+            <label>Comfort Description</label>
+            <textarea
+                v-model="wallet1.comfort.description"
+                placeholder="Enter comfort description"
+                class="form-control"
+            ></textarea>
+
+            <div class="toggle-group">
+              <span :class="{ 'active-label': wallet1.isActive, 'inactive-label': !wallet1.isActive }">
+                {{ wallet1.isActive ? 'Active' : 'Inactive' }}
+              </span>
+              <label class="switch">
+                <input type="checkbox" v-model="wallet1.isActive" />
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <button
+                class="btn btn-primary"
+                @click="saveWalletSettings(1)"
+                :disabled="isSaving || !isWallet1Valid"
+            >
+              <span v-if="isSaving">Saving...</span>
+              <span v-else>Save Settings</span>
+            </button>
+            <div v-if="!isWallet1Valid && saveAttempted" class="error-message">
+              All fields must be filled
+            </div>
+          </div>
+        </div>
+
         <!-- Wallet System 2 Card -->
         <div class="card">
           <h3>Wallet System 2</h3>
@@ -31,14 +118,12 @@
                 placeholder="Enter title"
                 class="form-control"
             />
-
             <label>Description</label>
             <textarea
                 v-model="wallet2.description"
                 placeholder="Enter description"
                 class="form-control"
             ></textarea>
-
             <label>Subscription Amount</label>
             <input
                 type="number"
@@ -48,7 +133,6 @@
                 min="0"
                 step="1"
             />
-
             <label>Profit Percentage</label>
             <input
                 type="number"
@@ -66,10 +150,8 @@
                 placeholder="Enter Days"
                 class="form-control"
                 min="0"
-                max="100"
-                step="0.1"
+                step="1"
             />
-
             <div class="toggle-group">
               <span :class="{ 'active-label': wallet2.isActive, 'inactive-label': !wallet2.isActive }">
                 {{ wallet2.isActive ? 'Active' : 'Inactive' }}
@@ -82,11 +164,14 @@
             <button
                 class="btn btn-primary"
                 @click="saveWalletSettings(2)"
-                :disabled="isSaving"
+                :disabled="isSaving || !isWallet2Valid"
             >
               <span v-if="isSaving">Saving...</span>
               <span v-else>Save Settings</span>
             </button>
+            <div v-if="!isWallet2Valid && saveAttempted" class="error-message">
+              All fields must be filled
+            </div>
           </div>
         </div>
 
@@ -101,25 +186,21 @@
                 placeholder="Enter title"
                 class="form-control"
             />
-
             <label>Description</label>
             <textarea
                 v-model="wallet3.description"
                 placeholder="Enter description"
                 class="form-control"
             ></textarea>
-
             <label>Fixed Profit</label>
             <input
                 type="number"
                 v-model.number="wallet3.profit"
-                placeholder="Enter profit percentage"
+                placeholder="Enter fixed profit"
                 class="form-control"
                 min="0"
-                max="100"
                 step="0.1"
             />
-
             <div class="toggle-group">
               <span :class="{ 'active-label': wallet3.isActive, 'inactive-label': !wallet3.isActive }">
                 {{ wallet3.isActive ? 'Active' : 'Inactive' }}
@@ -132,11 +213,14 @@
             <button
                 class="btn btn-primary"
                 @click="saveWalletSettings(3)"
-                :disabled="isSaving"
+                :disabled="isSaving || !isWallet3Valid"
             >
               <span v-if="isSaving">Saving...</span>
               <span v-else>Save Settings</span>
             </button>
+            <div v-if="!isWallet3Valid && saveAttempted" class="error-message">
+              All fields must be filled
+            </div>
           </div>
         </div>
       </div>
@@ -159,7 +243,17 @@ export default {
     return {
       isSidebarExpanded: true,
       isSaving: false,
+      saveAttempted: false,
       waitingCaptains: 0,
+      wallet1: {
+        _id: "",
+        isActive: false,
+        walletType: "1",
+        car: { title: "", description: "" },
+        motorcycle: { title: "", description: "" },
+        van: { title: "", description: "" },
+        comfort: { title: "", description: "" }
+      },
       wallet2: {
         _id: "",
         subScription: null,
@@ -180,6 +274,36 @@ export default {
       }
     };
   },
+  computed: {
+    isWallet1Valid() {
+      return (
+          this.wallet1.car.title.trim() &&
+          this.wallet1.car.description.trim() &&
+          this.wallet1.motorcycle.title.trim() &&
+          this.wallet1.motorcycle.description.trim() &&
+          this.wallet1.van.title.trim() &&
+          this.wallet1.van.description.trim() &&
+          this.wallet1.comfort.title.trim() &&
+          this.wallet1.comfort.description.trim()
+      );
+    },
+    isWallet2Valid() {
+      return (
+          this.wallet2.title.trim() &&
+          this.wallet2.description.trim() &&
+          this.wallet2.subScription != null &&
+          this.wallet2.profit != null &&
+          this.wallet2.days != null
+      );
+    },
+    isWallet3Valid() {
+      return (
+          this.wallet3.title.trim() &&
+          this.wallet3.description.trim() &&
+          this.wallet3.profit != null
+      );
+    }
+  },
   methods: {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
@@ -188,12 +312,24 @@ export default {
     async fetchWalletSettings() {
       try {
         const response = await axios.get(
-            "https://backend.fego-rides.com/admin/getWalletSystems?admin=true",
-            {
-            }
+            "https://backend.fego-rides.com/admin/getWalletSystems?admin=true"
         );
 
         const systems = response.data.systems || [];
+
+        // Find and set Wallet System 1
+        const system1 = systems.find(s => s.walletType === "1");
+        if (system1) {
+          this.wallet1 = {
+            _id: system1._id,
+            isActive: system1.isActive || false,
+            walletType: "1",
+            car: system1.car || { title: "", description: "" },
+            motorcycle: system1.motorcycle || { title: "", description: "" },
+            van: system1.van || { title: "", description: "" },
+            comfort: system1.comfort || { title: "", description: "" }
+          };
+        }
 
         // Find and set Wallet System 2
         const system2 = systems.find(s => s.walletType === "2");
@@ -205,7 +341,7 @@ export default {
             isActive: system2.isActive || false,
             walletType: "2",
             title: system2.title || "",
-            days: system2.days,
+            days: system2.days || null,
             description: system2.description || ""
           };
         }
@@ -229,35 +365,73 @@ export default {
     },
 
     async saveWalletSettings(type) {
+      this.saveAttempted = true;
+
+      // Validate based on wallet type
+      if (type === 1 && !this.isWallet1Valid) {
+        alert("All fields in Wallet System 1 must be filled");
+        return;
+      }
+      if (type === 2 && !this.isWallet2Valid) {
+        alert("All fields in Wallet System 2 must be filled");
+        return;
+      }
+      if (type === 3 && !this.isWallet3Valid) {
+        alert("All fields in Wallet System 3 must be filled");
+        return;
+      }
+
       this.isSaving = true;
       try {
-        const walletData = type === 2 ? this.wallet2 : this.wallet3;
+        let walletData;
+        let walletId;
 
-        // Prepare the exact request body structure
-        const requestBody = {
-          subScription: walletData.subScription,
-          profit: walletData.profit,
-          isActive: walletData.isActive,
-          walletType: walletData.walletType,
-          title: walletData.title,
-          description: walletData.description
-        };
+        if (type === 1) {
+          walletData = {
+            isActive: this.wallet1.isActive,
+            walletType: this.wallet1.walletType,
+            car: this.wallet1.car,
+            motorcycle: this.wallet1.motorcycle,
+            van: this.wallet1.van,
+            comfort: this.wallet1.comfort
+          };
+          walletId = this.wallet1._id;
+        } else if (type === 2) {
+          walletData = {
+            subScription: this.wallet2.subScription,
+            profit: this.wallet2.profit,
+            isActive: this.wallet2.isActive,
+            walletType: this.wallet2.walletType,
+            title: this.wallet2.title,
+            description: this.wallet2.description,
+            days: this.wallet2.days
+          };
+          walletId = this.wallet2._id;
+        } else {
+          walletData = {
+            profit: this.wallet3.profit,
+            isActive: this.wallet3.isActive,
+            walletType: this.wallet3.walletType,
+            title: this.wallet3.title,
+            description: this.wallet3.description
+          };
+          walletId = this.wallet3._id;
+        }
 
         await axios.patch(
             `https://backend.fego-rides.com/admin/updateSystemwallet`,
-            requestBody,
+            walletData,
             {
               params: {
-                _id: walletData._id
+                _id: walletId
               }
             }
         );
 
-        alert('success update');
-
+        alert('Success update');
       } catch (error) {
         console.error("Error saving wallet settings:", error);
-        alert("failed");
+        alert("Failed to update");
       } finally {
         this.isSaving = false;
       }
@@ -270,7 +444,6 @@ export default {
 </script>
 
 <style scoped>
-/* Your existing styles remain unchanged */
 .parent {
   display: flex;
   height: 100vh;
@@ -370,7 +543,8 @@ textarea.form-control {
 .error-message {
   color: #E53E3E;
   font-size: 0.8rem;
-  margin-bottom: 10px;
+  margin-top: 10px;
+  text-align: center;
 }
 
 .toggle-group {
