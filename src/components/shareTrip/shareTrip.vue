@@ -1,7 +1,29 @@
 <template>
   <div class="map-container">
-    <div ref="map" class="map"></div>
+    <!-- Driver Data Card -->
+    <div class="driver-card-container">
+      <div v-if="isLoadingDriverData" class="loader">
+        <div class="spinner"></div>
+        <p>جاري تحميل بيانات السائق...</p>
+      </div>
+      <div v-else-if="driverData" class="driver-card">
+        <h3>معلومات السائق</h3>
+        <p><strong>الاسم:</strong> {{ driverData.username || 'غير متوفر' }}</p>
+        <p><strong>رقم الهاتف:</strong> {{ driverData.phoneNumber || 'غير متوفر' }}</p>
+        <p v-if="driverData.carNumber">
+          <strong>رقم السيارة:</strong> {{ driverData.carNumber || 'غير متوفر' }}
+        </p>
+        <p v-if="driverData.vehicleCategory">
+          <strong>فئة السيارة:</strong> {{ driverData.vehicleCategory || 'غير متوفر' }}
+        </p>
+        <p v-if="driverData.vehicleSubCategory">
+          <strong>نوع السيارة:</strong> {{ driverData.vehicleSubCategory || 'غير متوفر' }}
+        </p>
+        <p v-else><strong>السيارة:</strong> غير متوفر</p>
+      </div>
+    </div>
     <div v-if="error" class="error">{{ error }}</div>
+    <div ref="map" class="map"></div>
   </div>
 </template>
 
@@ -9,6 +31,7 @@
 import { Loader } from '@googlemaps/js-api-loader';
 import polyline from '@mapbox/polyline';
 import io from 'socket.io-client';
+import axios from 'axios';
 
 export default {
   name: 'ShareTripMap',
@@ -26,8 +49,10 @@ export default {
       google: null,
       plannedPolyline: null,
       actualPolyline: null,
-      driverPath: [], // Store driver's actual path
-      plannedPath: [], // Store the planned route path
+      driverPath: [],
+      plannedPath: [],
+      driverData: null,
+      isLoadingDriverData: false,
     };
   },
   methods: {
@@ -154,15 +179,8 @@ export default {
         console.warn('Empty path after decoding:', encoded);
         return;
       }
-      this.plannedPolyline = new this.google.maps.Polyline({
-        path: this.plannedPath,
-        geodesic: true,
-        strokeColor: '#6b5b95', // Purple for planned route
-        strokeOpacity: 1.0,
-        strokeWeight: 3,
-        map: this.googleMap,
-      });
-      console.log('Planned polyline drawn with path:', this.plannedPath);
+      this.updatePlannedPolyline(this.plannedPath);
+      console.log('Planned polyline initialized with path:', this.plannedPath);
     },
     drawFallbackPlannedPolyline(startLat, startLng, endLat, endLng) {
       if (!this.google || !this.googleMap) {
@@ -173,47 +191,55 @@ export default {
         { lat: startLat, lng: startLng },
         { lat: endLat, lng: endLng },
       ];
+      this.updatePlannedPolyline(this.plannedPath);
+      console.log('Fallback planned polyline drawn between:', this.plannedPath);
+    },
+    updatePlannedPolyline(path) {
+      if (this.plannedPolyline) {
+        this.plannedPolyline.setMap(null);
+      }
       this.plannedPolyline = new this.google.maps.Polyline({
-        path: this.plannedPath,
+        path: path,
         geodesic: true,
-        strokeColor: '#FF0000', // Red for fallback planned route
+        strokeColor: '#6b5b95',
         strokeOpacity: 1.0,
         strokeWeight: 3,
         map: this.googleMap,
       });
-      console.log('Fallback planned polyline drawn between:', this.plannedPath);
+      console.log('Planned polyline updated with path:', path);
     },
     updateActualRoute() {
       if (!this.google || !this.googleMap) {
         this.error = 'الخريطة غير جاهزة';
         return;
       }
-      if (this.driverPath.length < 2) return; // Need at least 2 points to draw a line
+      if (this.driverPath.length < 1) return;
 
-      // Remove the passed portion by keeping only the remaining path
-      const remainingPath = this.calculateRemainingPath();
       if (this.actualPolyline) {
-        this.actualPolyline.setMap(null); // Remove old polyline
+        this.actualPolyline.setMap(null);
       }
       this.actualPolyline = new this.google.maps.Polyline({
-        path: remainingPath,
+        path: this.driverPath,
         geodesic: true,
         strokeColor: '#0000FF',
         strokeOpacity: 1.0,
         strokeWeight: 3,
         map: this.googleMap,
       });
-      console.log('Actual route updated with remaining path:', remainingPath);
+      console.log('Actual route updated with path:', this.driverPath);
+
+      const remainingPath = this.calculateRemainingPath();
+      this.updatePlannedPolyline(remainingPath);
     },
     calculateRemainingPath() {
-      if (this.driverPath.length < 2) return this.driverPath;
+      if (!this.plannedPath.length || !this.driverPath.length) {
+        return this.plannedPath;
+      }
 
       const currentPosition = this.driverPath[this.driverPath.length - 1];
-      const remainingPath = [currentPosition]; // Start with current position
-
-      // Find the closest point on the planned path to the current position
       let closestIndex = 0;
       let minDistance = Number.MAX_VALUE;
+
       for (let i = 0; i < this.plannedPath.length; i++) {
         const distance = this.google.maps.geometry.spherical.computeDistanceBetween(
             new this.google.maps.LatLng(currentPosition.lat, currentPosition.lng),
@@ -224,11 +250,25 @@ export default {
           closestIndex = i;
         }
       }
-      for (let i = closestIndex; i < this.plannedPath.length; i++) {
-        remainingPath.push(this.plannedPath[i]);
-      }
 
-      return remainingPath;
+      return this.plannedPath.slice(closestIndex + 1);
+    },
+    async refreshPlannedRoute() {
+      try {
+        console.log('Refreshing planned route for tripId:', this.tripId);
+        const response = await fetch(`https://backend.fego-rides.com/book/getTripbyId/${this.tripId}`);
+        if (!response.ok) throw new Error(`فشل جلب المسار الجديد: ${response.statusText}`);
+        const data = await response.json();
+        if (data.trip && data.trip.encodedPolyline) {
+          this.drawPlannedPolyline(data.trip.encodedPolyline);
+          console.log('Planned route refreshed with new polyline');
+        } else {
+          console.warn('No new encodedPolyline in response:', data);
+        }
+      } catch (err) {
+        console.error('Refresh planned route error:', err);
+        this.error = 'خطأ في تحديث المسار';
+      }
     },
     setupWebSocket() {
       try {
@@ -263,6 +303,23 @@ export default {
           }
         });
 
+        // الاستماع لتغيير المسار
+        this.socket.on(`route-updated/${this.tripId}`, (data) => {
+          try {
+            console.log('Received route update for tripId:', this.tripId, data);
+            if (data.encodedPolyline) {
+              this.drawPlannedPolyline(data.encodedPolyline);
+              console.log('Planned route updated via Socket.IO');
+            } else {
+              // لو مفيش polyline في الـ Socket، نعمل fetch
+              this.refreshPlannedRoute();
+            }
+          } catch (err) {
+            console.error('Route update error:', err);
+            this.error = 'خطأ في تحديث المسار';
+          }
+        });
+
         this.socket.on('connect_error', (err) => {
           this.error = 'خطأ في الاتصال بالسوكيت';
           console.error('Socket.IO connect error:', err.message, err);
@@ -279,6 +336,20 @@ export default {
       } catch (err) {
         this.error = 'فشل إعداد السوكيت';
         console.error('Socket.IO setup error:', err);
+      }
+    },
+    async getDriverdata() {
+      try {
+        this.isLoadingDriverData = true;
+        console.log('Fetching driver data for driverId:', this.driverId);
+        const response = await axios.get(`https://backend.fego-rides.com/authdriver/driver/${this.driverId}`);
+        this.driverData = response.data.driver;
+        console.log('Driver data fetched:', this.driverData);
+      } catch (err) {
+        this.error = 'خطأ في جلب بيانات السائق';
+        console.error('Get driver data error:', err);
+      } finally {
+        this.isLoadingDriverData = false;
       }
     },
     updateCarMarker(lat, lng) {
@@ -320,6 +391,7 @@ export default {
     await this.initMap();
     if (this.googleMap && this.google) {
       await this.fetchTrip();
+      await this.getDriverdata();
       this.setupWebSocket();
     } else {
       this.error = 'فشل تهيئة الخريطة';
@@ -342,6 +414,8 @@ export default {
     this.actualPolyline = null;
     this.googleMap = null;
     this.google = null;
+    this.driverData = null;
+    this.isLoadingDriverData = false;
   },
 };
 </script>
@@ -351,6 +425,7 @@ export default {
   position: relative;
   height: 100vh;
   width: 100%;
+  overflow: hidden;
 }
 
 .map {
@@ -358,15 +433,121 @@ export default {
   width: 100%;
 }
 
+.driver-card-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  max-width: 320px;
+  width: 90%;
+}
+
+.driver-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.driver-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.driver-card h3 {
+  margin: 0 0 15px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #6b5b95;
+  padding-bottom: 8px;
+}
+
+.driver-card p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.driver-card p strong {
+  color: #333;
+  font-weight: 500;
+}
+
+.loader {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loader p {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #6b5b95;
+  border-top: 3px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .error {
   position: absolute;
-  top: 10px;
+  top: 260px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(255, 0, 0, 0.8);
+  background: #d32f2f;
   color: white;
-  padding: 10px;
-  border-radius: 5px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
   z-index: 1000;
+  max-width: 90%;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .driver-card-container {
+    top: 10px;
+    left: 10px;
+    max-width: 280px;
+  }
+
+  .driver-card,
+  .loader {
+    padding: 15px;
+  }
+
+  .driver-card h3 {
+    font-size: 18px;
+  }
+
+  .driver-card p {
+    font-size: 13px;
+  }
+
+  .error {
+    top: 220px;
+    padding: 10px 15px;
+    font-size: 13px;
+  }
 }
 </style>
