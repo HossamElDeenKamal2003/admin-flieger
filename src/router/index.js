@@ -21,7 +21,13 @@ import confirmRequest from '@/components/confirmRequests.vue';
 import sucessTransactions from "@/components/getRequests.vue";
 import ContactsComponent from "@/components/getContacts.vue";
 import DriverRequestsComponent from "@/components/getChangeReqs.vue";
+import ShareTripMap from "@/components/shareTrip/shareTrip.vue";
 const routes = [
+    {
+      path: '/share-trip/:tripId/:driverId',
+      name: 'share-tip',
+      component: ShareTripMap
+    },
     {
         path: "/change-reqs",
         name: "change-reqs",
