@@ -23,7 +23,13 @@ import ContactsComponent from "@/components/getContacts.vue";
 import DriverRequestsComponent from "@/components/getChangeReqs.vue";
 import ShareTripMap from "@/components/shareTrip/shareTrip.vue";
 import defineComponent from "@/components/couponsandMessages.vue";
+import SpecialCases from "@/components/specialCases.vue";
 const routes = [
+    {
+      path: "/special-cases",
+        name: "specia-cases",
+      component: SpecialCases,
+    },
     {
       path: "/defineComponent",
       name: "defineComponent",
