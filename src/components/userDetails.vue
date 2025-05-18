@@ -143,11 +143,10 @@
               <td>{{ trip.payment || 'N/A' }}</td>
               <td>{{ trip.wallet || '0 EGP' }}</td>
               <td :class="{
-                  'status-end': trip.status === 'END',
-                  'status-completed': trip.status === 'COMPLETED',
+                  'status-completed': trip.status === 'COMPLETED' || trip.status === 'END',
                   'status-cancelled': trip.status === 'CANCELLED'
                 }">
-                {{ trip.status || 'N/A' }}
+                {{ trip.status === 'END' ? 'COMPLETED' : trip.status }}
               </td>
             </tr>
             <tr v-if="paginatedData.length === 0">
@@ -182,7 +181,6 @@
               <select v-model="selectedTrip.status" @change="updateTrip(selectedTrip.tripId, 'status', selectedTrip.status)">
                 <option value="COMPLETED">COMPLETED</option>
                 <option value="CANCELLED">CANCELLED</option>
-                <option value="END">END</option>
               </select>
             </div>
             <div class="modal-buttons">
@@ -379,9 +377,10 @@ export default {
       try {
         this.isLoading = true;
         const userId = this.$route.params.userId;
+        const statusToSave = this.selectedTrip.status === 'COMPLETED' ? 'end' : this.selectedTrip.status;
         await axios.patch(`${this.baseUrl}/user-profile/update-trip/${userId}`, {
           tripId: this.selectedTrip.tripId,
-          status: this.selectedTrip.status,
+          status: statusToSave,
         });
 
         const index = this.tripsData.findIndex(t => t.tripId === this.selectedTrip.tripId);
@@ -741,11 +740,6 @@ header {
 
 .status-completed {
   color: #28c76f;
-  font-weight: 600;
-}
-
-.status-end {
-  color: #6b48ff;
   font-weight: 600;
 }
 

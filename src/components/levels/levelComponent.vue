@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="fego-dashboard">
     <div class="sidebar">
@@ -108,9 +109,7 @@
         <form @submit.prevent="addCountryPricing">
           <div class="form-group">
             <label>Country</label>
-            <select v-model="newCountry.country" required>
-              <option v-for="country in countries" :key="country.code" :value="country.code">{{ country.name }}</option>
-            </select>
+            <input v-model="newCountry.country" type="text" placeholder="Enter country code" required />
           </div>
           <div class="form-group">
             <label>Level</label>
@@ -196,7 +195,7 @@ export default {
       changes: {},
       fixedAmountChanges: {},
       newCountry: {
-        country: 'egypt',
+        country: '',
         level: '1',
         priceCar: 0,
         priceVan: 0,
@@ -226,42 +225,42 @@ export default {
         this.currentPrices = {
           level1: {
             priceCar: data.levelOne?.[0]?.priceCar || 0,
-            motorcycle: data.levelOne?.[0]?.motorocycle || 0,
+            motorcycle: data.levelOne?.[0]?.motorcycle || 0,
             priceVan: data.levelOne?.[0]?.priceVan || 0,
             comfort: data.levelOne?.[0]?.comfort || 0,
             carComission: data.levelOne?.[0]?.carComission || 0,
             vanComission: data.levelOne?.[0]?.vanComission || 0,
-            motorcycleComission: data.levelOne?.[0]?.motorocycleComission || 0,
+            motorcycleComission: data.levelOne?.[0]?.motorcycleComission || 0,
             comfortComission: data.levelOne?.[0]?.comfortComission || 0
           },
           level2: {
             priceCar: data.levelTwo?.[0]?.priceCar || 0,
-            motorcycle: data.levelTwo?.[0]?.motorocycle || 0,
+            motorcycle: data.levelTwo?.[0]?.motorcycle || 0,
             priceVan: data.levelTwo?.[0]?.priceVan || 0,
             comfort: data.levelTwo?.[0]?.comfort || 0,
             carComission: data.levelTwo?.[0]?.carComission || 0,
             vanComission: data.levelTwo?.[0]?.vanComission || 0,
-            motorcycleComission: data.levelTwo?.[0]?.motorocycleComission || 0,
+            motorcycleComission: data.levelTwo?.[0]?.motorcycleComission || 0,
             comfortComission: data.levelTwo?.[0]?.comfortComission || 0
           },
           level3: {
             priceCar: data.levelThree?.[0]?.priceCar || 0,
-            motorcycle: data.levelThree?.[0]?.motorocycle || 0,
+            motorcycle: data.levelThree?.[0]?.motorcycle || 0,
             priceVan: data.levelThree?.[0]?.priceVan || 0,
             comfort: data.levelThree?.[0]?.comfort || 0,
             carComission: data.levelThree?.[0]?.carComission || 0,
             vanComission: data.levelThree?.[0]?.vanComission || 0,
-            motorcycleComission: data.levelThree?.[0]?.motorocycleComission || 0,
+            motorcycleComission: data.levelThree?.[0]?.motorcycleComission || 0,
             comfortComission: data.levelThree?.[0]?.comfortComission || 0
           },
           level4: {
             priceCar: data.levelFour?.[0]?.priceCar || 0,
-            motorcycle: data.levelFour?.[0]?.motorocycle || 0,
+            motorcycle: data.levelFour?.[0]?.motorcycle || 0,
             priceVan: data.levelFour?.[0]?.priceVan || 0,
             comfort: data.levelFour?.[0]?.comfort || 0,
             carComission: data.levelFour?.[0]?.carComission || 0,
             vanComission: data.levelFour?.[0]?.vanComission || 0,
-            motorcycleComission: data.levelFour?.[0]?.motorocycleComission || 0,
+            motorcycleComission: data.levelFour?.[0]?.motorcycleComission || 0,
             comfortComission: data.levelFour?.[0]?.comfortComission || 0
           }
         };
@@ -312,11 +311,11 @@ export default {
             country: this.selectedCountry,
             priceCar: this.currentPrices[level].priceCar || 0,
             priceVan: this.currentPrices[level].priceVan || 0,
-            motorocycle: this.currentPrices[level].motorcycle || 0,
+            motorcycle: this.currentPrices[level].motorcycle || 0,
             comfort: this.currentPrices[level].comfort || 0,
             carComission: this.currentPrices[level].carComission || 0,
             vanComission: this.currentPrices[level].vanComission || 0,
-            motorocycleComission: this.currentPrices[level].motorcycleComission || 0,
+            motorcycleComission: this.currentPrices[level].motorcycleComission || 0,
             comfortComission: this.currentPrices[level].comfortComission || 0
           };
 
@@ -364,18 +363,18 @@ export default {
           country: this.newCountry.country.toLowerCase(),
           priceCar: this.newCountry.priceCar || 0,
           priceVan: this.newCountry.priceVan || 0,
-          motorocycle: this.newCountry.motorcycle || 0,
+          motorcycle: this.newCountry.motorcycle || 0,
           comfort: this.newCountry.comfort || 0,
           carComission: this.newCountry.carComission || 0,
           vanComission: this.newCountry.vanComission || 0,
-          motorocycleComission: this.newCountry.motorcycleComission || 0,
+          motorcycleComission: this.newCountry.motorcycleComission || 0,
           comfortComission: this.newCountry.comfortComission || 0
         };
 
         await axios.post('https://backend.fego-rides.com/levels', payload);
         alert(`Pricing for ${this.newCountry.country} (Level ${this.newCountry.level}) added successfully!`);
         this.newCountry = {
-          country: this.selectedCountry,
+          country: '',
           level: '1',
           priceCar: 0,
           priceVan: 0,
@@ -574,3 +573,4 @@ h3 {
   margin-bottom: 20px;
 }
 </style>
+```

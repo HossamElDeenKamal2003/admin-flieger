@@ -44,19 +44,19 @@
           <h2>Total Trips In Levels</h2>
           <div class="counters-grid">
             <div class="counter-card">
-              <span class="counter-label">Level 1 Drivers</span>
+              <span class="counter-label">Level 1 Trips</span>
               <p class="counter-value">{{ counter.levelOneCount || 0 }}</p>
             </div>
             <div class="counter-card">
-              <span class="counter-label">Level 2 Drivers</span>
+              <span class="counter-label">Level 2 Trips</span>
               <p class="counter-value">{{ counter.levelTwoCount || 0 }}</p>
             </div>
             <div class="counter-card">
-              <span class="counter-label">Level 3 Drivers</span>
+              <span class="counter-label">Level 3 Trips</span>
               <p class="counter-value">{{ counter.levelThreeCount || 0 }}</p>
             </div>
             <div class="counter-card">
-              <span class="counter-label">Level 4 Drivers</span>
+              <span class="counter-label">Level 4 Trips</span>
               <p class="counter-value">{{ counter.levelFourCount || 0 }}</p>
             </div>
           </div>

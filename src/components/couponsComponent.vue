@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="fego-dashboard">
     <!-- Sidebar -->
@@ -27,7 +28,7 @@
             <input v-model="driverMessage.text" placeholder="Enter Captains Message Text" />
             <input v-model="driverMessage.sender" placeholder="Enter sender name" />
             <button @click="updateDriverMessage">Confirm</button>
-            <p>Last Updated: {{userUpdatedMessage}}</p>
+            <p v-if="driverMessage.updatedAt">Last Updated: {{ formatDate(driverMessage.updatedAt) }}</p>
           </div>
         </div>
         <div class="ids">
@@ -50,22 +51,22 @@
           </div>
         </div>
 
-        <!-- User Offer Applay and Captain Offer Applay (Side by Side) -->
+        <!-- User Offer Apply and Captain Offer Apply (Side by Side) -->
         <div class="offer-apply-row">
-          <!-- User Offer Applay -->
+          <!-- User Offer Apply -->
           <div class="offer-apply-card">
-            <h3>User Offer Applay</h3>
+            <h3>User Offer Apply</h3>
             <label>
               <input type="checkbox" v-model="userBool" /> Apply User Offer
             </label>
             <button @click="updateUserBoolean">Confirm</button>
           </div>
 
-          <!-- Captain Offer Applay -->
+          <!-- Captain Offer Apply -->
           <div class="offer-apply-card">
-            <h3>Captain Offer Applay</h3>
+            <h3>Captain Offer Apply</h3>
             <label>
-              <input type="checkbox" v-model="driverBool" /> Apply User Offer
+              <input type="checkbox" v-model="driverBool" /> Apply Captain Offer
             </label>
             <button @click="updateDriverBoolean">Confirm</button>
           </div>
@@ -118,8 +119,7 @@ export default {
       userBool: false,
       driverBool: false,
       offers: [],
-      userUpdatedMessage: null,
-      updateOffer: null
+      waitingCaptains: 0
     };
   },
   components: {
@@ -133,30 +133,32 @@ export default {
     async fetchOffers() {
       try {
         const response = await axios.get(`${baseUrl}/getOffers`);
-        this.offers = response.data.discount;
+        this.offers = response.data.discount || [];
 
-        const userOffer = this.offers.find(offer => offer.type === 'user');
-        const driverOffer = this.offers.find(offer => offer.type === 'driver');
-        console.log("userOffer", userOffer.messageUser.updatedAt);
-        this.updateOffer = this.formatDate(this.offers.updatedAt);
-        console.log("update offer", this.updateOffer);
-        this.userUpdatedMessage = this.formatDate(driverOffer.messageUser.updatedAt);
-        if (userOffer) {
+        // User offer (index 0)
+        if (this.offers[0] && this.offers[0].messageUser) {
           this.userMessage = {
-            text: userOffer.messageUser?.text || '',
-            sender: userOffer.messageUser?.sender || '',
-            updatedAt: userOffer.messageUser?.updatedAt || null
+            text: this.offers[0].messageUser.text || '',
+            sender: this.offers[0].messageUser.sender || '',
+            updatedAt: this.offers[0].messageUser.updatedAt || null
           };
-          this.userBool = userOffer.bool || false;
+          this.userBool = this.offers[0].bool || false;
+        } else {
+          this.userMessage = { text: '', sender: '', updatedAt: null };
+          this.userBool = false;
         }
 
-        if (driverOffer) {
+        // Driver offer (index 1)
+        if (this.offers[1] && this.offers[1].messageUser) {
           this.driverMessage = {
-            text: driverOffer.messageDriver?.text || '',
-            sender: driverOffer.messageDriver?.sender || '',
-            updatedAt: driverOffer.messageDriver?.updatedAt || null
+            text: this.offers[1].messageUser.text || '',
+            sender: this.offers[1].messageUser.sender || '',
+            updatedAt: this.offers[1].messageUser.updatedAt || null
           };
-          this.driverBool = driverOffer.bool || false;
+          this.driverBool = this.offers[1].bool || false;
+        } else {
+          this.driverMessage = { text: '', sender: '', updatedAt: null };
+          this.driverBool = false;
         }
 
         console.log('API Response:', response.data);
@@ -173,7 +175,7 @@ export default {
         });
         this.userMessage.updatedAt = response.data.updatedMessage.updatedAt;
         alert('User message updated successfully!');
-        this.fetchOffers();
+        await this.fetchOffers();
       } catch (error) {
         console.error('Error updating user message:', error);
         alert('Error updating user message: ' + (error.response?.data?.message || error.message));
@@ -187,7 +189,7 @@ export default {
         });
         this.driverMessage.updatedAt = response.data.updatedMessage.updatedAt;
         alert('Captains message updated successfully!');
-        this.fetchOffers();
+        await this.fetchOffers();
       } catch (error) {
         console.error('Error updating captains message:', error);
         alert('Error updating captains message: ' + (error.response?.data?.message || error.message));
@@ -202,8 +204,9 @@ export default {
           amount: this.updateData.amount
         });
         console.log(response);
+
         alert('Discount options updated successfully!');
-        this.fetchOffers();
+        await this.fetchOffers();
       } catch (error) {
         console.error('Error updating discount options:', error);
         alert('Error updating discount options: ' + (error.response?.data?.message || error.message));
@@ -217,7 +220,7 @@ export default {
         });
         console.log(response);
         alert('User offer activation updated successfully!');
-        this.fetchOffers();
+        await this.fetchOffers();
       } catch (error) {
         console.error('Error updating user boolean:', error);
         alert('Error updating user offer activation: ' + (error.response?.data?.message || error.message));
@@ -230,8 +233,9 @@ export default {
           type: 'driver'
         });
         console.log(response);
+
         alert('Captain offer activation updated successfully!');
-        this.fetchOffers();
+        await this.fetchOffers();
       } catch (error) {
         console.error('Error updating driver boolean:', error);
         alert('Error updating captain offer activation: ' + (error.response?.data?.message || error.message));
@@ -498,8 +502,9 @@ p {
   margin: 10px 0 0;
   font-size: 14px;
 }
-h3{
+h3 {
   text-align: center;
   font-weight: bold;
 }
 </style>
+```

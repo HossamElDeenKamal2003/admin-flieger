@@ -1,33 +1,38 @@
+```vue
 <template>
-  <div class="sidebar">
-    <sidebarComponent />
-  </div>
-  <!-- Main Content -->
-  <div class="main-content">
-    <WaitingDriversNumber :waiting-captains="waitingCaptains" />
-    <div class="transaction-management">
-      <h2 class="section-title">Transaction Management</h2>
-
-      <!-- Transaction Form -->
-      <div class="transaction-form">
-        <div class="input-wrapper">
-          <input v-model="idDriver" placeholder="Enter ID Driver" class="form-input" />
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <sidebarComponent />
+    </div>
+    <!-- Main Content -->
+    <div class="main-content">
+      <WaitingDriversNumber :waiting-captains="waitingCaptains" />
+      <div class="transaction-management">
+        <h2 class="section-title">Transaction Management</h2>
+        <!-- Display Wallet -->
+        <p class="wallet-info">Driver Wallet: {{ wallet || 'N/A' }}</p>
+        <!-- Transaction Form -->
+        <div class="transaction-form">
+          <div class="input-wrapper">
+            <input v-model="idDriver" placeholder="Enter ID Driver" class="form-input" />
+          </div>
+          <div class="input-wrapper">
+            <input v-model="transaction.transferBy" placeholder="Transfer by" class="form-input transfer-by" />
+          </div>
+          <div class="input-wrapper">
+            <input v-model="sender" placeholder="Sender Name" class="form-input transfer-by" :disabled="true" />
+          </div>
+          <div class="input-wrapper">
+            <input v-model.number="transaction.amount" placeholder="Enter an Amount" class="form-input transfer-by" type="number" />
+          </div>
+          <div class="input-wrapper">
+            <input v-model="transaction.transactionNumber" placeholder="Enter Transaction Number" class="form-input" />
+          </div>
+          <button @click="applyTransfer" class="confirm-button">Confirm</button>
+          <button @click="copyAllText" class="copy-button">📋</button>
+          <p v-if="transaction.updatedAt" class="timestamp">Transfer Time: {{ formatDate(transaction.updatedAt) }}</p>
         </div>
-        <div class="input-wrapper">
-          <input v-model="transaction.transferBy" placeholder="Transfer by" class="form-input transfer-by" />
-        </div>
-        <div class="input-wrapper">
-          <input v-model="sender" placeholder="Sender Name" class="form-input transfer-by" :disabled="true" />
-        </div>
-        <div class="input-wrapper">
-          <input v-model="transaction.amount" placeholder="Enter an Amount" class="form-input transfer-by" />
-        </div>
-        <div class="input-wrapper">
-          <input v-model="transaction.transactionNumber" placeholder="Enter Transaction Number" class="form-input" />
-        </div>
-        <button @click="applyTransfer" class="confirm-button">Confirm</button>
-        <button @click="copyAllText" class="copy-button">📋</button>
-        <p v-if="transaction.updatedAt" class="timestamp">Transfer Time: {{ formatDate(transaction.updatedAt) }}</p>
       </div>
     </div>
   </div>
@@ -38,15 +43,19 @@ import { defineComponent } from "vue";
 import sidebarComponent from "@/components/sidebarComponent.vue";
 import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 import axios from 'axios';
+
 export default defineComponent({
   components: { WaitingDriversNumber, sidebarComponent },
   data() {
     return {
+      waitingCaptains: 0, // Added to avoid prop error
+      wallet: this.$route.query.wallet || 'N/A',
+      requestId: this.$route.query.requestId || '',
       transaction: {
         idDriver: this.$route.params.id || '',
         transferBy: '',
         sender: '',
-        amount: 0,
+        amount: parseFloat(this.$route.query.amount) || 0,
         transactionNumber: '',
         updatedAt: null
       }
@@ -73,27 +82,26 @@ export default defineComponent({
   created() {
     this.idDriver = this.$route.params.id || '';
     this.sender = localStorage.getItem("username") || 'Unknown';
+    // Amount is already set in data initialization
   },
   methods: {
-    applyTransfer(){
-      axios.post('https://backend.fego-rides.com/applyReq',{
-        driverId: this.transaction.idDriver,
-        amount: this.transaction.amount,
-        transactionId: this.transaction.transactionNumber,
-        transferBy: this.transaction.transferBy,
-        sender: this.transaction.sender
-      }).then(response=>{
-        if(response.status === 200 || response.status === 201){
+    async applyTransfer() {
+      try {
+        const response = await axios.post('https://backend.fego-rides.com/applyReq', {
+          driverId: this.transaction.idDriver,
+          amount: this.transaction.amount,
+          transactionId: this.transaction.transactionNumber,
+          transferBy: this.transaction.transferBy,
+          sender: this.transaction.sender
+        });
+        if (response.status === 200 || response.status === 201) {
+          this.transaction.updatedAt = new Date();
           alert("Successful Transfer");
         }
-      }).catch(error=>{
-        console.log(error);
-        alert(error.message)
-      });
-    },
-
-    confirmTransaction() {
-      this.transaction.updatedAt = new Date();
+      } catch (error) {
+        console.error("Error applying transfer:", error);
+        alert("Failed to apply transfer: " + (error.response?.data?.message || error.message));
+      }
     },
     formatDate(date) {
       if (!date) return '';
@@ -108,7 +116,7 @@ export default defineComponent({
       }).replace(',', '');
     },
     copyAllText() {
-      const allText = `${this.transaction.idDriver}\n${this.transaction.sender}\n${this.transaction.transferBy}\n${this.transaction.amount}\n${this.transaction.transactionNumber}`;
+      const allText = `${this.transaction.idDriver}\n${this.transaction.sender}\n${this.transaction.transferBy}\n${this.transaction.amount}\n${this.transaction.transactionNumber}\nWallet: ${this.wallet}`;
       if (allText.trim()) {
         navigator.clipboard.writeText(allText)
             .then(() => {
@@ -116,6 +124,7 @@ export default defineComponent({
             })
             .catch(err => {
               console.error('Failed to copy text: ', err);
+              alert('Failed to copy text');
             });
       }
     }
@@ -124,23 +133,54 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #2f1c6a;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
 .main-content {
+  margin-left: 250px;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: #f5f7fa;
+  padding: 20px;
 }
 
 .transaction-management {
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 900px;
 }
 
 .section-title {
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 20px;
+  text-align: center;
+  color: #34495e;
+}
+
+.wallet-info {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-bottom: 15px;
   text-align: center;
 }
 
@@ -212,4 +252,25 @@ export default defineComponent({
   margin-top: 10px;
   text-align: center;
 }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 80px;
+  }
+  .main-content {
+    margin-left: 80px;
+  }
+  .form-input.transfer-by {
+    width: 100%;
+    height: 50px;
+  }
+}
+
+.wallet-info{
+  font-weight: bold;
+  color: #6b5b95;
+  font-size: 1.2em;
+}
 </style>
+```

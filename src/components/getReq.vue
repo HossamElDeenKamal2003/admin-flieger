@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -39,7 +40,7 @@
           <tr
               v-for="(request, index) in paginatedRequests"
               :key="request._id"
-              @click="navigateToConfirmRequest(request.driverId._id)"
+              @click="navigateToConfirmRequest(request)"
               class="clickable-row"
           >
             <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
@@ -47,11 +48,11 @@
             <td>{{ request.driverId?.phoneNumber || 'N/A' }}</td>
             <td>{{ request.driverId?.nationalId || 'N/A' }}</td>
             <td>{{ request.amount || 0 }} EGP</td>
-            <td>{{ request.driverId?.wallet }}</td>
+            <td>{{ request.driverId?.wallet || 'N/A' }}</td>
             <td>View Details</td>
           </tr>
           <tr v-if="paginatedRequests.length === 0">
-            <td colspan="6" class="no-data">No requests found</td>
+            <td colspan="7" class="no-data">No requests found</td>
           </tr>
           </tbody>
         </table>
@@ -94,7 +95,7 @@ export default {
       newRequestsCount: 0,
       currentPage: 1,
       itemsPerPage: 3,
-      waitingCaptains: 0, // Added to avoid prop error, adjust based on your needs
+      waitingCaptains: 0,
     };
   },
   computed: {
@@ -103,7 +104,6 @@ export default {
       const end = start + this.itemsPerPage;
       return this.requests.slice(start, end);
     },
-
     totalPages() {
       return Math.ceil(this.requests.length / this.itemsPerPage);
     },
@@ -127,7 +127,7 @@ export default {
             _id: request.driverId?._id || '',
             username: request.driverId?.username || 'N/A',
             phoneNumber: request.driverId?.phoneNumber || 'N/A',
-            nationalId: request.driverId?.id || 'N/A',
+            nationalId: request.driverId?.nationalId || 'N/A', // Fixed mapping
             wallet: request.driverId?.wallet || 'N/A',
             createdAt: request.driverId?.createdAt || '',
             ctr: request.driverId?.ctr || 0,
@@ -162,15 +162,20 @@ export default {
         alert("Failed to confirm request. Please try again.");
       }
     },
-    navigateToConfirmRequest(driverId) {
-      if (!driverId) {
+    navigateToConfirmRequest(request) {
+      if (!request.driverId?._id) {
         console.error('Driver ID is missing');
         alert('Cannot navigate: Driver ID is missing');
         return;
       }
       this.$router.push({
         name: 'confirmRequest',
-        params: { id: driverId },
+        params: { id: request.driverId._id },
+        query: {
+          requestId: request._id || '',
+          wallet: request.driverId?.wallet || 'N/A',
+          amount: request.amount?.toString() || '0',
+        },
       });
     },
     formatDate(dateString) {
@@ -383,3 +388,4 @@ export default {
   }
 }
 </style>
+```

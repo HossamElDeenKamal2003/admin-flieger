@@ -34,6 +34,7 @@ export default {
         { name: 'Trips', icon: 'trips', route: '/admin/get-trips' },
         { name: 'Users', icon: 'users', route: '/admin/users' },
         { name: 'Captains', icon: 'captains', route: '/admin/getdriver' },
+        {name: 'Coupons', icon: 'coupons', route: '/defineComponent' },
         { name: 'Requests From WEB', icon: 'wdsdcded', route: '/get-contact' },
         { name: "Offers", icon: "coupons", route: '/coupons' },
         { name: 'Waiting Captains', icon: 'icon', route: '/waiting-drivers' },

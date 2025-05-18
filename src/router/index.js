@@ -22,7 +22,13 @@ import sucessTransactions from "@/components/getRequests.vue";
 import ContactsComponent from "@/components/getContacts.vue";
 import DriverRequestsComponent from "@/components/getChangeReqs.vue";
 import ShareTripMap from "@/components/shareTrip/shareTrip.vue";
+import defineComponent from "@/components/couponsandMessages.vue";
 const routes = [
+    {
+      path: "/defineComponent",
+      name: "defineComponent",
+      component: defineComponent
+    },
     {
       path: '/share-trip/:tripId/:driverId',
       name: 'share-tip',
