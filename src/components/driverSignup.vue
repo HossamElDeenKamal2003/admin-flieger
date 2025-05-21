@@ -29,7 +29,7 @@
             </div>
             <div class="form-group">
               <label>National ID</label>
-              <input v-model="form.id" type="National ID" placeholder="Nationl ID" required />
+              <input v-model="form.id" type="text" placeholder="National ID" required />
             </div>
             <div class="form-group">
               <label>Password</label>
@@ -42,7 +42,7 @@
           </div>
 
           <!-- Vehicle Information -->
-          <div class="form-section">
+          <div class="form-section" :class="{ 'loading-section': loadingVehicles }">
             <h3>Vehicle Information</h3>
             <div class="form-group">
               <label>Vehicle Type</label>
@@ -93,8 +93,13 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Vehicle Production Date</label>
-              <input v-model="form.vehicleProductionDate" type="date" />
+              <label>Vehicle Production Year</label>
+              <select v-model="form.vehicleProductionDate" required>
+                <option value="" disabled>Select Production Year</option>
+                <option v-for="year in productionYears" :key="year" :value="year">
+                  {{ year }}
+                </option>
+              </select>
             </div>
           </div>
 
@@ -103,30 +108,13 @@
             <h3>Documents</h3>
             <div class="form-group">
               <label>License Expiry Date</label>
-              <input v-model="form.licence_expire_date" type="date" required />
+              <input v-model="form.license_expire_date" type="date" required />
             </div>
             <div v-for="(label, key) in fileFields" :key="key" class="form-group">
-              <label>{{ label }}</label>
-              <input type="file" accept="image/*" @change="handleFileUpload($event, key)" :required="key !== 'vehicleNumberImage'" />
+              <label>{{ label }} <span v-if="key === 'vehicleNumberImage'" class="optional">(Optional)</span></label>
+              <input type="file" accept="image/jpeg,image/png" @change="handleFileUpload($event, key)" :required="key !== 'vehicleNumberImage'" />
             </div>
           </div>
-
-          <!-- Additional Information -->
-<!--          <div class="form-section">-->
-<!--            <h3>Additional Information</h3>-->
-<!--            <div class="form-group">-->
-<!--              <label>Wallet Type</label>-->
-<!--              <input v-model="form.walletType" type="text" placeholder="Wallet Type" />-->
-<!--            </div>-->
-<!--            <div class="form-group">-->
-<!--              <label>City</label>-->
-<!--              <input v-model="form.city" type="text" placeholder="City" />-->
-<!--            </div>-->
-<!--            <div class="form-group">-->
-<!--              <label>Comments</label>-->
-<!--              <textarea v-model="form.comments" placeholder="Comments (Optional)" rows="4"></textarea>-->
-<!--            </div>-->
-<!--          </div>-->
 
           <!-- Location -->
           <div class="form-group location-group">
@@ -134,10 +122,19 @@
               <span v-if="locationLoading">Fetching Location...</span>
               <span v-else>Get Current Location</span>
             </button>
+            <div v-if="showManualLocation" class="manual-location">
+              <label>Latitude</label>
+              <input v-model.number="form.location.latitude" type="number" step="any" placeholder="Latitude" required />
+              <label>Longitude</label>
+              <input v-model.number="form.location.longitude" type="number" step="any" placeholder="Longitude" required />
+            </div>
             <p v-if="form.location" class="success-message">
               Location captured: {{ form.location.latitude }}, {{ form.location.longitude }}
             </p>
             <p v-if="locationError" class="error-message">{{ locationError }}</p>
+            <p v-if="locationError" class="info-message">
+              If you denied location access, please enter coordinates manually above.
+            </p>
           </div>
 
           <!-- Submit Button -->
@@ -170,6 +167,7 @@ export default {
     return {
       isSidebarExpanded: true,
       vehicleTypes: ['Car', 'Motorcycle', 'Van'],
+      productionYears: Array.from({ length: 2025 - 1990 + 1 }, (_, i) => 1990 + i).reverse(), // 1990 to 2025, newest first
       form: {
         username: '',
         phoneNumber: '',
@@ -178,34 +176,29 @@ export default {
         carNumber: '',
         carColor: '',
         vehicleType: '',
-        licence_expire_date: '',
+        license_expire_date: '',
         password: '',
         confirmPassword: '',
         licenseImage: null,
-        driver_licence_image: null,
+        driver_license_image: null,
         profile_image: null,
         national_front: null,
         national_back: null,
         national_selfie: null,
         vehicleNumberImage: null,
         location: null,
-        walletType: '',
         vehicleCategory: '',
         vehicleSubCategory: '',
-        vehicleProductionDate: '',
-        city: '',
-        driverFCMToken: null,
-        updateWallettime: null,
-        comments: '',
+        vehicleProductionDate: ''
       },
       fileFields: {
         licenseImage: 'License Image',
-        driver_licence_image: 'Driver License Image',
+        driver_license_image: 'Driver License Image',
         profile_image: 'Profile Image',
         national_front: 'National ID Front',
         national_back: 'National ID Back',
         national_selfie: 'Selfie with National ID',
-        vehicleNumberImage: 'Vehicle Number Image',
+        vehicleNumberImage: 'Vehicle Number Image'
       },
       colors: [],
       vehicleCategories: [],
@@ -216,46 +209,60 @@ export default {
       locationLoading: false,
       locationError: '',
       loadingVehicles: false,
-      waitingCaptains: 0,
+      showManualLocation: false,
+      waitingCaptains: 0
     };
   },
   methods: {
-    // Format names for consistent display (e.g., capitalize, fix typos)
     formatName(name) {
       if (!name) return '';
-      // Known typo corrections
       const typoFixes = {
         'toyta': 'Toyota',
         'A5 Cabriolrt': 'A5 Cabriolet',
         'RS6 Aant': 'RS6 Avant',
         'rio x line': 'Rio X-Line',
-        'ceedgt': 'Ceed GT',
+        'ceedgt': 'Ceed GT'
       };
       const correctedName = typoFixes[name.toLowerCase()] || name;
-      // Capitalize first letter of each word
       return correctedName
           .split(' ')
           .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(' ');
     },
-    // Clean vehicle data to remove duplicates and empty strings
     cleanVehicleData(vehicles) {
-      return vehicles.map(category => ({
-        ...category,
-        category: category.category || '',
-        subCategories: [
-          ...new Set( // Remove duplicates
-              (category.subCategories || [])
-                  .filter(sub => sub && sub.trim() !== '') // Remove empty strings
-                  .map(sub => sub.trim())
-          )
-        ]
-      })).filter(cat => cat.category && cat.subCategories.length > 0); // Remove invalid categories
+      return vehicles
+          .map(category => ({
+            ...category,
+            category: category.category || '',
+            subCategories: [
+              ...new Set(
+                  (category.subCategories || [])
+                      .filter(sub => sub && sub.trim() !== '')
+                      .map(sub => sub.trim())
+              )
+            ]
+          }))
+          .filter(cat => cat.category && cat.subCategories.length > 0);
+    },
+    async retryApi(fn, retries = 3, delay = 1000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await fn();
+        } catch (error) {
+          if (i === retries - 1) throw error;
+          await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+        }
+      }
     },
     async fetchColors() {
       try {
-        const response = await axios.get('https://backend.fego-rides.com/colors/get-colors');
+        const response = await this.retryApi(() =>
+            axios.get(`${process.env.VUE_APP_API_URL}/colors/get-colors`)
+        );
         this.colors = response.data.colors || [];
+        if (!this.colors.length) {
+          this.errorMessage = 'No car colors available. Please try again later.';
+        }
       } catch (error) {
         console.error('Error fetching colors:', error);
         this.errorMessage = 'Failed to load car colors. Please try again.';
@@ -270,10 +277,10 @@ export default {
         this.form.vehicleCategory = '';
         this.form.vehicleSubCategory = '';
 
-        const endpoint = `https://backend.fego-rides.com/vehicles/${type.toLowerCase()}`;
-        const response = await axios.get(endpoint);
+        const response = await this.retryApi(() =>
+            axios.get(`${process.env.VUE_APP_API_URL}/vehicles/${type.toLowerCase()}`)
+        );
 
-        // Validate and clean API response
         if (response.data && Array.isArray(response.data.vehicles)) {
           this.vehicleCategories = this.cleanVehicleData(response.data.vehicles);
           if (!this.vehicleCategories.length) {
@@ -285,13 +292,11 @@ export default {
       } catch (error) {
         console.error(`Error fetching ${type} vehicles:`, error);
         this.errorMessage = `Failed to load ${type.toLowerCase()} categories. Please try again later.`;
-        this.vehicleCategories = [];
       } finally {
         this.loadingVehicles = false;
       }
     },
     onVehicleTypeChange() {
-      // Reset dependent fields
       this.form.vehicleCategory = '';
       this.form.vehicleSubCategory = '';
       this.vehicleCategories = [];
@@ -304,10 +309,10 @@ export default {
     onCategoryChange() {
       this.form.vehicleSubCategory = '';
       const selectedCategory = this.vehicleCategories.find(
-          (cat) => cat.category.toLowerCase() === this.form.vehicleCategory.toLowerCase()
+          cat => cat.category.toLowerCase() === this.form.vehicleCategory.toLowerCase()
       );
       this.selectedSubCategories = selectedCategory && Array.isArray(selectedCategory.subCategories)
-          ? [...selectedCategory.subCategories].sort() // Sort for consistent UX
+          ? [...selectedCategory.subCategories].sort()
           : [];
       if (!this.selectedSubCategories.length && this.form.vehicleCategory) {
         this.errorMessage = 'No sub-categories available for the selected category.';
@@ -315,22 +320,34 @@ export default {
     },
     handleFileUpload(event, field) {
       const file = event.target.files[0];
-      if (file) {
-        this.compressImage(file)
-            .then((compressedFile) => {
-              this.form[field] = compressedFile;
-            })
-            .catch(() => {
-              this.form[field] = file; // Fallback to original file
-              this.errorMessage = `Failed to compress ${field.replace('_', ' ')}. Using original file.`;
-            });
+      if (!file) return;
+
+      // Validate file type and size
+      const validTypes = ['image/jpeg', 'image/png'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (!validTypes.includes(file.type)) {
+        this.errorMessage = `Invalid file type for ${this.formatName(field.replace('_', ' '))}. Please upload a JPEG or PNG image.`;
+        return;
       }
+      if (file.size > maxSize) {
+        this.errorMessage = `File size for ${this.formatName(field.replace('_', ' '))} exceeds 5MB.`;
+        return;
+      }
+
+      this.compressImage(file)
+          .then(compressedFile => {
+            this.form[field] = compressedFile;
+          })
+          .catch(() => {
+            this.form[field] = file;
+            this.errorMessage = `Failed to compress ${this.formatName(field.replace('_', ' '))}. Using original file.`;
+          });
     },
     compressImage(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = (event) => {
+        reader.onload = event => {
           const img = new Image();
           img.src = event.target.result;
           img.onload = () => {
@@ -342,7 +359,7 @@ export default {
             canvas.height = img.height * scale;
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             canvas.toBlob(
-                (blob) => {
+                blob => {
                   if (blob) {
                     resolve(new File([blob], file.name, { type: 'image/jpeg' }));
                   } else {
@@ -361,66 +378,91 @@ export default {
     getLocation() {
       if (!navigator.geolocation) {
         this.locationError = 'Geolocation is not supported by your browser.';
+        this.showManualLocation = true;
         return;
       }
       this.locationLoading = true;
       this.locationError = '';
       navigator.geolocation.getCurrentPosition(
-          (position) => {
+          position => {
             this.form.location = {
               latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
+              longitude: position.coords.longitude
             };
             this.locationLoading = false;
+            this.showManualLocation = false;
           },
-          (error) => {
+          error => {
             console.error('Location Error:', error);
-            this.locationError = 'Failed to retrieve location. Please try again.';
+            this.locationError = 'Failed to retrieve location. Please try again or enter coordinates manually.';
+            this.showManualLocation = true;
             this.locationLoading = false;
           }
       );
     },
+    validatePassword() {
+      const password = this.form.password;
+      const minLength = 8;
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasLowerCase = /[a-z]/.test(password);
+      const hasNumber = /\d/.test(password);
+      const hasSpecialChar = /[!@#$%^&*]/.test(password);
+
+      if (password.length < minLength) {
+        throw new Error('Password must be at least 8 characters long.');
+      }
+      if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+        throw new Error('Password must include uppercase, lowercase, numbers, and special characters.');
+      }
+    },
+    validateEmail() {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(this.form.email)) {
+        throw new Error('Please enter a valid email address.');
+      }
+    },
     validateForm() {
+      this.validateEmail();
+      this.validatePassword();
       if (this.form.password !== this.form.confirmPassword) {
         throw new Error('Passwords do not match.');
       }
-
       const requiredFields = [
         'username',
         'phoneNumber',
         'email',
+        'id',
         'carNumber',
         'carColor',
         'vehicleType',
-        'licence_expire_date',
+        'license_expire_date',
         'password',
         'licenseImage',
-        'driver_licence_image',
+        'driver_license_image',
         'profile_image',
+        'national_front',
+        'national_back',
+        'national_selfie',
         'vehicleCategory',
         'vehicleSubCategory',
+        'vehicleProductionDate'
       ];
-
       for (const field of requiredFields) {
         if (!this.form[field]) {
-          throw new Error(`Please fill out ${field.replace('_', ' ')} field.`);
+          throw new Error(`Please fill out ${this.formatName(field.replace('_', ' '))} field.`);
         }
       }
-
-      if (!this.form.location) {
-        throw new Error('Please capture your location.');
+      if (!this.form.location || isNaN(this.form.location.latitude) || isNaN(this.form.location.longitude)) {
+        throw new Error('Please capture or enter a valid location.');
       }
     },
     prepareFormData() {
       const formData = new FormData();
-      Object.keys(this.form).forEach((key) => {
+      Object.keys(this.form).forEach(key => {
         if (key === 'confirmPassword') return;
         if (key === 'location' && this.form.location) {
           formData.append('latitude', this.form.location.latitude);
           formData.append('longitude', this.form.location.longitude);
-          formData.append('carModel', "2302")
-        } else if (key === 'comments' && this.form.comments) {
-          formData.append('comments', this.form.comments.split('\n').filter((c) => c.trim()));
         } else if (this.form[key] !== null && this.form[key] !== '') {
           formData.append(key, this.form[key]);
         }
@@ -433,32 +475,27 @@ export default {
         phoneNumber: '',
         email: '',
         id: '',
-        carModel: '',
         carNumber: '',
         carColor: '',
         vehicleType: '',
-        licence_expire_date: '',
+        license_expire_date: '',
         password: '',
         confirmPassword: '',
         licenseImage: null,
-        driver_licence_image: null,
+        driver_license_image: null,
         profile_image: null,
         national_front: null,
         national_back: null,
         national_selfie: null,
         vehicleNumberImage: null,
         location: null,
-        walletType: '',
         vehicleCategory: '',
         vehicleSubCategory: '',
-        vehicleProductionDate: '',
-        city: '',
-        driverFCMToken: null,
-        updateWallettime: null,
-        comments: '',
+        vehicleProductionDate: ''
       };
       this.vehicleCategories = [];
       this.selectedSubCategories = [];
+      this.showManualLocation = false;
     },
     async handleSignup() {
       this.errorMessage = '';
@@ -469,15 +506,12 @@ export default {
         this.validateForm();
         const formData = this.prepareFormData();
 
-        // 🔽 Log form data before sending
-        for (let pair of formData.entries()) {
-          console.log(`${pair[0]}:`, pair[1]);
-        }
-
-        const response = await axios.post(
-            'https://backend.fego-rides.com/authdriver/driversignup',
-            formData,
-            { headers: { 'Content-Type': 'multipart/form-data' } }
+        const response = await this.retryApi(() =>
+            axios.post(
+                `${process.env.VUE_APP_API_URL}/authdriver/driversignup`,
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            )
         );
 
         console.log('Signup response:', response.data);
@@ -489,12 +523,11 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-
+    }
   },
   created() {
     this.fetchColors();
-  },
+  }
 };
 </script>
 
@@ -542,6 +575,18 @@ h2 {
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   background-color: #f9f9f9;
+  position: relative;
+}
+
+.form-section.loading-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 1;
 }
 
 .form-section h3 {
@@ -562,9 +607,14 @@ h2 {
   font-weight: bold;
 }
 
+.form-group .optional {
+  font-weight: normal;
+  color: #7f8c8d;
+  font-size: 0.9em;
+}
+
 input,
-select,
-textarea {
+select {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
@@ -576,14 +626,10 @@ input[type="file"] {
   padding: 5px;
 }
 
-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
 select:disabled {
   background-color: #f0f0f0;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .color-swatch {
@@ -649,6 +695,14 @@ select:disabled {
   margin: 20px 0;
 }
 
+.manual-location {
+  margin-top: 15px;
+}
+
+.manual-location input {
+  margin-bottom: 10px;
+}
+
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
@@ -656,6 +710,7 @@ select:disabled {
 
   .sidebar {
     width: 100%;
+    position: relative;
   }
 
   .sidebar-collapsed {
