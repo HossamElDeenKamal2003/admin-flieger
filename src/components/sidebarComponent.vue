@@ -119,6 +119,10 @@ export default {
   width: 80px;
 }
 
+.sidebar{
+  overflow: auto;
+}
+
 .logo {
   display: flex;
   align-items: center;
