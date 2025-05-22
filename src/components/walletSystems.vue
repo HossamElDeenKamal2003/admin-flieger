@@ -10,18 +10,17 @@
       <!-- Header -->
       <header>
         <div class="header-left">
-          <i class="fas fa-bars" @click="handleSidebarToggle"></i>
+          <i class="fas fa-bars" @click="handleSidebarToggle" aria-label="Toggle sidebar"></i>
           <WaitingDriversNumber :waiting-captains="waitingCaptains" />
         </div>
         <div class="header-right">
-          <i class="fas fa-plus-circle"></i>
+          <i class="fas fa-plus-circle" aria-label="Add new item"></i>
         </div>
       </header>
 
-      <!-- Error Message -->
-      <div v-if="fetchError" class="error-message">
-        {{ fetchError }}
-      </div>
+      <!-- Loading and Error Messages -->
+      <div v-if="isFetching" class="loading-message">Loading wallet settings...</div>
+      <div v-else-if="fetchError" class="error-message">{{ fetchError }}</div>
 
       <!-- Cards Section -->
       <div class="cards-container">
@@ -34,7 +33,11 @@
                 {{ wallet1.isActive ? 'Active' : 'Inactive' }}
               </span>
               <label class="switch">
-                <input type="checkbox" v-model="wallet1.isActive" />
+                <input
+                    type="checkbox"
+                    v-model="wallet1.isActive"
+                    :aria-label="`Toggle Wallet System 1 ${wallet1.isActive ? 'off' : 'on'}`"
+                />
                 <span class="slider round"></span>
               </label>
             </div>
@@ -123,17 +126,6 @@
               <label>Comfort</label>
               <div class="input-group">
                 <input
-                    type="text"
-                    v-model="wallet1.comfort.title"
-                    placeholder="Comfort title"
-                    class="form-control title-input"
-                />
-                <textarea
-                    v-model="wallet1.comfort.description"
-                    placeholder="Comfort description"
-                    class="form-control description-input"
-                ></textarea>
-                <input
                     type="number"
                     v-model.number="wallet1.comfort.profit"
                     placeholder="Comfort profit (%)"
@@ -146,15 +138,12 @@
 
             <button
                 class="btn btn-primary"
-                @click="saveWalletSettings(1)"
-                :disabled="isSaving || !isWallet1Valid"
+                @click="saveWalletSettings(wallet1)"
+                :disabled="isSaving"
             >
               <span v-if="isSaving">Saving...</span>
               <span v-else>Save Settings</span>
             </button>
-            <div v-if="!isWallet1Valid && saveAttempted" class="error-message">
-              All fields must be filled
-            </div>
           </div>
         </div>
 
@@ -167,64 +156,117 @@
                 {{ wallet2.isActive ? 'Active' : 'Inactive' }}
               </span>
               <label class="switch">
-                <input type="checkbox" v-model="wallet2.isActive" />
+                <input
+                    type="checkbox"
+                    v-model="wallet2.isActive"
+                    :aria-label="`Toggle Wallet System 2 ${wallet2.isActive ? 'off' : 'on'}`"
+                />
                 <span class="slider round"></span>
               </label>
             </div>
           </div>
           <div class="form-group">
-            <label>Title</label>
-            <input
-                type="text"
-                v-model="wallet2.title"
-                placeholder="Enter title"
-                class="form-control"
-            />
-            <label>Description</label>
-            <textarea
-                v-model="wallet2.description"
-                placeholder="Enter description"
-                class="form-control"
-            ></textarea>
-            <label>Subscription Amount</label>
-            <input
-                type="number"
-                v-model.number="wallet2.subScription"
-                placeholder="Enter subscription amount"
-                class="form-control"
-                min="0"
-                step="1"
-            />
-            <label>Profit Percentage</label>
-            <input
-                type="number"
-                v-model.number="wallet2.profit"
-                placeholder="Enter profit percentage"
-                class="form-control"
-                min="0"
-                max="100"
-                step="0.1"
-            />
-            <label>Days</label>
-            <input
-                type="number"
-                v-model.number="wallet2.days"
-                placeholder="Enter Days"
-                class="form-control"
-                min="0"
-                step="1"
-            />
+            <!-- Car -->
+            <div class="vehicle-row">
+              <label>Car</label>
+              <div class="input-group">
+                <input
+                    type="text"
+                    v-model="wallet2.car.title"
+                    placeholder="Car title"
+                    class="form-control title-input"
+                />
+                <textarea
+                    v-model="wallet2.car.description"
+                    placeholder="Car description"
+                    class="form-control description-input"
+                ></textarea>
+                <input
+                    type="number"
+                    v-model.number="wallet2.car.profit"
+                    placeholder="Car profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
+            <!-- Motorcycle -->
+            <div class="vehicle-row">
+              <label>Motorcycle</label>
+              <div class="input-group">
+                <input
+                    type="text"
+                    v-model="wallet2.motorcycle.title"
+                    placeholder="Motorcycle title"
+                    class="form-control title-input"
+                />
+                <textarea
+                    v-model="wallet2.motorcycle.description"
+                    placeholder="Motorcycle description"
+                    class="form-control description-input"
+                ></textarea>
+                <input
+                    type="number"
+                    v-model.number="wallet2.motorcycle.profit"
+                    placeholder="Motorcycle profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
+            <!-- Van -->
+            <div class="vehicle-row">
+              <label>Van</label>
+              <div class="input-group">
+                <input
+                    type="text"
+                    v-model="wallet2.van.title"
+                    placeholder="Van title"
+                    class="form-control title-input"
+                />
+                <textarea
+                    v-model="wallet2.van.description"
+                    placeholder="Van description"
+                    class="form-control description-input"
+                ></textarea>
+                <input
+                    type="number"
+                    v-model.number="wallet2.van.profit"
+                    placeholder="Van profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
+            <!-- Comfort -->
+            <div class="vehicle-row">
+              <label>Comfort</label>
+              <div class="input-group">
+                <input
+                    type="number"
+                    v-model.number="wallet2.comfort.profit"
+                    placeholder="Comfort profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
             <button
                 class="btn btn-primary"
-                @click="saveWalletSettings(2)"
-                :disabled="isSaving || !isWallet2Valid"
+                @click="saveWalletSettings(wallet2)"
+                :disabled="isSaving"
             >
               <span v-if="isSaving">Saving...</span>
               <span v-else>Save Settings</span>
             </button>
-            <div v-if="!isWallet2Valid && saveAttempted" class="error-message">
-              All fields must be filled
-            </div>
           </div>
         </div>
 
@@ -237,45 +279,117 @@
                 {{ wallet3.isActive ? 'Active' : 'Inactive' }}
               </span>
               <label class="switch">
-                <input type="checkbox" v-model="wallet3.isActive" />
+                <input
+                    type="checkbox"
+                    v-model="wallet3.isActive"
+                    :aria-label="`Toggle Wallet System 3 ${wallet3.isActive ? 'off' : 'on'}`"
+                />
                 <span class="slider round"></span>
               </label>
             </div>
           </div>
           <div class="form-group">
-            <label>Title</label>
-            <input
-                type="text"
-                v-model="wallet3.title"
-                placeholder="Enter title"
-                class="form-control"
-            />
-            <label>Description</label>
-            <textarea
-                v-model="wallet3.description"
-                placeholder="Enter description"
-                class="form-control"
-            ></textarea>
-            <label>Fixed Profit</label>
-            <input
-                type="number"
-                v-model.number="wallet3.profit"
-                placeholder="Enter fixed profit"
-                class="form-control"
-                min="0"
-                step="0.1"
-            />
+            <!-- Car -->
+            <div class="vehicle-row">
+              <label>Car</label>
+              <div class="input-group">
+                <input
+                    type="text"
+                    v-model="wallet3.car.title"
+                    placeholder="Car title"
+                    class="form-control title-input"
+                />
+                <textarea
+                    v-model="wallet3.car.description"
+                    placeholder="Car description"
+                    class="form-control description-input"
+                ></textarea>
+                <input
+                    type="number"
+                    v-model.number="wallet3.car.profit"
+                    placeholder="Car profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
+            <!-- Motorcycle -->
+            <div class="vehicle-row">
+              <label>Motorcycle</label>
+              <div class="input-group">
+                <input
+                    type="text"
+                    v-model="wallet3.motorcycle.title"
+                    placeholder="Motorcycle title"
+                    class="form-control title-input"
+                />
+                <textarea
+                    v-model="wallet3.motorcycle.description"
+                    placeholder="Motorcycle description"
+                    class="form-control description-input"
+                ></textarea>
+                <input
+                    type="number"
+                    v-model.number="wallet3.motorcycle.profit"
+                    placeholder="Motorcycle profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
+            <!-- Van -->
+            <div class="vehicle-row">
+              <label>Van</label>
+              <div class="input-group">
+                <input
+                    type="text"
+                    v-model="wallet3.van.title"
+                    placeholder="Van title"
+                    class="form-control title-input"
+                />
+                <textarea
+                    v-model="wallet3.van.description"
+                    placeholder="Van description"
+                    class="form-control description-input"
+                ></textarea>
+                <input
+                    type="number"
+                    v-model.number="wallet3.van.profit"
+                    placeholder="Van profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
+            <!-- Comfort -->
+            <div class="vehicle-row">
+              <label>Comfort</label>
+              <div class="input-group">
+                <input
+                    type="number"
+                    v-model.number="wallet3.comfort.profit"
+                    placeholder="Comfort profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
             <button
                 class="btn btn-primary"
-                @click="saveWalletSettings(3)"
-                :disabled="isSaving || !isWallet3Valid"
+                @click="saveWalletSettings(wallet3)"
+                :disabled="isSaving"
             >
               <span v-if="isSaving">Saving...</span>
               <span v-else>Save Settings</span>
             </button>
-            <div v-if="!isWallet3Valid && saveAttempted" class="error-message">
-              All fields must be filled
-            </div>
           </div>
         </div>
       </div>
@@ -288,6 +402,8 @@ import Sidebar from './sidebarComponent.vue';
 import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 import axios from "axios";
 
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'https://backend.fego-rides.com';
+
 export default {
   name: "WalletSystems",
   components: {
@@ -298,7 +414,7 @@ export default {
     return {
       isSidebarExpanded: true,
       isSaving: false,
-      saveAttempted: false,
+      isFetching: false,
       fetchError: '',
       waitingCaptains: 0,
       wallet1: {
@@ -308,222 +424,114 @@ export default {
         car: { title: "", description: "", profit: null },
         motorcycle: { title: "", description: "", profit: null },
         van: { title: "", description: "", profit: null },
-        comfort: { title: "", description: "", profit: null }
+        comfort: { profit: null }
       },
       wallet2: {
         _id: "",
-        subScription: null,
-        profit: null,
         isActive: false,
         walletType: "2",
-        title: "",
-        description: "",
-        days: null
+        car: { title: "", description: "", profit: null },
+        motorcycle: { title: "", description: "", profit: null },
+        van: { title: "", description: "", profit: null },
+        comfort: { profit: null }
       },
       wallet3: {
         _id: "",
-        profit: null,
         isActive: false,
         walletType: "3",
-        title: "",
-        description: ""
+        car: { title: "", description: "", profit: null },
+        motorcycle: { title: "", description: "", profit: null },
+        van: { title: "", description: "", profit: null },
+        comfort: { profit: null }
       }
     };
-  },
-  computed: {
-    isWallet1Valid() {
-      return (
-          this.wallet1.car.title.trim() &&
-          this.wallet1.car.description.trim() &&
-          this.wallet1.car.profit != null &&
-          this.wallet1.motorcycle.title.trim() &&
-          this.wallet1.motorcycle.description.trim() &&
-          this.wallet1.motorcycle.profit != null &&
-          this.wallet1.van.title.trim() &&
-          this.wallet1.van.description.trim() &&
-          this.wallet1.van.profit != null &&
-          this.wallet1.comfort.title.trim() &&
-          this.wallet1.comfort.description.trim() &&
-          this.wallet1.comfort.profit != null
-      );
-    },
-    isWallet2Valid() {
-      return (
-          this.wallet2.title.trim() &&
-          this.wallet2.description.trim() &&
-          this.wallet2.subScription != null &&
-          this.wallet2.profit != null &&
-          this.wallet2.days != null
-      );
-    },
-    isWallet3Valid() {
-      return (
-          this.wallet3.title.trim() &&
-          this.wallet3.description.trim() &&
-          this.wallet3.profit != null
-      );
-    }
   },
   methods: {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
     },
     async fetchWalletSettings() {
+      this.isFetching = true;
+      this.fetchError = '';
       try {
-        this.fetchError = '';
-        const response = await axios.get(
-            "https://backend.fego-rides.com/admin/getWalletSystems?admin=true"
-        );
-
+        const response = await axios.get(`${API_BASE_URL}/admin/getWalletSystems?admin=true`);
         console.log('Fetched wallet systems:', response.data);
 
         const systems = response.data.systems || [];
 
-        // Normalize and set Wallet System 1
-        const system1 = systems.find(s => s.walletType === "1");
-        this.wallet1 = {
-          _id: system1?._id || "",
-          isActive: system1?.isActive ?? false,
-          walletType: "1",
-          car: {
-            title: system1?.carTitle || "",
-            description: system1?.carDescription || "",
-            profit: system1?.carProfit ?? null
-          },
-          motorcycle: {
-            title: system1?.motorcycleTitle || "",
-            description: system1?.motorcycleDescription || "",
-            profit: system1?.motorcycleProfit ?? null
-          },
-          van: {
-            title: system1?.vanTitle || "",
-            description: system1?.vanDescription || "",
-            profit: system1?.vanProfit ?? null
-          },
-          comfort: {
-            title: system1?.comfortTitle || "", // Note: Missing in response
-            description: system1?.comfortDescription || "", // Note: Missing in response
-            profit: system1?.comfortProfit ?? null
-          }
+        const updateWallet = (system, walletType) => {
+          const sys = systems.find(s => s.walletType === walletType);
+          return {
+            _id: sys?._id || "",
+            isActive: sys?.isActive ?? false,
+            walletType,
+            car: {
+              title: sys?.carTitle || "",
+              description: sys?.carDescription || "",
+              profit: sys?.carProfit ?? null
+            },
+            motorcycle: {
+              title: sys?.motorcycleTitle || "",
+              description: sys?.motorcycleDescription || "",
+              profit: sys?.motorcycleProfit ?? null
+            },
+            van: {
+              title: sys?.vanTitle || "",
+              description: sys?.vanDescription || "",
+              profit: sys?.vanProfit ?? null
+            },
+            comfort: {
+              profit: sys?.comfortProfit ?? null
+            }
+          };
         };
 
-        // Normalize and set Wallet System 2
-        const system2 = systems.find(s => s.walletType === "2");
-        this.wallet2 = {
-          _id: system2?._id || "",
-          subScription: system2?.subScription ?? null, // Note: Missing in response
-          profit: system2?.carProfit ?? null, // Using carProfit as fallback
-          isActive: system2?.isActive ?? false,
-          walletType: "2",
-          title: [system2?.carTitle, system2?.vanTitle, system2?.motorcycleTitle]
-              .filter(Boolean)
-              .join(", ") || "",
-          description: [system2?.carDescription, system2?.vanDescription, system2?.motorcycleDescription]
-              .filter(Boolean)
-              .join("; ") || "",
-          days: system2?.days ?? null // Note: Missing in response
-        };
-
-        // Normalize and set Wallet System 3
-        const system3 = systems.find(s => s.walletType === "3");
-        this.wallet3 = {
-          _id: system3?._id || "",
-          profit: system3?.carProfit ?? null, // Using carProfit as fallback
-          isActive: system3?.isActive ?? false,
-          walletType: "3",
-          title: [system3?.carTitle, system3?.vanTitle, system3?.motorcycleTitle]
-              .filter(Boolean)
-              .join(", ") || "",
-          description: [system3?.carDescription, system3?.vanDescription, system3?.motorcycleDescription]
-              .filter(Boolean)
-              .join("; ") || ""
-        };
+        this.wallet1 = updateWallet(systems, "1");
+        this.wallet2 = updateWallet(systems, "2");
+        this.wallet3 = updateWallet(systems, "3");
 
         console.log('Updated wallet1:', this.wallet1);
         console.log('Updated wallet2:', this.wallet2);
         console.log('Updated wallet3:', this.wallet3);
-
       } catch (error) {
         console.error("Error fetching wallet settings:", error);
         this.fetchError = 'Failed to load wallet settings. Please try again.';
+      } finally {
+        this.isFetching = false;
       }
     },
-    async saveWalletSettings(type) {
-      this.saveAttempted = true;
-
-      // Validate based on wallet type
-      if (type === 1 && !this.isWallet1Valid) {
-        alert("All fields in Wallet System 1 must be filled");
-        return;
-      }
-      if (type === 2 && !this.isWallet2Valid) {
-        alert("All fields in Wallet System 2 must be filled");
-        return;
-      }
-      if (type === 3 && !this.isWallet3Valid) {
-        alert("All fields in Wallet System 3 must be filled");
-        return;
-      }
-
+    async saveWalletSettings(wallet) {
       this.isSaving = true;
       try {
-        let walletData;
-        let walletId;
-
-        if (type === 1) {
-          walletData = {
-            isActive: this.wallet1.isActive,
-            walletType: this.wallet1.walletType,
-            carTitle: this.wallet1.car.title,
-            carDescription: this.wallet1.car.description,
-            carProfit: this.wallet1.car.profit,
-            motorcycleTitle: this.wallet1.motorcycle.title,
-            motorcycleDescription: this.wallet1.motorcycle.description,
-            motorcycleProfit: this.wallet1.motorcycle.profit,
-            vanTitle: this.wallet1.van.title,
-            vanDescription: this.wallet1.van.description,
-            vanProfit: this.wallet1.van.profit,
-            comfortTitle: this.wallet1.comfort.title,
-            comfortDescription: this.wallet1.comfort.description,
-            comfortProfit: this.wallet1.comfort.profit
-          };
-          walletId = this.wallet1._id;
-        } else if (type === 2) {
-          walletData = {
-            isActive: this.wallet2.isActive,
-            walletType: this.wallet2.walletType,
-            title: this.wallet2.title,
-            description: this.wallet2.description,
-            subScription: this.wallet2.subScription,
-            profit: this.wallet2.profit,
-            days: this.wallet2.days
-          };
-          walletId = this.wallet2._id;
-        } else {
-          walletData = {
-            isActive: this.wallet3.isActive,
-            walletType: this.wallet3.walletType,
-            title: this.wallet3.title,
-            description: this.wallet3.description,
-            profit: this.wallet3.profit
-          };
-          walletId = this.wallet3._id;
-        }
+        const walletData = {
+          isActive: wallet.isActive,
+          walletType: wallet.walletType,
+          carTitle: wallet.car.title,
+          carDescription: wallet.car.description,
+          carProfit: wallet.car.profit,
+          motorcycleTitle: wallet.motorcycle.title,
+          motorcycleDescription: wallet.motorcycle.description,
+          motorcycleProfit: wallet.motorcycle.profit,
+          vanTitle: wallet.van.title,
+          vanDescription: wallet.van.description,
+          vanProfit: wallet.van.profit,
+          comfortProfit: wallet.comfort.profit
+        };
 
         await axios.patch(
-            `https://backend.fego-rides.com/admin/updateSystemwallet`,
+            `${API_BASE_URL}/admin/updateSystemwallet`,
             walletData,
             {
               params: {
-                _id: walletId
+                _id: wallet._id
               }
             }
         );
 
-        alert('Success update');
+        alert(`Wallet System ${wallet.walletType} updated successfully`);
       } catch (error) {
-        console.error("Error saving wallet settings:", error);
-        alert("Failed to update");
+        console.error(`Error saving Wallet System ${wallet.walletType} settings:`, error);
+        alert(`Failed to update Wallet System ${wallet.walletType}`);
       } finally {
         this.isSaving = false;
       }
@@ -674,6 +682,13 @@ header {
 .error-message {
   color: #E53E3E;
   font-size: 0.8rem;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.loading-message {
+  color: #4C51BF;
+  font-size: 1rem;
   margin-top: 10px;
   text-align: center;
 }

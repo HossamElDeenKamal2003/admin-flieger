@@ -210,7 +210,7 @@ export default {
     },
     async fetchTopUsers() {
       try {
-        const response = await axios.get('https://backend.fego-rides.com/admin/get-users');
+        const response = await axios.get('https://backend.fego-rides.com/book/allUsersCounter');
         this.topUsers = response.data
             .sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0))
             .slice(0, 10)
