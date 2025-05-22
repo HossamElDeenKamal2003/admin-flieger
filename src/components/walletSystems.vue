@@ -58,14 +58,6 @@
                     placeholder="Car description"
                     class="form-control description-input"
                 ></textarea>
-<!--                <input-->
-<!--                    type="number"-->
-<!--                    v-model.number="wallet1.car.profit"-->
-<!--                    placeholder="Car profit (%)"-->
-<!--                    class="form-control profit-input"-->
-<!--                    min="0"-->
-<!--                    step="0.1"-->
-<!--                />-->
               </div>
             </div>
 
@@ -84,14 +76,6 @@
                     placeholder="Motorcycle description"
                     class="form-control description-input"
                 ></textarea>
-<!--                <input-->
-<!--                    type="number"-->
-<!--                    v-model.number="wallet1.motorcycle.profit"-->
-<!--                    placeholder="Motorcycle profit (%)"-->
-<!--                    class="form-control profit-input"-->
-<!--                    min="0"-->
-<!--                    step="0.1"-->
-<!--                />-->
               </div>
             </div>
 
@@ -110,31 +94,8 @@
                     placeholder="Van description"
                     class="form-control description-input"
                 ></textarea>
-<!--                <input-->
-<!--                    type="number"-->
-<!--                    v-model.number="wallet1.van.profit"-->
-<!--                    placeholder="Van profit (%)"-->
-<!--                    class="form-control profit-input"-->
-<!--                    min="0"-->
-<!--                    step="0.1"-->
-<!--                />-->
               </div>
             </div>
-
-            <!-- Comfort -->
-<!--            <div class="vehicle-row">-->
-<!--              <label>Comfort</label>-->
-<!--              <div class="input-group">-->
-<!--                <input-->
-<!--                    type="number"-->
-<!--                    v-model.number="wallet1.comfort.profit"-->
-<!--                    placeholder="Comfort profit (%)"-->
-<!--                    class="form-control profit-input"-->
-<!--                    min="0"-->
-<!--                    step="0.1"-->
-<!--                />-->
-<!--              </div>-->
-<!--            </div>-->
 
             <button
                 class="btn btn-primary"
@@ -259,16 +220,25 @@
               </div>
             </div>
 
+            <!-- Subscription -->
             <div class="vehicle-row">
-              <label>Days</label>
+              <label>Subscription</label>
               <div class="input-group">
                 <input
                     type="number"
-
-                    placeholder="Days"
+                    v-model.number="wallet2.subscription.cost"
+                    placeholder="Subscription cost (EGP)"
                     class="form-control profit-input"
                     min="0"
-                    step="0.1"
+                    step="0.01"
+                />
+                <input
+                    type="number"
+                    v-model.number="wallet2.subscription.days"
+                    placeholder="Subscription days"
+                    class="form-control profit-input"
+                    min="0"
+                    step="1"
                 />
               </div>
             </div>
@@ -435,10 +405,9 @@ export default {
         _id: "",
         isActive: false,
         walletType: "1",
-        car: { title: "", description: "", profit: null },
-        motorcycle: { title: "", description: "", profit: null },
-        van: { title: "", description: "", profit: null },
-        comfort: { profit: null }
+        car: { title: "", description: "" },
+        motorcycle: { title: "", description: "" },
+        van: { title: "", description: "" }
       },
       wallet2: {
         _id: "",
@@ -447,7 +416,8 @@ export default {
         car: { title: "", description: "", profit: null },
         motorcycle: { title: "", description: "", profit: null },
         van: { title: "", description: "", profit: null },
-        comfort: { profit: null }
+        comfort: { profit: null },
+        subscription: { cost: null, days: null }
       },
       wallet3: {
         _id: "",
@@ -464,6 +434,18 @@ export default {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
     },
+    validateWallet(wallet) {
+      const errors = [];
+      if (wallet.walletType === "2") {
+        if (wallet.subscription.days !== null && (wallet.subscription.days < 0 || !Number.isInteger(wallet.subscription.days))) {
+          errors.push("Subscription days must be a non-negative integer.");
+        }
+        if (wallet.subscription.cost !== null && wallet.subscription.cost < 0) {
+          errors.push("Subscription cost must be non-negative.");
+        }
+      }
+      return errors;
+    },
     async fetchWalletSettings() {
       this.isFetching = true;
       this.fetchError = '';
@@ -475,29 +457,55 @@ export default {
 
         const updateWallet = (system, walletType) => {
           const sys = systems.find(s => s.walletType === walletType);
-          return {
-            _id: sys?._id || "",
-            isActive: sys?.isActive ?? false,
-            walletType,
-            car: {
-              title: sys?.carTitle || "",
-              description: sys?.carDescription || "",
-              profit: sys?.carProfit ?? null
-            },
-            motorcycle: {
-              title: sys?.motorcycleTitle || "",
-              description: sys?.motorcycleDescription || "",
-              profit: sys?.motorcycleProfit ?? null
-            },
-            van: {
-              title: sys?.vanTitle || "",
-              description: sys?.vanDescription || "",
-              profit: sys?.vanProfit ?? null
-            },
-            comfort: {
-              profit: sys?.comfortProfit ?? null
-            }
-          };
+          if (walletType === "1") {
+            return {
+              _id: sys?._id || "",
+              isActive: sys?.isActive ?? false,
+              walletType,
+              car: {
+                title: sys?.carTitle || "",
+                description: sys?.carDescription || ""
+              },
+              motorcycle: {
+                title: sys?.motorcycleTitle || "",
+                description: sys?.motorcycleDescription || ""
+              },
+              van: {
+                title: sys?.vanTitle || "",
+                description: sys?.vanDescription || ""
+              }
+            };
+          } else {
+            return {
+              _id: sys?._id || "",
+              isActive: sys?.isActive ?? false,
+              walletType,
+              car: {
+                title: sys?.carTitle || "",
+                description: sys?.carDescription || "",
+                profit: sys?.carProfit ?? null
+              },
+              motorcycle: {
+                title: sys?.motorcycleTitle || "",
+                description: sys?.motorcycleDescription || "",
+                profit: sys?.motorcycleProfit ?? null
+              },
+              van: {
+                title: sys?.vanTitle || "",
+                description: sys?.vanDescription || "",
+                profit: sys?.vanProfit ?? null
+              },
+              comfort: {
+                profit: sys?.comfortProfit ?? null
+              },
+              ...(walletType === "2" ? {
+                subscription: {
+                  cost: sys?.subscriptionCost ?? null,
+                  days: sys?.subscriptionDays ?? null
+                }
+              } : {})
+            };
+          }
         };
 
         this.wallet1 = updateWallet(systems, "1");
@@ -515,6 +523,12 @@ export default {
       }
     },
     async saveWalletSettings(wallet) {
+      const errors = this.validateWallet(wallet);
+      if (errors.length > 0) {
+        alert(`Validation errors:\n${errors.join('\n')}`);
+        return;
+      }
+
       this.isSaving = true;
       try {
         const walletData = {
@@ -522,15 +536,23 @@ export default {
           walletType: wallet.walletType,
           carTitle: wallet.car.title,
           carDescription: wallet.car.description,
-          carProfit: wallet.car.profit,
           motorcycleTitle: wallet.motorcycle.title,
           motorcycleDescription: wallet.motorcycle.description,
-          motorcycleProfit: wallet.motorcycle.profit,
           vanTitle: wallet.van.title,
-          vanDescription: wallet.van.description,
-          vanProfit: wallet.van.profit,
-          comfortProfit: wallet.comfort.profit
+          vanDescription: wallet.van.description
         };
+
+        if (wallet.walletType !== "1") {
+          walletData.carProfit = wallet.car.profit;
+          walletData.motorcycleProfit = wallet.motorcycle.profit;
+          walletData.vanProfit = wallet.van.profit;
+          walletData.comfortProfit = wallet.comfort.profit;
+        }
+
+        if (wallet.walletType === "2") {
+          walletData.subscriptionCost = wallet.subscription.cost;
+          walletData.subscriptionDays = wallet.subscription.days;
+        }
 
         await axios.patch(
             `${API_BASE_URL}/admin/updateSystemwallet`,
