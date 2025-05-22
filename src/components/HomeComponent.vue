@@ -211,7 +211,7 @@ export default {
     async fetchTopUsers() {
       try {
         const response = await axios.get('https://backend.fego-rides.com/book/allUsersCounter');
-        this.topUsers = response.data
+        this.topUsers = response.data.data
             .sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0))
             .slice(0, 10)
             .map(user => ({
@@ -220,7 +220,7 @@ export default {
               image: user.userData.profile_image || 'https://via.placeholder.com/40',
               phone: user.userData.phoneNumber || 'N/A',
               completeTrips: user.endCount || 0,
-              cancelledTrips: user.userData.cancelledCount || 0,
+              cancelledTrips: user.cancelledCount || 0,
               wallet: user.wallet || '0 EGP',
               rating: user.rating || '0.0',
             }));
