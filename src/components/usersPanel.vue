@@ -178,19 +178,20 @@ export default {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await axios.get('https://backend.fego-rides.com/admin/get-users');
+        const response = await axios.get('https://backend.fego-rides.com/book/allUsersCounter');
         console.log('API response:', response.data); // For debugging
-        this.users = response.data.map(user => ({
+        this.users = response.data.data.map(user => ({
           _id: user._id || null,
-          id: user.id || user._id || null,
-          name: user.username || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A',
-          phoneNumber: user.phoneNumber || user.mobile || 'N/A',
-          image: user.profile_image || 'https://via.placeholder.com/40',
-          completedTrips: user.completedTrips || 0,
-          cancelledTrips: user.cancelledTrips || 0,
-          wallet: `${user.wallet || 0} EGP`,
-          rating: user.rate || '0.0'
+          id: user.userData?.id || user._id || null,
+          name: user.userData?.username || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A',
+          phoneNumber: user.userData?.phoneNumber || user.mobile || 'N/A',
+          image: user.userData?.profile_image || 'https://via.placeholder.com/40',
+          completedTrips: user.endCount || 0,
+          cancelledTrips: user.cancelledCount || 0,
+          wallet: `${user.userData?.wallet || 0} EGP`,
+          rating: user.userData?.rate || '0.0'
         }));
+
       } catch (error) {
         console.error('Error fetching users:', error);
         this.error = 'Failed to load users. Please try again later.';
