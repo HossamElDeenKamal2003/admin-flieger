@@ -58,14 +58,14 @@
                     placeholder="Car description"
                     class="form-control description-input"
                 ></textarea>
-                <input
-                    type="number"
-                    v-model.number="wallet1.car.profit"
-                    placeholder="Car profit (%)"
-                    class="form-control profit-input"
-                    min="0"
-                    step="0.1"
-                />
+<!--                <input-->
+<!--                    type="number"-->
+<!--                    v-model.number="wallet1.car.profit"-->
+<!--                    placeholder="Car profit (%)"-->
+<!--                    class="form-control profit-input"-->
+<!--                    min="0"-->
+<!--                    step="0.1"-->
+<!--                />-->
               </div>
             </div>
 
@@ -84,14 +84,14 @@
                     placeholder="Motorcycle description"
                     class="form-control description-input"
                 ></textarea>
-                <input
-                    type="number"
-                    v-model.number="wallet1.motorcycle.profit"
-                    placeholder="Motorcycle profit (%)"
-                    class="form-control profit-input"
-                    min="0"
-                    step="0.1"
-                />
+<!--                <input-->
+<!--                    type="number"-->
+<!--                    v-model.number="wallet1.motorcycle.profit"-->
+<!--                    placeholder="Motorcycle profit (%)"-->
+<!--                    class="form-control profit-input"-->
+<!--                    min="0"-->
+<!--                    step="0.1"-->
+<!--                />-->
               </div>
             </div>
 
@@ -110,31 +110,31 @@
                     placeholder="Van description"
                     class="form-control description-input"
                 ></textarea>
-                <input
-                    type="number"
-                    v-model.number="wallet1.van.profit"
-                    placeholder="Van profit (%)"
-                    class="form-control profit-input"
-                    min="0"
-                    step="0.1"
-                />
+<!--                <input-->
+<!--                    type="number"-->
+<!--                    v-model.number="wallet1.van.profit"-->
+<!--                    placeholder="Van profit (%)"-->
+<!--                    class="form-control profit-input"-->
+<!--                    min="0"-->
+<!--                    step="0.1"-->
+<!--                />-->
               </div>
             </div>
 
             <!-- Comfort -->
-            <div class="vehicle-row">
-              <label>Comfort</label>
-              <div class="input-group">
-                <input
-                    type="number"
-                    v-model.number="wallet1.comfort.profit"
-                    placeholder="Comfort profit (%)"
-                    class="form-control profit-input"
-                    min="0"
-                    step="0.1"
-                />
-              </div>
-            </div>
+<!--            <div class="vehicle-row">-->
+<!--              <label>Comfort</label>-->
+<!--              <div class="input-group">-->
+<!--                <input-->
+<!--                    type="number"-->
+<!--                    v-model.number="wallet1.comfort.profit"-->
+<!--                    placeholder="Comfort profit (%)"-->
+<!--                    class="form-control profit-input"-->
+<!--                    min="0"-->
+<!--                    step="0.1"-->
+<!--                />-->
+<!--              </div>-->
+<!--            </div>-->
 
             <button
                 class="btn btn-primary"
@@ -252,6 +252,20 @@
                     type="number"
                     v-model.number="wallet2.comfort.profit"
                     placeholder="Comfort profit (%)"
+                    class="form-control profit-input"
+                    min="0"
+                    step="0.1"
+                />
+              </div>
+            </div>
+
+            <div class="vehicle-row">
+              <label>Days</label>
+              <div class="input-group">
+                <input
+                    type="number"
+
+                    placeholder="Days"
                     class="form-control profit-input"
                     min="0"
                     step="0.1"

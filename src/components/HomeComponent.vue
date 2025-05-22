@@ -215,12 +215,12 @@ export default {
             .sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0))
             .slice(0, 10)
             .map(user => ({
-              id: user.id || Date.now() + Math.random(),
-              name: user.username || 'Unknown',
-              image: user.profile_image || 'https://via.placeholder.com/40',
-              phone: user.phoneNumber || 'N/A',
-              completeTrips: user.completedTrips || 0,
-              cancelledTrips: user.cancelledTrips || 0,
+              id: user.userData.id || Date.now() + Math.random(),
+              name: user.userData.username || 'Unknown',
+              image: user.userData.profile_image || 'https://via.placeholder.com/40',
+              phone: user.userData.phoneNumber || 'N/A',
+              completeTrips: user.endCount || 0,
+              cancelledTrips: user.userData.cancelledCount || 0,
               wallet: user.wallet || '0 EGP',
               rating: user.rating || '0.0',
             }));
