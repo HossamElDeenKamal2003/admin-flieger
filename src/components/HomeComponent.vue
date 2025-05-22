@@ -221,9 +221,10 @@ export default {
               phone: user.userData.phoneNumber || 'N/A',
               completeTrips: user.endCount || 0,
               cancelledTrips: user.cancelledCount || 0,
-              wallet: user.wallet || '0 EGP',
+              wallet: user.userData.wallet || '0 EGP',
               rating: user.rating || '0.0',
             }));
+        console.log(this.topUsers)
       } catch (error) {
         console.error('Error fetching users:', error);
         this.topUsers = [{
