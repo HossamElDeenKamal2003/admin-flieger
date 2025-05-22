@@ -257,7 +257,7 @@ export default {
     async fetchColors() {
       try {
         const response = await this.retryApi(() =>
-            axios.get(`${process.env.VUE_APP_API_URL}/colors/get-colors`)
+            axios.get(`https://backend.fego-rides.com/colors/get-colors`)
         );
         this.colors = response.data.colors || [];
         if (!this.colors.length) {
@@ -278,7 +278,7 @@ export default {
         this.form.vehicleSubCategory = '';
 
         const response = await this.retryApi(() =>
-            axios.get(`${process.env.VUE_APP_API_URL}/vehicles/${type.toLowerCase()}`)
+            axios.get(`https://backend.fego-rides.com/vehicles/${type.toLowerCase()}`)
         );
 
         if (response.data && Array.isArray(response.data.vehicles)) {
@@ -508,7 +508,7 @@ export default {
 
         const response = await this.retryApi(() =>
             axios.post(
-                `${process.env.VUE_APP_API_URL}/authdriver/driversignup`,
+                `https://backend.fego-rides.com/authdriver/driversignup`,
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             )
