@@ -147,8 +147,8 @@
                 <div class="data-row">
                   <span>Color:</span>
                   <div class="field-container">
-                    <span>{{ driverData.color || 'N/A' }}</span>
                     <span class="color-dot" :style="{ backgroundColor: driverData.color || '#000' }"></span>
+                    <span>{{ driverData.color || 'N/A' }}</span>
                   </div>
                 </div>
               </div>
@@ -648,7 +648,7 @@ export default {
           brand: driver.brand || 'N/A',
           model: driver.carModel || 'N/A',
           plate: driver.carNumber || 'N/A',
-          color: driver.carColor || 'N/A',
+          color: driver.carColor.color || 'N/A',
           confirmedTrips: driver.ctr || 0,
           cancelledTrips: 0,
           rating: driver.rate || 0,

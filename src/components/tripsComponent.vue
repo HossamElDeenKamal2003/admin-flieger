@@ -73,6 +73,7 @@
             <th>Finish Location</th>
             <th>Value</th>
             <th>Payment</th>
+            <th>Wallet user after trip</th>
             <th>Wallet driver after trip</th>
             <th>Trip Comment</th>
           </tr>
@@ -147,12 +148,15 @@
               <span v-else>N/A</span>
             </td>
 
+            <td>
+              {{ trip.moneyFlow.flowItem.walletAfter }}
+            </td>
             <!-- Wallet driver after trip -->
             <td>
                 <span
                     :class="{
-                    'wallet-non-zero': trip.moneyFlow?.flowItem?.walletAfter !== 0,
-                    'wallet-zero': !trip.moneyFlow?.flowItem?.walletAfter
+                    'wallet-non-zero': trip.moneyFlow?.flow?.walletAfter !== 0,
+                    'wallet-zero': !trip.moneyFlow?.flow?.walletAfter
                   }"
                 >
                   {{ formatCurrency(trip.moneyFlow?.flowItem?.walletAfter || 0) }} EGP

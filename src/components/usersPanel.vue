@@ -54,7 +54,7 @@
               <tr
                   v-for="user in filteredUsers"
                   :key="user._id"
-                  @click="goToUser(user._id)"
+                  @click="goToUser(user.id)"
                   style="cursor: pointer"
               >
                 <td>
@@ -88,31 +88,31 @@
               </tbody>
             </table>
 
-
             <!-- Footer with Pagination -->
-          <div class="users-footer">
-            <p>Total users: {{ filteredUsersCount }}</p>
-            <div class="pagination">
-              <p>
-                {{ (currentPage - 1) * itemsPerPage + 1 }}-{{
-                  Math.min(currentPage * itemsPerPage, filteredUsersCount)
-                }} of {{ filteredUsersCount }} items
-              </p>
-              <div class="pagination-buttons">
-                <button :disabled="currentPage === 1" @click="currentPage--">
-                  prev
-                </button>
-                <button
-                    v-for="page in totalPages"
-                    :key="page"
-                    :class="{ active: currentPage === page }"
-                    @click="currentPage = page"
-                >
-                  {{ page }}
-                </button>
-                <button :disabled="currentPage === totalPages" @click="currentPage++">
-                  next
-                </button>
+            <div class="users-footer">
+              <p>Total users: {{ filteredUsersCount }}</p>
+              <div class="pagination">
+                <p>
+                  {{ (currentPage - 1) * itemsPerPage + 1 }}-{{
+                    Math.min(currentPage * itemsPerPage, filteredUsersCount)
+                  }} of {{ filteredUsersCount }} items
+                </p>
+                <div class="pagination-buttons">
+                  <button :disabled="currentPage === 1" @click="currentPage--">
+                    prev
+                  </button>
+                  <button
+                      v-for="page in totalPages"
+                      :key="page"
+                      :class="{ active: currentPage === page }"
+                      @click="currentPage = page"
+                  >
+                    {{ page }}
+                  </button>
+                  <button :disabled="currentPage === totalPages" @click="currentPage++">
+                    next
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -120,13 +120,13 @@
       </div>
     </div>
   </div>
-  </div>
 </template>
 
 <script>
 import axios from 'axios';
 import Sidebar from "./sidebarComponent.vue";
 import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
+
 export default {
   name: "UsersListComponent",
   data() {
@@ -172,6 +172,11 @@ export default {
       this.isSidebarExpanded = !this.isSidebarExpanded;
     },
     goToUser(id) {
+      if (!id) {
+        console.error('Invalid user ID:', id);
+        alert('Cannot navigate: Invalid user ID');
+        return;
+      }
       this.$router.push(`/user/${id}`);
     },
     async fetchUsers() {
@@ -179,7 +184,7 @@ export default {
       this.error = null;
       try {
         const response = await axios.get('https://backend.fego-rides.com/book/allUsersCounter');
-        console.log('API response:', response.data); // For debugging
+        console.log('API response:', response.data);
         this.users = response.data.data.map(user => ({
           _id: user._id || null,
           id: user.userData?.id || user._id || null,
@@ -191,7 +196,6 @@ export default {
           wallet: `${user.userData?.wallet || 0} EGP`,
           rating: user.userData?.rate || '0.0'
         }));
-
       } catch (error) {
         console.error('Error fetching users:', error);
         this.error = 'Failed to load users. Please try again later.';
@@ -204,10 +208,10 @@ export default {
       try {
         await axios.delete(`https://backend.fego-rides.com/admin/delete-user/${userId}`);
         this.users = this.users.filter(user => user._id !== userId);
-        this.$toast.success('User deleted successfully');
+        alert('User deleted successfully');
       } catch (error) {
         console.error('Error deleting user:', error);
-        this.$toast.error('Failed to delete user. Please try again.');
+        alert('Failed to delete user. Please try again.');
       }
     }
   },
