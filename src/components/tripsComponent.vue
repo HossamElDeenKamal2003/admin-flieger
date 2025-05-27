@@ -11,7 +11,6 @@
       <header>
         <div>
           <WaitingDriversNumber :waiting-captains="waitingCaptains" />
-
         </div>
         <div class="header-icons">
           <i class="fas fa-plus-circle"></i>
@@ -79,92 +78,94 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="trip in paginatedTrips" :key="trip._id || trip.tripId?._id">
+          <tr v-for="trip in paginatedTrips" :key="trip._id">
             <!-- User Name -->
             <td>
               <div style="display: flex; align-items: center;">
-                <span>{{ trip.user?.username || trip.userId?.username || 'N/A' }}</span>
+                <span>{{ trip.userId?.username || 'N/A' }}</span>
               </div>
             </td>
 
             <!-- User Phone -->
-            <td>{{ trip.user?.phoneNumber || trip.userId?.phoneNumber || 'N/A' }}</td>
+            <td>{{ trip.userId?.phoneNumber || 'N/A' }}</td>
 
             <!-- Driver Name -->
             <td>
               <div style="display: flex; align-items: center;">
                 <img
-                    v-if="trip.driver?.profileImage || trip.driverId?.profile_image"
-                    :src="trip.driver?.profileImage || trip.driverId?.profile_image"
+                    v-if="trip.driverId?.profile_image"
+                    :src="trip.driverId?.profile_image"
                     alt="Driver Image"
                     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 8px;"
                 >
-                <span>{{ trip.driver?.username || trip.driverId?.username || 'N/A' }}</span>
+                <span>{{ trip.driverId?.username || 'N/A' }}</span>
               </div>
             </td>
 
             <!-- Driver Phone -->
-            <td>{{ trip.driver?.phoneNumber || trip.driverId?.phoneNumber || 'N/A' }}</td>
+            <td>{{ trip.driverId?.phoneNumber || 'N/A' }}</td>
 
             <!-- Vehicle -->
             <td>
-                <span v-if="trip.driver || trip.driverId">
-                  {{ trip.vehicleType || trip.tripId?.vehicleType || 'N/A' }}
-                  ({{ trip.driver?.username || trip.driverId?.username || 'N/A' }})
+                <span v-if="trip.driverId">
+                  {{ trip.vehicleType || 'N/A' }}
+                  ({{ trip.driverId?.username || 'N/A' }})
                 </span>
               <span v-else>
-                  {{ trip.vehicleType || trip.tripId?.vehicleType || 'N/A' }}
+                  {{ trip.vehicleType || 'N/A' }}
                 </span>
             </td>
 
             <!-- Trip ID -->
-            <td>{{ trip.uniqueId || trip.tripId?.uniqueId || 'N/A' }}</td>
+            <td>{{ trip.uniqueId || 'N/A' }}</td>
 
             <!-- Ordered Time -->
-            <td>{{ formatDate(trip.createdAt || trip.tripId?.createdAt) }}</td>
+            <td>{{ formatDate(trip.createdAt) }}</td>
 
             <!-- Start Location -->
-            <td>{{ trip.pickupLocationName || trip.tripId?.pickupLocationName || 'N/A' }}</td>
+            <td>{{ trip.pickupLocationName || 'N/A' }}</td>
 
             <!-- Finish Location -->
-            <td>{{ trip.destination || trip.tripId?.destination || 'N/A' }}</td>
+            <td>{{ trip.destination || 'N/A' }}</td>
 
             <!-- Value -->
-            <td>{{ trip.cost || trip.tripId?.cost || 0 }} EGP</td>
+            <td>{{ formatCurrency(trip.cost || 0) }} EGP</td>
 
             <!-- Payment -->
             <td>
-              <template v-if="trip.moneyFlow?.flowItem">
-                {{ formatCurrency(trip.moneyFlow.flowItem.payWallet) }} Wallet +
-                {{ formatCurrency(trip.moneyFlow.flowItem.payCash) }} Cash EGP
+              <template v-if="trip.userMoneyFlowId?.flow?.[0]">
+                {{ formatCurrency(trip.userMoneyFlowId.flow[0].payWallet) }} Wallet +
+                {{ formatCurrency(trip.userMoneyFlowId.flow[0].payCash) }} Cash EGP
                 <br>
                 <small>Total:
                   {{ formatCurrency(
-                      (trip.moneyFlow.flowItem.payWallet || 0) +
-                      (trip.moneyFlow.flowItem.payCash || 0)
+                      (trip.userMoneyFlowId.flow[0].payWallet || 0) +
+                      (trip.userMoneyFlowId.flow[0].payCash || 0)
                   ) }} EGP
                 </small>
               </template>
               <span v-else>N/A</span>
             </td>
 
+            <!-- Wallet user after trip -->
             <td>
-              {{ trip.moneyFlow.flowItem.walletAfter }}
+              {{ formatCurrency(trip.userMoneyFlowId?.flow?.[0]?.walletAfter || 0) }} EGP
             </td>
+
             <!-- Wallet driver after trip -->
             <td>
                 <span
                     :class="{
-                    'wallet-non-zero': trip.moneyFlow?.flow?.walletAfter !== 0,
-                    'wallet-zero': !trip.moneyFlow?.flow?.walletAfter
+                    'wallet-non-zero': trip.driverMoneyFlowId?.flow?.[0]?.walletAfter !== 0,
+                    'wallet-zero': !trip.driverMoneyFlowId?.flow?.[0]?.walletAfter
                   }"
                 >
-                  {{ formatCurrency(trip.moneyFlow?.flowItem?.walletAfter || 0) }} EGP
+                  {{ formatCurrency(trip.driverMoneyFlowId?.flow?.[0]?.walletAfter || 0) }} EGP
                 </span>
             </td>
 
             <!-- Trip Comment -->
-            <td>{{ trip.comment || trip.tripId?.comment || 'N/A' }}</td>
+            <td>{{ trip.comment || 'N/A' }}</td>
           </tr>
           </tbody>
         </table>
@@ -175,14 +176,15 @@
             {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredTrips.length) }}
             of {{ filteredTrips.length }} items
           </span>
-          <button :disabled="currentPage === 1" @click="currentPage--">prev</button>
-          <button>{{ currentPage }}</button>
-          <button :disabled="currentPage >= totalPages" @click="currentPage++">next</button>
+          <button :disabled="currentPage === 1" @click="currentPage--"> prev</button>
+          <button disabled>{{ currentPage }}</button>
+          <button :disabled="currentPage >= totalPages" @click="currentPage++">next </button>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 <script>
 import Sidebar from "./sidebarComponent.vue";
 import axios from "axios";
@@ -208,7 +210,8 @@ export default {
       dateFilter: "",
       currentPage: 1,
       itemsPerPage: 10,
-      adminUsername: ""
+      adminUsername: "",
+      waitingCaptains: 0, // Placeholder for WaitingDriversNumber prop
     };
   },
   computed: {
@@ -230,20 +233,20 @@ export default {
       if (this.searchUniqueId) {
         const query = this.searchUniqueId.toLowerCase();
         filtered = filtered.filter((trip) => {
-          const uniqueId = trip.uniqueId || trip.tripId?.uniqueId || '';
+          const uniqueId = trip.uniqueId || '';
           return uniqueId.toLowerCase().includes(query);
         });
       }
 
       if (this.vehicleTypeFilter) {
         filtered = filtered.filter(
-            (trip) => (trip.vehicleType || trip.tripId?.vehicleType) === this.vehicleTypeFilter
+            (trip) => trip.vehicleType === this.vehicleTypeFilter
         );
       }
 
       if (this.dateFilter) {
         filtered = filtered.filter((trip) => {
-          const tripDate = new Date(trip.createdAt || trip.tripId?.createdAt).toISOString().split("T")[0];
+          const tripDate = new Date(trip.createdAt).toISOString().split("T")[0];
           return tripDate === this.dateFilter;
         });
       }
@@ -289,11 +292,10 @@ export default {
     },
   },
   created() {
+    this.adminUsername = localStorage.getItem('username');
     this.getTrips();
-    console.log("Trips", this.trips);
     this.getCancelledByUserTrips();
     this.getCancelledByCaptainTrips();
-    this.adminUsername = localStorage.getItem('username')
   },
   methods: {
     handleSidebarToggle() {
@@ -311,13 +313,8 @@ export default {
       try {
         this.loading = true;
         const response = await axios.post(`${this.baseUrl}/wallet/get-data`);
-        this.trips = response.data.data.map((trip) => {
-          if (trip.moneyFlow?.document?.flow?.[0] && !trip.moneyFlow.flowItem) {
-            trip.moneyFlow.flowItem = trip.moneyFlow.document.flow[0];
-          }
-          console.log("Trips....", response.data)
-          return trip;
-        });
+        this.trips = response.data.trips || [];
+        console.log("Trips:", this.trips);
       } catch (error) {
         console.error("Error fetching trips:", error);
       } finally {
@@ -329,7 +326,7 @@ export default {
         this.loading = true;
         const response = await axios.get(`${this.baseUrl}/admin/get-cancelled-trips`);
         this.cancelledByUserTrips = response.data.trips || [];
-        console.log(this.cancelledByUserTrips);
+        console.log("Cancelled by User Trips:", this.cancelledByUserTrips);
       } catch (error) {
         console.error("Error fetching cancelled by user trips:", error);
       } finally {
@@ -341,6 +338,7 @@ export default {
         this.loading = true;
         const response = await axios.get(`${this.baseUrl}/admin/get-cancelled-by-driver`);
         this.cancelledByCaptainTrips = response.data.trips || [];
+        console.log("Cancelled by Captain Trips:", this.cancelledByCaptainTrips);
       } catch (error) {
         console.error("Error fetching cancelled by captain trips:", error);
       } finally {
@@ -352,20 +350,15 @@ export default {
     },
     formatDate(dateString) {
       if (!dateString) return "N/A";
-
       const date = new Date(dateString);
-
-      // Extract day, month, and year
-      const day = String(date.getDate()).padStart(2, '0');  // Ensures 2 digits (e.g., 05)
-      const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-      const year = String(date.getFullYear()); // Gets last 2 digits (e.g., 24 for 2024)
-
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
       return `${day}/${month}/${year}`;
-    }
+    },
   },
 };
 </script>
-
 
 <style scoped>
 /* Base Styles */
@@ -610,200 +603,3 @@ td {
   }
 }
 </style>
-```
-
-<style scoped>
-/* Base Styles */
-.dashboard {
-  display: flex;
-  min-height: 100vh;
-  font-family: "Arial", sans-serif;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 250px;
-  transition: width 0.3s ease;
-}
-
-/* Main Content */
-.main-content {
-  flex: 1;
-  background-color: #ffffff;
-  padding: 24px;
-  transition: margin-left 0.3s ease;
-}
-
-.main-content-expanded {
-  margin-left: 250px;
-}
-
-.main-content-expanded.sidebar-collapsed {
-  margin-left: 80px;
-}
-
-/* Header */
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2a44;
-}
-
-header p {
-  font-size: 14px;
-  color: #2563eb;
-  cursor: pointer;
-  margin-top: 4px;
-}
-
-.header-icons i {
-  font-size: 20px;
-  color: #6b7280;
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #e5e7eb;
-  margin-top: 24px;
-}
-
-.tabs button {
-  flex: 1;
-  padding-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #000000;
-  text-align: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.tabs button.active-tab {
-  color: #000000;
-  border-bottom: 2px solid #2563eb;
-}
-
-.count-badge {
-  display: inline-block;
-  min-width: 20px;
-  height: 20px;
-  line-height: 20px;
-  background-color: #e5e7eb;
-  color: #374151;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 10px;
-  margin-left: 8px;
-  padding: 0 6px;
-  text-align: center;
-}
-
-/* Table */
-.table-container {
-  margin-top: 24px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 12px;
-  text-align: left;
-}
-
-th {
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  background-color: #f9fafb;
-  text-transform: uppercase;
-}
-
-td {
-  font-size: 14px;
-  color: #374151;
-  border-top: 1px solid #e5e7eb;
-}
-
-.wallet-non-zero {
-  display: inline-block;
-  padding: 4px 8px;
-  background-color: #d1fae5;
-  color: #059669;
-  border-radius: 9999px;
-  font-size: 14px;
-}
-
-.wallet-zero {
-  display: inline-block;
-  padding: 4px 8px;
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border-radius: 9999px;
-  font-size: 14px;
-}
-
-/* Loading and No Data States */
-.loading,
-.no-data {
-  text-align: center;
-  padding: 24px;
-  font-size: 16px;
-  color: #6b7280;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    padding: 16px;
-  }
-  .sidebar-collapsed {
-    width: 80px;
-  }
-
-  .sidebar {
-    width: 80px;
-  }
-
-  .main-content-expanded {
-    margin-left: 80px;
-  }
-
-  header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .header-icons {
-    margin-top: 8px;
-  }
-
-  .tabs {
-    flex-wrap: wrap;
-  }
-
-  .tabs button {
-    flex: 1 1 50%;
-    margin-bottom: 8px;
-  }
-}
-</style>
-```
