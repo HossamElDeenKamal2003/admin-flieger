@@ -366,6 +366,7 @@ export default {
   display: flex;
   min-height: 100vh;
   font-family: "Arial", sans-serif;
+  justify-content: space-between;
 }
 
 /* Sidebar */
@@ -380,7 +381,7 @@ export default {
 
 /* Main Content */
 .main-content {
-  flex: 1;
+
   background-color: #ffffff;
   padding: 24px;
   transition: margin-left 0.3s ease;
@@ -601,5 +602,8 @@ td {
     flex-direction: column;
     gap: 8px;
   }
+}
+.main-content{
+  width: 90%;
 }
 </style>
