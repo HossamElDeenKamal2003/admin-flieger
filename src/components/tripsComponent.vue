@@ -565,6 +565,7 @@ td {
   color: #6b7280;
 }
 
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .main-content {
@@ -605,5 +606,10 @@ td {
 }
 .main-content{
   width: 90%;
+}
+@media (max-width: 1920px) {
+  .main-content {
+    width: 85%;
+  }
 }
 </style>

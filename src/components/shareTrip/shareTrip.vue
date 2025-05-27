@@ -49,10 +49,14 @@ export default {
       google: null,
       plannedPolyline: null,
       actualPolyline: null,
+      walkedPolyline: null, // New polyline for walked path
       driverPath: [],
+      walkedPath: [], // New array to store walked coordinates
       plannedPath: [],
       driverData: null,
       isLoadingDriverData: false,
+      lastVisitedIndex: 0,
+      isTripComplete: false,
     };
   },
   methods: {
@@ -90,6 +94,7 @@ export default {
         console.log('Trip data:', data);
 
         if (data.trip) {
+          this.lastVisitedIndex = 0;
           if (data.trip.encodedPolyline) {
             try {
               this.drawPlannedPolyline(data.trip.encodedPolyline);
@@ -152,7 +157,12 @@ export default {
             }
 
             this.updateCarMarker(driverLat, driverLng);
-            this.driverPath.push({ lat: driverLat, lng: driverLng });
+            if (this.isPositionOnRoute(driverLat, driverLng)) {
+              this.driverPath.push({ lat: driverLat, lng: driverLng });
+              this.walkedPath.push({ lat: driverLat, lng: driverLng }); // Add to walked path
+            } else {
+              console.warn('Initial driver position is off-route, not adding to driverPath:', { lat: driverLat, lng: driverLng });
+            }
             this.updateActualRoute();
             this.googleMap.fitBounds(bounds);
           } else {
@@ -179,6 +189,7 @@ export default {
         console.warn('Empty path after decoding:', encoded);
         return;
       }
+      this.lastVisitedIndex = 0;
       this.updatePlannedPolyline(this.plannedPath);
       console.log('Planned polyline initialized with path:', this.plannedPath);
     },
@@ -191,6 +202,7 @@ export default {
         { lat: startLat, lng: startLng },
         { lat: endLat, lng: endLng },
       ];
+      this.lastVisitedIndex = 0;
       this.updatePlannedPolyline(this.plannedPath);
       console.log('Fallback planned polyline drawn between:', this.plannedPath);
     },
@@ -207,6 +219,28 @@ export default {
         map: this.googleMap,
       });
       console.log('Planned polyline updated with path:', path);
+    },
+    isPositionOnRoute(lat, lng) {
+      if (!this.plannedPath.length || this.plannedPath.length < 2) return false;
+
+      const position = new this.google.maps.LatLng(lat, lng);
+      let minDistance = Number.MAX_VALUE;
+
+      // Check perpendicular distance to each segment of the planned route
+      for (let i = 0; i < this.plannedPath.length - 1; i++) {
+        const start = new this.google.maps.LatLng(this.plannedPath[i].lat, this.plannedPath[i].lng);
+        const end = new this.google.maps.LatLng(this.plannedPath[i + 1].lat, this.plannedPath[i + 1].lng);
+
+        // Approximate perpendicular distance
+        const distance = this.google.maps.geometry.spherical.computeDistanceBetween(position,
+            this.google.maps.geometry.spherical.interpolate(start, end,
+                this.google.maps.geometry.spherical.computeHeading(start, end, position)));
+
+        minDistance = Math.min(minDistance, distance);
+      }
+
+      const DISTANCE_THRESHOLD = 20; // meters
+      return minDistance <= DISTANCE_THRESHOLD;
     },
     updateActualRoute() {
       if (!this.google || !this.googleMap) {
@@ -228,19 +262,59 @@ export default {
       });
       console.log('Actual route updated with path:', this.driverPath);
 
-      const remainingPath = this.calculateRemainingPath();
-      this.updatePlannedPolyline(remainingPath);
+      // Draw the walked path in grey
+      if (this.walkedPolyline) {
+        this.walkedPolyline.setMap(null);
+      }
+      if (this.walkedPath.length > 0) {
+        this.walkedPolyline = new this.google.maps.Polyline({
+          path: this.walkedPath,
+          geodesic: true,
+          strokeColor: '#808080', // Grey color for walked path
+          strokeOpacity: 1.0,
+          strokeWeight: 2,
+          map: this.googleMap,
+        });
+        console.log('Walked path updated with path:', this.walkedPath);
+      }
+
+      // Check if the driver is near the destination
+      const currentPosition = this.driverPath[this.driverPath.length - 1];
+      const destinationPosition = this.endMarker.getPosition();
+      const distanceToDestination = this.google.maps.geometry.spherical.computeDistanceBetween(
+          new this.google.maps.LatLng(currentPosition.lat, currentPosition.lng),
+          destinationPosition
+      );
+      const NEAR_DESTINATION_THRESHOLD = 50; // meters
+      if (distanceToDestination < NEAR_DESTINATION_THRESHOLD) {
+        this.isTripComplete = true;
+        console.log('Driver has reached the destination');
+      }
+
+      if (!this.isTripComplete) {
+        const remainingPath = this.calculateRemainingPath();
+        console.log('Remaining planned path:', remainingPath);
+        if (remainingPath.length === 0) {
+          console.warn('Remaining path is empty, showing full planned path as fallback');
+          this.updatePlannedPolyline(this.plannedPath);
+        } else {
+          this.updatePlannedPolyline(remainingPath);
+        }
+      } else {
+        this.updatePlannedPolyline([]);
+      }
     },
     calculateRemainingPath() {
       if (!this.plannedPath.length || !this.driverPath.length) {
+        console.log('Planned or driver path is empty, returning full planned path');
         return this.plannedPath;
       }
 
       const currentPosition = this.driverPath[this.driverPath.length - 1];
-      let closestIndex = 0;
+      let closestIndex = this.lastVisitedIndex;
       let minDistance = Number.MAX_VALUE;
 
-      for (let i = 0; i < this.plannedPath.length; i++) {
+      for (let i = this.lastVisitedIndex; i < this.plannedPath.length; i++) {
         const distance = this.google.maps.geometry.spherical.computeDistanceBetween(
             new this.google.maps.LatLng(currentPosition.lat, currentPosition.lng),
             new this.google.maps.LatLng(this.plannedPath[i].lat, this.plannedPath[i].lng)
@@ -251,7 +325,16 @@ export default {
         }
       }
 
-      return this.plannedPath.slice(closestIndex + 1);
+      const DISTANCE_THRESHOLD = 20; // meters
+      if (minDistance > DISTANCE_THRESHOLD) {
+        console.warn('Driver is too far from the planned path:', minDistance);
+        return this.plannedPath.slice(this.lastVisitedIndex);
+      }
+
+      this.lastVisitedIndex = closestIndex;
+      const remainingPath = this.plannedPath.slice(closestIndex);
+      console.log('Calculated remaining path:', remainingPath);
+      return remainingPath;
     },
     async refreshPlannedRoute() {
       try {
@@ -289,9 +372,14 @@ export default {
               const [lng, lat] = data.location.coordinates;
               if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
                 this.updateCarMarker(lat, lng);
-                this.driverPath.push({ lat, lng });
-                this.updateActualRoute();
-                console.log(`Updated marker and route for driver ${this.driverId} to:`, { lat, lng });
+                if (this.isPositionOnRoute(lat, lng)) {
+                  this.driverPath.push({ lat, lng });
+                  this.walkedPath.push({ lat, lng }); // Add to walked path
+                  this.updateActualRoute();
+                  console.log(`Updated marker and route for driver ${this.driverId} to:`, { lat, lng });
+                } else {
+                  console.warn('Driver position is off-route, not adding to driverPath:', { lat, lng });
+                }
               } else {
                 console.warn('Invalid coordinates received:', data.location.coordinates);
               }
@@ -303,7 +391,6 @@ export default {
           }
         });
 
-        // الاستماع لتغيير المسار
         this.socket.on(`route-updated/${this.tripId}`, (data) => {
           try {
             console.log('Received route update for tripId:', this.tripId, data);
@@ -311,7 +398,6 @@ export default {
               this.drawPlannedPolyline(data.encodedPolyline);
               console.log('Planned route updated via Socket.IO');
             } else {
-              // لو مفيش polyline في الـ Socket، نعمل fetch
               this.refreshPlannedRoute();
             }
           } catch (err) {
@@ -407,11 +493,13 @@ export default {
     if (this.endMarker) this.endMarker.setMap(null);
     if (this.plannedPolyline) this.plannedPolyline.setMap(null);
     if (this.actualPolyline) this.actualPolyline.setMap(null);
+    if (this.walkedPolyline) this.walkedPolyline.setMap(null); // Clean up walked polyline
     this.carMarker = null;
     this.startMarker = null;
     this.endMarker = null;
     this.plannedPolyline = null;
     this.actualPolyline = null;
+    this.walkedPolyline = null;
     this.googleMap = null;
     this.google = null;
     this.driverData = null;

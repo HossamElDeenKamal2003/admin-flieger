@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="dashboard">
     <!-- Sidebar -->
@@ -10,8 +9,8 @@
       <header class="header">
         <div class="greeting">
           <WaitingDriversNumber :waiting-captains="waitingCaptains" />
-          <h1>Special Cases</h1>
-          <p>Manage special case requests</p>
+          <h1>Pending Trips</h1>
+          <p>Manage pending trip requests</p>
         </div>
         <div class="header-icons">
           <i class="icon notifications"></i>
@@ -30,68 +29,40 @@
         <button @click="retryFetch">Retry</button>
       </div>
 
-      <!-- Pending Cases Table -->
-      <section class="special-cases-table" v-if="!loading && !error">
-        <h2 class="table-title">Pending Cases</h2>
+      <!-- Pending Trips Table -->
+      <section class="pending-trips-table" v-if="!loading && !error">
+        <h2 class="table-title">Pending Trips</h2>
         <div class="table-responsive">
           <table>
             <thead>
             <tr>
               <th>No.</th>
               <th>User ID</th>
-              <th>Case Type</th>
-              <th>Action</th>
-              <th>Current Status</th>
-              <th>File</th>
-              <th>Percent</th>
-              <th>Title</th>
-              <th>Body</th>
+              <th>Username</th>
+              <th>Phone Number</th>
+              <th>Vehicle Type</th>
+              <th>Pickup Location</th>
+              <th>Destination</th>
+              <th>Cost</th>
+              <th>Discount (%)</th>
+              <th>Status</th>
               <th>Created At</th>
               <th>Actions</th>
             </tr>
             </thead>
             <tbody>
-            <tr v-for="(specialCase, index) in paginatedPendingCases" :key="specialCase._id">
+            <tr v-for="(trip, index) in paginatedPendingTrips" :key="trip._id">
               <td>{{ (pendingPage - 1) * itemsPerPage + index + 1 }}</td>
-              <td>{{ specialCase.userId }}</td>
-              <td>{{ specialCase.caseType || capitalize }}</td>
-              <td>
-                <div class="status-buttons">
-                  <button
-                      class="status-button approve"
-                      :class="{ active: specialCase.status === 'approved' }"
-                      @click="setStatus(specialCase, 'approved')"
-                  >
-                    Approve
-                  </button>
-                  <button
-                      class="status-button reject"
-                      :class="{ active: specialCase.status === 'rejected' }"
-                      @click="setStatus(specialCase, 'rejected')"
-                  >
-                    Reject
-                  </button>
-                  <button
-                      class="status-button pending"
-                      :class="{ active: specialCase.status === 'pending' }"
-                      @click="setStatus(specialCase, 'pending')"
-                  >
-                    Pending
-                  </button>
-                </div>
-              </td>
-              <td>{{ specialCase.status }}</td>
-              <td>
-                <img
-                    :src="specialCase.file"
-                    alt="Case File Preview"
-                    class="file-preview"
-                    @click="openOverlay(specialCase.file)"
-                />
-              </td>
+              <td>{{ trip.userId._id }}</td>
+              <td>{{ trip.userId.username }}</td>
+              <td>{{ trip.userId.phoneNumber }}</td>
+              <td>{{ trip.vehicleType || 'N/A' }}</td>
+              <td>{{ trip.pickupLocationName || 'N/A' }}</td>
+              <td>{{ trip.destination || 'N/A' }}</td>
+              <td>{{ trip.cost || 0 }}</td>
               <td>
                 <input
-                    v-model.number="specialCase.percent"
+                    v-model.number="trip.discount"
                     type="number"
                     class="percent-input"
                     min="0"
@@ -100,38 +71,47 @@
                 />
               </td>
               <td>
-                <input
-                    v-model="specialCase.title"
-                    type="text"
-                    class="text-input"
-                    placeholder="Enter title"
-                />
+                <div class="status-buttons">
+                  <button
+                      class="status-button approve"
+                      :class="{ active: trip.status === 'accepted' }"
+                      @click="setStatus(trip, 'accepted')"
+                  >
+                    Accept
+                  </button>
+                  <button
+                      class="status-button reject"
+                      :class="{ active: trip.status === 'rejected' }"
+                      @click="setStatus(trip, 'rejected')"
+                  >
+                    Reject
+                  </button>
+                  <button
+                      class="status-button pending"
+                      :class="{ active: trip.status === 'pending' }"
+                      @click="setStatus(trip, 'pending')"
+                  >
+                    Pending
+                  </button>
+                </div>
               </td>
-              <td>
-                <input
-                    v-model="specialCase.body"
-                    type="text"
-                    class="text-input"
-                    placeholder="Enter body"
-                />
-              </td>
-              <td>{{ formatDate(specialCase.createdAt) }}</td>
+              <td>{{ formatDate(trip.createdAt) }}</td>
               <td>
                 <div class="action-buttons">
                   <button
-                      @click="updateCase(specialCase)"
+                      @click="updateTrip(trip)"
                       class="save-button"
                   >
                     Save
                   </button>
-                  <button @click="deleteCase(specialCase._id)" class="delete-button">
+                  <button @click="deleteTrip(trip._id)" class="delete-button">
                     Delete
                   </button>
                 </div>
               </td>
             </tr>
-            <tr v-if="paginatedPendingCases.length === 0">
-              <td colspan="11" class="no-data">No pending cases found</td>
+            <tr v-if="paginatedPendingTrips.length === 0">
+              <td colspan="12" class="no-data">No pending trips found</td>
             </tr>
             </tbody>
           </table>
@@ -140,28 +120,32 @@
         <!-- Pending Table Footer (Pagination) -->
         <div class="table-footer">
           <div>
-            <p>Total Pending Cases: {{ pendingCases.length }}</p>
+            <p>Total Pending Trips: {{ pendingTrips.length }}</p>
           </div>
           <div class="pagination">
             <span>
-              {{ (pendingPage - 1) * itemsPerPage + 1 }}-{{ Math.min(pendingPage * itemsPerPage, pendingCases.length) }}
-              of {{ pendingCases.length }} items
+              {{ (pendingPage - 1) * itemsPerPage + 1 }}-{{ Math.min(pendingPage * itemsPerPage, pendingTrips.length) }}
+              of {{ pendingTrips.length }} items
             </span>
-            <button :disabled="pendingPage === 1" @click="pendingPage--">Prev</button>
+            <button :disabled="pendingPage === 1" @click="pendingPage--">
+              Prev
+            </button>
             <button>{{ pendingPage }}</button>
-            <button :disabled="pendingPage >= pendingTotalPages" @click="pendingPage++">Next</button>
+            <button :disabled="pendingPage >= pendingTotalPages" @click="pendingPage++">
+              Next
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- Non-Pending Cases Table -->
-      <section class="special-cases-table" v-if="!loading && !error">
-        <h2 class="table-title">Approved/Rejected Cases</h2>
+      <!-- Non-Pending Trips Table -->
+      <section class="pending-trips-table" v-if="!loading && !error">
+        <h2 class="table-title">Accepted/Rejected Trips</h2>
         <div class="filter-container">
           <label for="statusFilter">Filter by Status: </label>
           <select v-model="statusFilter" id="statusFilter" @change="applyFilter">
             <option value="all">All</option>
-            <option value="approved">Approved</option>
+            <option value="accepted">Accepted</option>
             <option value="rejected">Rejected</option>
           </select>
         </div>
@@ -171,59 +155,31 @@
             <tr>
               <th>No.</th>
               <th>User ID</th>
-              <th>Case Type</th>
-              <th>Action</th>
-              <th>Current Status</th>
-              <th>File</th>
-              <th>Percent</th>
-              <th>Title</th>
-              <th>Body</th>
+              <th>Username</th>
+              <th>Phone Number</th>
+              <th>Vehicle Type</th>
+              <th>Pickup Location</th>
+              <th>Destination</th>
+              <th>Cost</th>
+              <th>Discount (%)</th>
+              <th>Status</th>
               <th>Created At</th>
               <th>Actions</th>
             </tr>
             </thead>
             <tbody>
-            <tr v-for="(specialCase, index) in paginatedNonPendingCases" :key="specialCase._id">
+            <tr v-for="(trip, index) in paginatedNonPendingTrips" :key="trip._id">
               <td>{{ (nonPendingPage - 1) * itemsPerPage + index + 1 }}</td>
-              <td>{{ specialCase.userId }}</td>
-              <td>{{ specialCase.caseType || capitalize }}</td>
-              <td>
-                <div class="status-buttons">
-                  <button
-                      class="status-button approve"
-                      :class="{ active: specialCase.status === 'approved' }"
-                      @click="setStatus(specialCase, 'approved')"
-                  >
-                    Approve
-                  </button>
-                  <button
-                      class="status-button reject"
-                      :class="{ active: specialCase.status === 'rejected' }"
-                      @click="setStatus(specialCase, 'rejected')"
-                  >
-                    Reject
-                  </button>
-                  <button
-                      class="status-button pending"
-                      :class="{ active: specialCase.status === 'pending' }"
-                      @click="setStatus(specialCase, 'pending')"
-                  >
-                    Pending
-                  </button>
-                </div>
-              </td>
-              <td>{{ specialCase.status }}</td>
-              <td>
-                <img
-                    :src="specialCase.file"
-                    alt="Case File Preview"
-                    class="file-preview"
-                    @click="openOverlay(specialCase.file)"
-                />
-              </td>
+              <td>{{ trip.userId._id }}</td>
+              <td>{{ trip.userId.username }}</td>
+              <td>{{ trip.userId.phoneNumber }}</td>
+              <td>{{ trip.vehicleType || 'N/A' }}</td>
+              <td>{{ trip.pickupLocationName || 'N/A' }}</td>
+              <td>{{ trip.destination || 'N/A' }}</td>
+              <td>{{ trip.cost || 0 }}</td>
               <td>
                 <input
-                    v-model.number="specialCase.percent"
+                    v-model.number="trip.discount"
                     type="number"
                     class="percent-input"
                     min="0"
@@ -232,38 +188,47 @@
                 />
               </td>
               <td>
-                <input
-                    v-model="specialCase.title"
-                    type="text"
-                    class="text-input"
-                    placeholder="Enter title"
-                />
+                <div class="status-buttons">
+                  <button
+                      class="status-button approve"
+                      :class="{ active: trip.status === 'accepted' }"
+                      @click="setStatus(trip, 'accepted')"
+                  >
+                    Accept
+                  </button>
+                  <button
+                      class="status-button reject"
+                      :class="{ active: trip.status === 'rejected' }"
+                      @click="setStatus(trip, 'rejected')"
+                  >
+                    Reject
+                  </button>
+                  <button
+                      class="status-button pending"
+                      :class="{ active: trip.status === 'pending' }"
+                      @click="setStatus(trip, 'pending')"
+                  >
+                    Pending
+                  </button>
+                </div>
               </td>
-              <td>
-                <input
-                    v-model="specialCase.body"
-                    type="text"
-                    class="text-input"
-                    placeholder="Enter body"
-                />
-              </td>
-              <td>{{ formatDate(specialCase.createdAt) }}</td>
+              <td>{{ formatDate(trip.createdAt) }}</td>
               <td>
                 <div class="action-buttons">
                   <button
-                      @click="updateCase(specialCase)"
+                      @click="updateTrip(trip)"
                       class="save-button"
                   >
                     Save
                   </button>
-                  <button @click="deleteCase(specialCase._id)" class="delete-button">
+                  <button @click="deleteTrip(trip._id)" class="delete-button">
                     Delete
                   </button>
                 </div>
               </td>
             </tr>
-            <tr v-if="paginatedNonPendingCases.length === 0">
-              <td colspan="11" class="no-data">No approved/rejected cases found</td>
+            <tr v-if="paginatedNonPendingTrips.length === 0">
+              <td colspan="12" class="no-data">No accepted/rejected trips found</td>
             </tr>
             </tbody>
           </table>
@@ -272,27 +237,23 @@
         <!-- Non-Pending Table Footer (Pagination) -->
         <div class="table-footer">
           <div>
-            <p>Total Approved/Rejected Cases: {{ filteredNonPendingCases.length }}</p>
+            <p>Total Accepted/Rejected Trips: {{ filteredNonPendingTrips.length }}</p>
           </div>
           <div class="pagination">
             <span>
-              {{ (nonPendingPage - 1) * itemsPerPage + 1 }}-{{ Math.min(nonPendingPage * itemsPerPage, filteredNonPendingCases.length) }}
-              of {{ filteredNonPendingCases.length }} items
+              {{ (nonPendingPage - 1) * itemsPerPage + 1 }}-{{ Math.min(nonPendingPage * itemsPerPage, filteredNonPendingTrips.length) }}
+              of {{ filteredNonPendingTrips.length }} items
             </span>
-            <button :disabled="nonPendingPage === 1" @click="nonPendingPage--">Prev</button>
+            <button :disabled="nonPendingPage === 1" @click="nonPendingPage--">
+              Prev
+            </button>
             <button>{{ nonPendingPage }}</button>
-            <button :disabled="nonPendingPage >= nonPendingTotalPages" @click="nonPendingPage++">Next</button>
+            <button :disabled="nonPendingPage >= nonPendingTotalPages" @click="nonPendingPage++">
+              Next
+            </button>
           </div>
         </div>
       </section>
-
-      <!-- Image Overlay -->
-      <div v-if="showOverlay" class="modal-overlay" @click="closeOverlay">
-        <div class="modal-content" @click.stop>
-          <img :src="overlayImage" alt="Case File" class="modal-image" @error="handleImageError" />
-          <button class="close-button" @click="closeOverlay">Close</button>
-        </div>
-      </div>
     </main>
   </div>
 </template>
@@ -303,56 +264,54 @@ import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 import axios from "axios";
 
 export default {
-  name: "SpecialCases",
+  name: "PendingTrips",
   components: {
     Sidebar,
     WaitingDriversNumber,
   },
   data() {
     return {
-      specialCases: [],
+      trips: [],
       loading: true,
       error: null,
       waitingCaptains: 0,
       pendingPage: 1,
       nonPendingPage: 1,
       itemsPerPage: 5,
-      showOverlay: false,
-      overlayImage: "",
       isSidebarCollapsed: false,
-      statusFilter: "all", // Default filter to show all non-pending cases
+      statusFilter: "all", // Default filter to show all non-pending trips
     };
   },
   computed: {
-    pendingCases() {
-      return this.specialCases.filter(caseItem => caseItem.status === 'pending');
+    pendingTrips() {
+      return this.trips.filter(trip => trip.status === 'pending');
     },
-    nonPendingCases() {
-      return this.specialCases.filter(caseItem => caseItem.status !== 'pending');
+    nonPendingTrips() {
+      return this.trips.filter(trip => trip.status !== 'pending');
     },
-    filteredNonPendingCases() {
-      if (this.statusFilter === "all") return this.nonPendingCases;
-      return this.nonPendingCases.filter(caseItem => caseItem.status === this.statusFilter);
+    filteredNonPendingTrips() {
+      if (this.statusFilter === "all") return this.nonPendingTrips;
+      return this.nonPendingTrips.filter(trip => trip.status === this.statusFilter);
     },
-    paginatedPendingCases() {
+    paginatedPendingTrips() {
       const start = (this.pendingPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.pendingCases.slice(start, end);
+      return this.pendingTrips.slice(start, end);
     },
-    paginatedNonPendingCases() {
+    paginatedNonPendingTrips() {
       const start = (this.nonPendingPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.filteredNonPendingCases.slice(start, end);
+      return this.filteredNonPendingTrips.slice(start, end);
     },
     pendingTotalPages() {
-      return Math.ceil(this.pendingCases.length / this.itemsPerPage);
+      return Math.ceil(this.pendingTrips.length / this.itemsPerPage);
     },
     nonPendingTotalPages() {
-      return Math.ceil(this.filteredNonPendingCases.length / this.itemsPerPage);
+      return Math.ceil(this.filteredNonPendingTrips.length / this.itemsPerPage);
     },
   },
   async created() {
-    await this.fetchSpecialCases();
+    await this.fetchTrips();
     window.addEventListener("resize", this.handleResize);
     this.handleResize();
   },
@@ -370,31 +329,33 @@ export default {
         this.isSidebarCollapsed = false;
       }
     },
-    async fetchSpecialCases() {
+    async fetchTrips() {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get("https://backend.fego-rides.com/specialCase", {
+        const response = await axios.get("https://backend.fego-rides.com/pendingTrips", {
           timeout: 10000,
         });
         if (response.status !== 200) {
-          throw new Error("Failed to fetch special cases");
+          throw new Error("Failed to fetch pending trips");
         }
-        this.specialCases = response.data.specialCases.map(caseItem => ({
-          ...caseItem,
-          _id: caseItem._id || caseItem.id,
-          title: caseItem.title || "",
-          body: caseItem.body || "",
-          status: caseItem.status || "pending",
-          percent: caseItem.percent || 0,
-          userId: caseItem.userId || "N/A",
-          caseType: caseItem.caseType || "",
-          file: caseItem.file || "https://via.placeholder.com/150",
-          createdAt: caseItem.createdAt || null,
+        this.trips = response.data.trips.map(trip => ({
+          ...trip,
+          _id: trip._id || trip.id,
+          userId: trip.userId || { _id: "N/A", username: "N/A", phoneNumber: "N/A" },
+          username: trip.userId?.username || trip.username || "N/A",
+          phoneNumber: trip.userId?.phoneNumber || "N/A",
+          vehicleType: trip.vehicleType || "N/A",
+          pickupLocationName: trip.pickupLocationName || "N/A",
+          destination: trip.destination || "N/A",
+          cost: trip.cost || 0,
+          discount: trip.discount || 0,
+          status: trip.status || "pending",
+          createdAt: trip.createdAt || null,
         }));
       } catch (error) {
-        console.error("Error fetching special cases:", error);
-        this.error = error.response?.data?.message || "Failed to fetch special cases.";
+        console.error("Error fetching trips:", error);
+        this.error = error.response?.data?.message || "Failed to fetch pending trips.";
       } finally {
         this.loading = false;
       }
@@ -407,82 +368,64 @@ export default {
         year: "2-digit",
       }).replace(/\//g, "/");
     },
-    openOverlay(imageUrl) {
-      this.overlayImage = imageUrl;
-      this.showOverlay = true;
+    async setStatus(trip, status) {
+      trip.status = status;
+      await this.updateTrip(trip);
     },
-    closeOverlay() {
-      this.showOverlay = false;
-      this.overlayImage = "";
-    },
-    handleImageError() {
-      console.error("Failed to load image:", this.overlayImage);
-      this.overlayImage = "https://via.placeholder.com/150";
-      alert("Failed to load image");
-    },
-    async setStatus(specialCase, status) {
-      specialCase.status = status;
-      await this.updateCase(specialCase);
-    },
-    async updateCase(specialCase) {
-      if (specialCase.percent === null || specialCase.percent === undefined || isNaN(specialCase.percent)) {
-        alert("Please enter a valid percent value");
+    async updateTrip(trip) {
+      if (trip.discount === null || trip.discount === undefined || isNaN(trip.discount)) {
+        alert("Please enter a valid discount value");
         return;
       }
-      if (specialCase.percent < 0 || specialCase.percent > 100) {
-        alert("Percent must be between 0 and 100");
+      if (trip.discount < 0 || trip.discount > 100) {
+        alert("Discount must be between 0 and 100");
         return;
       }
-      if (!specialCase.status || !["pending", "approved", "rejected"].includes(specialCase.status)) {
+      if (!trip.status || !["pending", "accepted", "rejected"].includes(trip.status)) {
         alert("Please select a valid status");
         return;
       }
       try {
         const payload = {
-          id: specialCase._id,
-          status: specialCase.status,
-          percent: specialCase.percent,
-          title: specialCase.title || "",
-          body: specialCase.body || "",
+          id: trip._id,
+          status: trip.status,
+          discount: trip.discount,
         };
-        const response = await axios.patch("https://backend.fego-rides.com/specialCase", payload, {
-          headers: {"Content-Type": "application/json"},
+        const response = await axios.patch("https://backend.fego-rides.com/pendingTrips", payload, {
+          headers: { "Content-Type": "application/json" },
           timeout: 10000,
         });
         if (response.status === 200) {
-          alert("Case updated successfully");
+          alert("Trip updated successfully");
+          await this.fetchTrips(); // Refresh data
         }
       } catch (error) {
-        console.error("Error updating case:", error);
-        alert("Failed to update case: " + (error.response?.data?.message || error.message));
+        console.error("Error updating trip:", error);
+        alert("Failed to update trip: " + (error.response?.data?.message || error.message));
       }
     },
-    async deleteCase(caseId) {
-      if (!confirm("Are you sure you want to delete this case?")) return;
+    async deleteTrip(tripId) {
+      if (!confirm("Are you sure you want to delete this trip?")) return;
       try {
-        const response = await axios.delete(`https://backend.fego-rides.com/specialCase`, {
-          data: { id: caseId }  // <-- fix is here
+        const response = await axios.delete("https://backend.fego-rides.com/pendingTrips", {
+          data: { id: tripId },
+          headers: { "Content-Type": "application/json" },
+          timeout: 10000,
         });
         if (response.status === 200) {
-          await this.fetchSpecialCases();
-          alert("Case deleted successfully");
+          await this.fetchTrips();
+          alert("Trip deleted successfully");
         }
       } catch (error) {
-        console.error("Error deleting case:", error);
-        alert("Failed to delete case: " + (error.response?.data?.message || error.message));
+        console.error("Error deleting trip:", error);
+        alert("Failed to delete trip: " + (error.response?.data?.message || error.message));
       }
     },
     retryFetch() {
-      this.fetchSpecialCases();
+      this.fetchTrips();
     },
     applyFilter() {
       this.nonPendingPage = 1; // Reset to first page when filter changes
-    },
-  },
-  filters: {
-    capitalize(value) {
-      if (!value) return "";
-      return value.charAt(0).toUpperCase() + value.slice(1);
     },
   },
 };
@@ -537,7 +480,7 @@ export default {
   cursor: pointer;
 }
 
-.special-cases-table {
+.pending-trips-table {
   background-color: white;
   padding: 20px;
   border-radius: 10px;
@@ -576,28 +519,28 @@ export default {
   -webkit-overflow-scrolling: touch;
 }
 
-.special-cases-table table {
+.pending-trips-table table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
   min-width: 600px;
 }
 
-.special-cases-table th,
-.special-cases-table td {
+.pending-trips-table th,
+.pending-trips-table td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #ecf0f1;
 }
 
-.special-cases-table th {
+.pending-trips-table th {
   background-color: #f8f9fa;
   font-weight: 600;
   color: #34495e;
   white-space: nowrap;
 }
 
-.special-cases-table td {
+.pending-trips-table td {
   white-space: nowrap;
   color: #2c3e50;
 }
@@ -653,34 +596,17 @@ export default {
   font-weight: bold;
 }
 
-.file-preview {
-  max-width: 50px;
-  height: auto;
-  cursor: pointer;
-  border-radius: 5px;
-  display: block;
-}
-
-.percent-input,
-.text-input {
+.percent-input {
   width: 100%;
   padding: 5px;
   border: 1px solid #ccc;
   border-radius: 5px;
   font-size: 0.9rem;
   box-sizing: border-box;
-}
-
-.percent-input {
   max-width: 60px;
 }
 
-.text-input {
-  min-width: 100px;
-}
-
-.percent-input::placeholder,
-.text-input::placeholder {
+.percent-input::placeholder {
   color: #aaa;
   font-style: italic;
 }
@@ -717,47 +643,6 @@ export default {
 
 .delete-button:hover {
   background-color: #5a6268;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 90%;
-  max-height: 90vh;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.modal-image {
-  width: 100%;
-  height: auto;
-  max-height: 80vh;
-}
-
-.close-button {
-  margin-top: 10px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #ff4d4f;
-  color: white;
 }
 
 .table-footer {
@@ -848,7 +733,7 @@ export default {
     margin-left: 250px;
   }
 
-  .special-cases-table {
+  .pending-trips-table {
     padding: 10px;
   }
 
@@ -872,4 +757,3 @@ export default {
   }
 }
 </style>
-```
