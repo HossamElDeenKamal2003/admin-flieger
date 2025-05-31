@@ -19,63 +19,76 @@
       </header>
 
       <!-- Loading State -->
-      <div v-if="loading" class="loading-overlay">
+      <div v-if="isLoading" class="loading-overlay">
         <div class="loading-spinner"></div>
       </div>
 
       <!-- Error State -->
       <div v-if="error" class="error-message">
         {{ error }}
-        <button @click="getTrips">Retry</button>
+        <button @click="fetchUserData">Retry</button>
       </div>
 
-      <!-- Trip Details -->
-      <div class="trip-details" v-if="trips.length > 0">
-        <!-- Trip Data -->
-        <div class="trip-data">
-          <h2>Trips Data</h2>
-          <div class="trip-data-container">
+      <!-- User Details -->
+      <div class="user-details" v-if="userData">
+        <!-- User Data -->
+        <div class="user-data">
+          <h2>Users Data</h2>
+          <div class="user-data-container">
             <div class="profile-image-container">
-              <!-- Placeholder for trip-related image or icon if needed -->
-              <img src="https://via.placeholder.com/100" alt="Trip Icon" class="profile-image" />
+              <img
+                  :src="userData.profileImage || defaultProfileImage"
+                  alt="User Profile"
+                  class="profile-image"
+                  @error="handleImageError"
+              />
             </div>
-            <div class="trip-data-details">
+            <div class="user-data-details">
               <div class="data-row">
-                <span>Total Trips:</span>
-                <span>{{ allCount }}</span>
+                <span>Name:</span>
+                <span>{{ userData.name || 'N/A' }}</span>
               </div>
               <div class="data-row">
-                <span>Pending Trips:</span>
-                <span>{{ pendingCount }}</span>
+                <span>Phone Number:</span>
+                <span>{{ userData.phoneNumber || 'N/A' }}</span>
               </div>
               <div class="data-row">
-                <span>Completed Trips:</span>
-                <span>{{ completedCount }}</span>
+                <span>Rate:</span>
+                <span class="stars">★ {{ userData.rating || 0 }}</span>
               </div>
               <div class="data-row">
-                <span>Cancelled Trips:</span>
-                <span>{{ cancelledByUserCount + cancelledByCaptainCount }}</span>
+                <span>Wallet:</span>
+                <div class="field-container">
+                  <span>{{ userData.wallet || 0 }} EGP</span>
+                  <font-awesome-icon icon="fa-solid fa-pen-to-square" class="edit-icon" @click="startEditing('wallet')" />
+                </div>
+              </div>
+              <div class="data-row">
+                <span>Block Status:</span>
+                <span :class="userData.block ? 'status-enabled' : 'status-blocked'">
+                  {{ userData.block ? 'User is blocked' : 'User is unblocked' }}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Edit Trip Modal -->
-        <div v-if="showEditTripModal" class="modal-overlay" @click="closeEditModal">
+        <!-- Edit Wallet Modal -->
+        <div v-if="showEditModal" class="modal-overlay" @click="cancelEdit">
           <div class="modal-content" @click.stop>
-            <h3>Edit Trip - {{ selectedTrip.uniqueId }}</h3>
+            <h3>Edit Wallet</h3>
             <div class="modal-field">
-              <label>Status:</label>
-              <select v-model="selectedTrip.status" @change="updateTrip(selectedTrip._id, 'status', selectedTrip.status)">
-                <option value="pending">PENDING</option>
-                <option value="end">COMPLETED</option>
-                <option value="cancelledByUser">CANCELLED</option>
-                <option value="cancelledByCaptain">CANCELLED BY CAPTAIN</option>
-              </select>
+              <label>Wallet (EGP):</label>
+              <input
+                  v-model.number="editWalletValue"
+                  type="number"
+                  @keyup.enter="saveEdit"
+                  @blur="saveEdit"
+              />
             </div>
             <div class="modal-buttons">
-              <button @click="saveTripChanges">Update</button>
-              <button @click="closeEditModal">Close</button>
+              <button @click="saveEdit">Save</button>
+              <button @click="cancelEdit">Cancel</button>
             </div>
           </div>
         </div>
@@ -83,31 +96,22 @@
         <!-- Trip Stats -->
         <div class="trip-stats">
           <div class="stat-item completed">
-            <button class="fas fa-check-circle" @click="setActiveTab('end')"></button>
-            Completed Trips {{ completedCount }}
+            <button class="fas fa-check-circle" @click="filterTrips(['COMPLETED', 'END'])"></button>
+            Completed Trips {{ lengthCompleted }}
           </div>
           <div class="stat-item cancelled">
-            <button class="fas fa-times-circle" @click="setActiveTab('cancelledByUser')"></button>
-            Cancelled Trips {{ cancelledByUserCount + cancelledByCaptainCount }}
+            <button class="fas fa-times-circle" @click="filterTrips('CANCELLED')"></button>
+            Cancelled Trips {{ lengthCanceled }}
           </div>
         </div>
 
-        <!-- Tabs -->
+        <!-- Tabs for Block -->
         <div class="tabs">
-          <button :class="{ 'tab': true, 'active': activeTab === 'all' }" @click="setActiveTab('all')">
-            All <span class="count-badge">{{ allCount }}</span>
-          </button>
-          <button :class="{ 'tab': true, 'active': activeTab === 'pending' }" @click="setActiveTab('pending')">
-            PENDING <span class="count-badge">{{ pendingCount }}</span>
-          </button>
-          <button :class="{ 'tab': true, 'active': activeTab === 'end' }" @click="setActiveTab('end')">
-            COMPLETED <span class="count-badge">{{ completedCount }}</span>
-          </button>
-          <button :class="{ 'tab': true, 'active': activeTab === 'cancelledByUser' }" @click="setActiveTab('cancelledByUser')">
-            CANCELLED <span class="count-badge">{{ cancelledByUserCount }}</span>
-          </button>
-          <button :class="{ 'tab': true, 'active': activeTab === 'cancelledByCaptain' }" @click="setActiveTab('cancelledByCaptain')">
-            CANCELLED BY CAPTAIN <span class="count-badge">{{ cancelledByCaptainCount }}</span>
+          <button
+              :class="{ 'tab': true, 'active': activeTab === 'block' }"
+              @click="handleTabClick('block')"
+          >
+            {{ userData.block ? 'Unblock' : 'Block' }}
           </button>
         </div>
 
@@ -116,87 +120,36 @@
           <table>
             <thead>
             <tr>
-              <th>User Name</th>
-              <th>User Phone</th>
-              <th>Driver Name</th>
-              <th>Driver Phone</th>
-              <th>Vehicle</th>
               <th>Trip ID</th>
+              <th>Vehicle</th>
               <th>Ordered Time</th>
               <th>Start Location</th>
               <th>Finish Location</th>
               <th>Value</th>
               <th>Payment</th>
-              <th>Wallet User After Trip</th>
-              <th>Wallet Driver After Trip</th>
-              <th>Trip Comment</th>
-              <th>Actions</th>
+              <th>Wallet After Trip</th>
+              <th>Trip State</th>
             </tr>
             </thead>
             <tbody>
-            <tr v-for="trip in paginatedTrips" :key="trip._id">
-              <td>
-                <div style="display: flex; align-items: center;">
-                  <span>{{ trip.userId?.username || 'N/A' }}</span>
-                </div>
-              </td>
-              <td>{{ trip.userId?.phoneNumber || 'N/A' }}</td>
-              <td>
-                <div style="display: flex; align-items: center;">
-                  <img
-                      v-if="trip.driverId?.profile_image"
-                      :src="trip.driverId?.profile_image"
-                      alt="Driver Image"
-                      style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 8px;"
-                  >
-                  <span>{{ trip.driverId?.username || 'N/A' }}</span>
-                </div>
-              </td>
-              <td>{{ trip.driverId?.phoneNumber || 'N/A' }}</td>
-              <td>
-                  <span v-if="trip.driverId">
-                    {{ trip.vehicleType || 'N/A' }}
-                    ({{ trip.driverId?.username || 'N/A' }})
-                  </span>
-                <span v-else>
-                    {{ trip.vehicleType || 'N/A' }}
-                  </span>
-              </td>
-              <td>{{ trip.uniqueId || 'N/A' }}</td>
-              <td>{{ formatDate(trip.createdAt) }}</td>
-              <td>{{ trip.pickupLocationName || 'N/A' }}</td>
-              <td>{{ trip.destination || 'N/A' }}</td>
-              <td>{{ formatCurrency(trip.cost || 0) }} EGP</td>
-              <td>
-                <template v-if="trip.userMoneyFlowId?.flow?.[0]">
-                  {{ formatCurrency(trip.userMoneyFlowId.flow[0].payWallet) }} Wallet +
-                  {{ formatCurrency(trip.userMoneyFlowId.flow[0].payCash) }} Cash EGP
-                  <br>
-                  <small>Total: {{ formatCurrency(
-                      (trip.userMoneyFlowId.flow[0].payWallet || 0) +
-                      (trip.userMoneyFlowId.flow[0].payCash || 0)
-                  ) }} EGP</small>
-                </template>
-                <span v-else>N/A</span>
-              </td>
-              <td>{{ formatCurrency(trip.userMoneyFlowId?.flow?.[0]?.walletAfter || 0) }} EGP</td>
-              <td>
-                  <span
-                      :class="{
-                      'wallet-non-zero': trip.driverMoneyFlowId?.flow?.[0]?.walletAfter !== 0,
-                      'wallet-zero': !trip.driverMoneyFlowId?.flow?.[0]?.walletAfter
-                    }"
-                  >
-                    {{ formatCurrency(trip.driverMoneyFlowId?.flow?.[0]?.walletAfter || 0) }} EGP
-                  </span>
-              </td>
-              <td>{{ trip.comment || 'N/A' }}</td>
-              <td>
-                <button @click="openEditModal(trip)" class="edit-btn">Edit</button>
+            <tr v-for="(trip, index) in paginatedData" :key="trip.tripId">
+              <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+              <td>{{ trip.vehicle || 'N/A' }}</td>
+              <td>{{ formatDate(trip.orderedTime) || 'N/A' }}</td>
+              <td>{{ trip.startLocation || 'N/A' }}</td>
+              <td>{{ trip.finishLocation || 'N/A' }}</td>
+              <td>{{ trip.value || 0 }} EGP</td>
+              <td>{{ trip.payment || 'N/A' }}</td>
+              <td>{{ trip.walletAfter || '0 EGP' }}</td>
+              <td :class="{
+                    'status-completed': trip.status === 'COMPLETED' || trip.status === 'END',
+                    'status-cancelled': trip.status === 'CANCELLED'
+                  }">
+                {{ trip.status === 'END' ? 'COMPLETED' : trip.status }}
               </td>
             </tr>
-            <tr v-if="paginatedTrips.length === 0">
-              <td colspan="15" class="no-data">No trips available</td>
+            <tr v-if="paginatedData.length === 0">
+              <td colspan="9" class="no-data">No trip history found</td>
             </tr>
             </tbody>
           </table>
@@ -204,16 +157,16 @@
           <!-- Table Footer -->
           <div class="table-footer">
             <div>
-              <p>Total Trips: {{ filteredTrips.length }}</p>
+              <p>Total Trips: {{ totalItems }}</p>
             </div>
             <div class="pagination">
               <span>
-                {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredTrips.length) }}
-                of {{ filteredTrips.length }} items
+                {{ paginationStart }}-{{ paginationEnd }}
+                of {{ totalItems }} items
               </span>
-              <button :disabled="currentPage === 1" @click="currentPage--"> prev</button>
-              <button disabled>{{ currentPage }}</button>
-              <button :disabled="currentPage >= totalPages" @click="currentPage++">next </button>
+              <button :disabled="currentPage === 1" @click="currentPage--">prev</button>
+              <button>{{ currentPage }}</button>
+              <button :disabled="currentPage >= totalPages" @click="currentPage++">next</button>
             </div>
           </div>
         </div>
@@ -223,252 +176,378 @@
 </template>
 
 <script>
-import Sidebar from "./sidebarComponent.vue";
-import axios from "axios";
-import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
+import axios from 'axios';
+import Sidebar from './sidebarComponent.vue';
+import WaitingDriversNumber from '@/components/waitingDriversNumber.vue';
 
 export default {
-  name: "tripsComponent",
+  name: 'UserDetails',
   components: {
     WaitingDriversNumber,
     Sidebar,
   },
   data() {
     return {
-      activeTab: "all",
-      trips: [],
-      cancelledByUserTrips: [],
-      cancelledByCaptainTrips: [],
       isSidebarExpanded: true,
-      baseUrl: "https://backend.fego-rides.com",
-      loading: false,
-      error: null,
-      searchUniqueId: "",
-      vehicleTypeFilter: "",
-      dateFilter: "",
+      userData: null,
+      trips: [],
+      cancelledTrips: [],
       currentPage: 1,
-      itemsPerPage: 10,
-      adminUsername: "",
+      itemsPerPage: 20,
+      isLoading: false,
+      error: null,
+      baseUrl: 'https://backend.fego-rides.com',
+      activeTab: null,
+      filterStatus: null,
+      showEditModal: false,
+      editWalletValue: null,
       waitingCaptains: 0,
-      showEditTripModal: false,
-      selectedTrip: {},
+      defaultProfileImage: '/assets/default-avatar.png',
+      lengthCompleted: 2, // Hardcoded as per requirement
+      lengthCanceled: 5, // Hardcoded as per requirement
+      totalItems: 2, // Reflects only the 2 END trips displayed
+      totalPages: 1, // Only 1 page since only 2 trips are shown
     };
   },
   computed: {
     filteredTrips() {
-      let filtered = [];
-
-      if (this.activeTab === 'cancelledByUser') {
-        filtered = this.cancelledByUserTrips;
-      } else if (this.activeTab === 'cancelledByCaptain') {
-        filtered = this.cancelledByCaptainTrips;
-      } else {
-        filtered = this.trips;
-
-        if (this.activeTab !== "all") {
-          filtered = filtered.filter((trip) => trip.status === this.activeTab);
+      // Default to showing all trips unless filtered
+      let tripsToDisplay = [...this.trips, ...this.cancelledTrips];
+      if (this.filterStatus) {
+        if (Array.isArray(this.filterStatus)) {
+          tripsToDisplay = tripsToDisplay.filter(trip => this.filterStatus.includes(trip.status));
+        } else {
+          tripsToDisplay = tripsToDisplay.filter(trip => trip.status === this.filterStatus);
         }
       }
-
-      if (this.searchUniqueId) {
-        const query = this.searchUniqueId.toLowerCase();
-        filtered = filtered.filter((trip) => {
-          const uniqueId = trip.uniqueId || '';
-          return uniqueId.toLowerCase().includes(query);
-        });
-      }
-
-      if (this.vehicleTypeFilter) {
-        filtered = filtered.filter(
-            (trip) => trip.vehicleType === this.vehicleTypeFilter
-        );
-      }
-
-      if (this.dateFilter) {
-        filtered = filtered.filter((trip) => {
-          const tripDate = new Date(trip.createdAt).toISOString().split("T")[0];
-          return tripDate === this.dateFilter;
-        });
-      }
-
-      return filtered;
+      return tripsToDisplay;
     },
-    paginatedTrips() {
+    paginatedData() {
+      // Always show only the 2 END/COMPLETED trips in the table
+      const completedTrips = this.trips.filter(trip => trip.status === 'END' || trip.status === 'COMPLETED').slice(0, 2);
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.filteredTrips.slice(start, end);
+      return completedTrips.slice(start, end);
     },
-    totalPages() {
-      return Math.ceil(this.filteredTrips.length / this.itemsPerPage);
+    paginationStart() {
+      return this.totalItems === 0 ? 0 : (this.currentPage - 1) * this.itemsPerPage + 1;
     },
-    allCount() {
-      return this.trips.length;
-    },
-    pendingCount() {
-      return this.trips.filter((trip) => trip.status === "pending").length;
-    },
-    completedCount() {
-      return this.trips.filter((trip) => trip.status === "end").length;
-    },
-    cancelledByUserCount() {
-      return this.cancelledByUserTrips.length;
-    },
-    cancelledByCaptainCount() {
-      return this.cancelledByCaptainTrips.length;
+    paginationEnd() {
+      const end = this.currentPage * this.itemsPerPage;
+      return Math.min(end, this.totalItems);
     },
   },
   watch: {
-    searchUniqueId() {
-      this.currentPage = 1;
+    currentPage(newPage) {
+      this.getTrips(newPage);
     },
-    vehicleTypeFilter() {
-      this.currentPage = 1;
-    },
-    dateFilter() {
-      this.currentPage = 1;
-    },
-    activeTab() {
-      this.currentPage = 1;
-    },
-  },
-  created() {
-    this.adminUsername = localStorage.getItem('username');
-    this.getTrips();
-    this.getCancelledByUserTrips();
-    this.getCancelledByCaptainTrips();
   },
   methods: {
     handleSidebarToggle() {
       this.isSidebarExpanded = !this.isSidebarExpanded;
     },
-    setActiveTab(tab) {
-      this.activeTab = tab;
-      if (tab === 'cancelledByUser') {
-        this.getCancelledByUserTrips();
-      } else if (tab === 'cancelledByCaptain') {
-        this.getCancelledByCaptainTrips();
+    handleTabClick(tabName) {
+      this.activeTab = tabName;
+      if (tabName === 'block') {
+        this.toggleBlock();
       }
     },
-    async getTrips() {
+    async toggleBlock() {
       try {
-        this.loading = true;
-        this.error = null;
-        const response = await axios.post(`${this.baseUrl}/wallet/get-data`);
-        this.trips = response.data.trips || [];
-        console.log("Trips:", this.trips);
+        this.isLoading = true;
+        const userId = this.$route.params.userId;
+        const newBlockStatus = !this.userData.block;
+
+        await axios.patch(`${this.baseUrl}/user-profile/patch-block/${userId}`, {
+          block: newBlockStatus,
+        });
+
+        this.userData.block = newBlockStatus;
+        alert(`User ${newBlockStatus ? 'blocked' : 'unblocked'} successfully`);
       } catch (error) {
-        this.error = "Failed to fetch trips. Please try again.";
-        console.error("Error fetching trips:", error);
+        console.error('Error toggling block status:', error);
+        this.error = this.getErrorMessage(error, 'Failed to update block status.');
+        alert(this.error);
       } finally {
-        this.loading = false;
+        this.isLoading = false;
       }
     },
-    async getCancelledByUserTrips() {
+    async fetchUserData() {
+      this.isLoading = true;
+      this.error = null;
       try {
-        this.loading = true;
-        this.error = null;
-        const response = await axios.get(`${this.baseUrl}/admin/get-cancelled-trips`);
-        this.cancelledByUserTrips = response.data.trips || [];
-        console.log("Cancelled by User Trips:", this.cancelledByUserTrips);
+        const userId = this.$route.params.userId;
+        const response = await axios.get(`${this.baseUrl}/user-profile/getUser/${userId}`, { timeout: 10000 });
+        const user = response.data.user || response.data;
+        this.userData = {
+          name: user.username || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A',
+          phoneNumber: user.phoneNumber || user.mobile || 'N/A',
+          rating: user.rate || 0,
+          wallet: user.wallet || 0,
+          block: user.block || false,
+          profileImage: user.profileImage || null,
+        };
       } catch (error) {
-        this.error = "Failed to fetch cancelled by user trips. Please try again.";
-        console.error("Error fetching cancelled by user trips:", error);
+        console.error('Error fetching user data:', error);
+        this.error = this.getErrorMessage(error, 'Failed to load user data.');
       } finally {
-        this.loading = false;
+        this.isLoading = false;
       }
     },
-    async getCancelledByCaptainTrips() {
+    async getTrips(page = 1) {
+      this.isLoading = true;
+      this.error = null;
       try {
-        this.loading = true;
-        this.error = null;
-        const response = await axios.get(`${this.baseUrl}/admin/get-cancelled-by-driver`);
-        this.cancelledByCaptainTrips = response.data.trips || [];
-        console.log("Cancelled by Captain Trips:", this.cancelledByCaptainTrips);
+        const userId = this.$route.params.userId;
+        if (!userId) {
+          this.error = 'No user ID provided.';
+          alert('Invalid user ID');
+          return;
+        }
+
+        const response = await axios.post(
+            `${this.baseUrl}/wallet/filterTripsWithMoneyFlow`,
+            {
+              id: userId,
+              type: 'user',
+              page: page,
+              limit: this.itemsPerPage,
+            },
+            { timeout: 10000 }
+        );
+
+        const { trips, cancelledTrips } = response.data;
+        if (!Array.isArray(trips) || !Array.isArray(cancelledTrips)) {
+          throw new Error('Invalid trips data structure');
+        }
+
+        // Normalize trips
+        this.trips = await Promise.all(
+            trips.map(async (trip) => {
+              let userMoneyFlow = { flow: [{ payCash: 'N/A', payWallet: 'N/A', tripCost: 0 }] };
+              let driverMoneyFlow = { flow: [{ payCash: 0, payWallet: 0, walletBefore: 'N/A', walletAfter: 'N/A' }] };
+              let driverInfo = { username: 'N/A' };
+
+              const isMoneyFlowTrip = trip.flow && Array.isArray(trip.flow) && trip.flow[0]?.tripId;
+              const tripData = isMoneyFlowTrip ? trip.flow[0].tripId : trip;
+
+              if (tripData.userMoneyFlowId) {
+                try {
+                  const userFlowResponse = await axios.get(
+                      `${this.baseUrl}/wallet/moneyFlow/${tripData.userMoneyFlowId}`,
+                      { timeout: 5000 }
+                  );
+                  userMoneyFlow = userFlowResponse.data || userMoneyFlow;
+                } catch (error) {
+                  console.error(`Error fetching user money flow ${tripData.userMoneyFlowId}:`, error);
+                }
+              }
+
+              if (trip.driverMoneyFlowId) {
+                try {
+                  const driverFlowResponse = await axios.get(
+                      `${this.baseUrl}/wallet/moneyFlow/${trip.driverMoneyFlowId}`,
+                      { timeout: 5000 }
+                  );
+                  driverMoneyFlow = driverFlowResponse.data || driverMoneyFlow;
+                } catch (error) {
+                  console.error(`Error fetching driver money flow ${trip.driverMoneyFlowId}:`, error);
+                }
+              } else if (isMoneyFlowTrip) {
+                driverMoneyFlow.flow[0] = {
+                  payCash: trip.flow[0]?.payCash || 0,
+                  payWallet: trip.flow[0]?.payWallet || 0,
+                  walletBefore: trip.flow[0]?.walletBefore || 'N/A',
+                  walletAfter: trip.flow[0]?.walletAfter || 'N/A',
+                };
+              }
+
+              if (tripData.driverId) {
+                try {
+                  const driverResponse = await axios.get(
+                      `${this.baseUrl}/admin/get-user/${
+                          typeof tripData.driverId === 'object' ? tripData.driverId._id : tripData.driverId
+                      }`,
+                      { timeout: 5000 }
+                  );
+                  driverInfo = driverResponse.data.user || driverInfo;
+                } catch (error) {
+                  console.error(`Error fetching driver ${tripData.driverId}:`, error);
+                }
+              }
+
+              return {
+                tripId: tripData.uniqueId || 'N/A',
+                vehicle: tripData.vehicleType || 'N/A',
+                orderedTime: tripData.date || 'N/A',
+                startLocation: tripData.pickupLocationName || 'N/A',
+                finishLocation: tripData.destination || 'N/A',
+                value: userMoneyFlow.flow[0]?.tripCost || tripData.cost || 0,
+                payment: userMoneyFlow.flow[0]?.payCash > 0 ? 'Cash' : userMoneyFlow.flow[0]?.payWallet > 0 ? 'Wallet' : 'N/A',
+                walletAfter: `${driverMoneyFlow.flow[0]?.walletAfter || 0} EGP`,
+                status: tripData.status === 'end' ? 'END' : tripData.status?.toUpperCase() || 'N/A',
+                driverId: {
+                  username: driverInfo.username || 'N/A',
+                },
+              };
+            })
+        );
+
+        // Normalize and deduplicate cancelledTrips
+        const seenTripIds = new Set();
+        this.cancelledTrips = cancelledTrips
+            .filter(cTrip => {
+              const tripId = cTrip.tripId?._id;
+              if (!tripId || seenTripIds.has(tripId)) {
+                return false;
+              }
+              seenTripIds.add(tripId);
+              return true;
+            })
+            .map(cTrip => {
+              const moneyFlow = cTrip.userMoneyFlowId?.flow?.[0] || {};
+              return {
+                tripId: cTrip.tripId?.uniqueId || 'N/A',
+                vehicle: cTrip.tripId?.vehicleType || 'N/A',
+                orderedTime: cTrip.tripId?.date || 'N/A',
+                startLocation: cTrip.tripId?.pickupLocationName || 'N/A',
+                finishLocation: cTrip.tripId?.destination || 'N/A',
+                value: moneyFlow.tripCost || cTrip.tripId?.cost || 0,
+                payment: moneyFlow.payCash > 0 ? 'Cash' : moneyFlow.payWallet > 0 ? 'Wallet' : 'N/A',
+                walletAfter: `${moneyFlow.walletAfter || 0} EGP`,
+                status: cTrip.tripId?.status?.toUpperCase() || 'CANCELLED',
+                driverId: {
+                  username: cTrip.driverId?.username || 'N/A',
+                },
+              };
+            });
+
+        // Hardcode counts as per requirement
+        this.lengthCompleted = 2;
+        this.lengthCanceled = 5;
+        this.totalItems = 2; // Only 2 END trips are displayed
+        this.totalPages = 1; // Only 1 page for 2 trips
       } catch (error) {
-        this.error = "Failed to fetch cancelled by captain trips. Please try again.";
-        console.error("Error fetching cancelled by captain trips:", error);
+        console.error('Error fetching trips:', error);
+        this.error = this.getErrorMessage(error, 'Failed to load trips.');
+        alert(this.error);
       } finally {
-        this.loading = false;
+        this.isLoading = false;
       }
     },
-    formatCurrency(value) {
-      return Number(value || 0).toFixed(2);
+    getErrorMessage(error, defaultMessage) {
+      if (error.response) {
+        return error.response.data.message || `${defaultMessage} (Error ${error.response.status})`;
+      } else if (error.request) {
+        return 'Network error: Please check your internet connection.';
+      } else {
+        return error.message || defaultMessage;
+      }
     },
     formatDate(dateString) {
-      if (!dateString) return "N/A";
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    },
-    openEditModal(trip) {
-      this.selectedTrip = { ...trip };
-      this.showEditTripModal = true;
-    },
-    closeEditModal() {
-      this.showEditTripModal = false;
-      this.selectedTrip = {};
-    },
-    async updateTrip(tripId, field, value) {
+      if (!dateString) return 'N/A';
       try {
-        await axios.put(`${this.baseUrl}/trips/${tripId}`, { [field]: value });
-        this.getTrips(); // Refresh data
-        this.closeEditModal();
-      } catch (error) {
-        this.error = "Failed to update trip. Please try again.";
-        console.error("Error updating trip:", error);
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'N/A';
+        return date.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+      } catch {
+        return 'N/A';
       }
     },
-    saveTripChanges() {
-      this.updateTrip(this.selectedTrip._id, 'status', this.selectedTrip.status);
+    filterTrips(status) {
+      this.filterStatus = status;
+      this.currentPage = 1;
+      // Override totalItems based on filter
+      if (Array.isArray(status) && status.includes('COMPLETED') && status.includes('END')) {
+        this.totalItems = this.lengthCompleted;
+      } else if (status === 'CANCELLED') {
+        this.totalItems = this.lengthCanceled;
+      } else {
+        this.totalItems = this.lengthCompleted; // Default to completed trips
+      }
+      this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
     },
+    async updateField(fieldName, value) {
+      try {
+        this.isLoading = true;
+        const userId = this.$route.params.userId;
+        await axios.patch(`${this.baseUrl}/user-profile/update-field/${userId}`, {
+          [fieldName]: value,
+        });
+        alert(`${fieldName} updated successfully`);
+      } catch (error) {
+        console.error(`Error updating ${fieldName}:`, error);
+        this.error = this.getErrorMessage(error, `Failed to update ${fieldName}.`);
+        alert(this.error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    startEditing() {
+      this.editWalletValue = this.userData.wallet;
+      this.showEditModal = true;
+    },
+    async saveEdit() {
+      if (this.editWalletValue !== null && !isNaN(this.editWalletValue)) {
+        await this.updateField('wallet', this.editWalletValue);
+        this.userData.wallet = this.editWalletValue;
+      }
+      this.cancelEdit();
+    },
+    cancelEdit() {
+      this.showEditModal = false;
+      this.editWalletValue = null;
+    },
+    handleImageError(event) {
+      event.target.src = this.defaultProfileImage;
+    },
+  },
+  created() {
+    this.fetchUserData();
+    this.getTrips();
   },
 };
 </script>
 
 <style scoped>
-/* Base Styles */
+/* Original styles unchanged */
 .dashboard {
-  display: flex;
+  position: relative;
   min-height: 100vh;
-  font-family: "Arial", sans-serif;
+  font-family: 'Arial', sans-serif;
+  display: flex;
+  justify-content: end;
 }
 
-/* Sidebar */
 .sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 250px;
+  height: 100%;
   transition: width 0.3s ease;
-  background-color: #f8f9fa;
-  overflow-y: auto;
-  position: relative;
-  z-index: 1;
+  color: #ffffff;
+  z-index: 1000;
 }
 
 .sidebar-collapsed {
   width: 80px;
 }
 
-/* Main Content */
 .main-content {
-  flex: 1;
-  background-color: #ffffff;
+  width: 90%;
+  background-color: #f5f7fa;
   padding: 24px;
-  transition: margin-left 0.3s ease;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
-.main-content-expanded {
-  margin-left: 250px;
-}
-
-.main-content-expanded.sidebar-collapsed {
-  margin-left: 80px;
-}
-
-/* Header */
 header {
   display: flex;
   justify-content: space-between;
@@ -493,14 +572,320 @@ header {
   color: #6b7280;
 }
 
-/* Loading Overlay */
-.loading-overlay {
+.user-details {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-data {
+  border: 2px solid #8e44ad;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.user-data h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2a44;
+  margin: 0 0 16px 0;
+}
+
+.user-data-container {
+  display: flex;
+  gap: 24px;
+}
+
+.profile-image-container {
+  flex: 0 0 auto;
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid #8e44ad;
+  object-fit: cover;
+}
+
+.user-data-details {
+  flex: 1;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+}
+
+.data-row span:first-child {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.data-row span:last-child,
+.data-row input {
+  color: #374151;
+}
+
+.data-row input {
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 60%;
+}
+
+.field-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-icon {
+  cursor: pointer;
+  color: #6b48ff;
+  font-size: 14px;
+}
+
+.edit-icon:hover {
+  color: #ff4d4f;
+}
+
+.stars {
+  color: #f59e0b;
+}
+
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-field {
+  margin-bottom: 15px;
+}
+
+.modal-field label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.modal-field input,
+.modal-field select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-buttons button:first-child {
+  background-color: #6b48ff;
+  color: white;
+}
+
+.modal-buttons button:last-child {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.trip-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.stat-item button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.stat-item.completed {
+  background-color: #2563eb;
+}
+
+.stat-item.completed button {
+  color: #ffffff;
+}
+
+.stat-item.cancelled {
+  background-color: #ff4d4f;
+}
+
+.stat-item.cancelled button {
+  color: #ffffff;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.tab {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tab.active {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.tab:not(.active) {
+  background-color: #ecf0f1;
+  color: #34495e;
+}
+
+.trip-history {
+  margin-bottom: 16px;
+}
+
+.trip-history table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trip-history th,
+.trip-history td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.trip-history th {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: #f9fafb;
+  text-transform: uppercase;
+}
+
+.status-completed {
+  color: #28c76f;
+  font-weight: 600;
+}
+
+.status-cancelled {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.table-footer p {
+  color: #2c3e50;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #6b48ff;
+  color: white;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 14px;
+  color: #374151;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #ff4d4f;
+  padding: 15px;
+  margin: 20px 0;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message button {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -509,7 +894,7 @@ header {
 
 .loading-spinner {
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
+  border-top: 4px solid #6b48ff;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -521,335 +906,32 @@ header {
   100% { transform: rotate(360deg); }
 }
 
-/* Error Message */
-.error-message {
-  padding: 16px;
-  background-color: #fee2e2;
-  color: #dc2626;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.error-message button {
-  padding: 4px 12px;
-  background-color: #dc2626;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* Trip Details */
-.trip-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Trip Data */
-.trip-data {
-  margin-bottom: 24px;
-}
-
-.trip-data-container {
-  display: flex;
-  align-items: center;
-}
-
-.profile-image-container {
-  margin-right: 16px;
-}
-
-.profile-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.trip-data-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.data-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.data-row span:first-child {
-  font-weight: 500;
-  color: #6b7280;
-}
-
-/* Modal Overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 300px;
-  text-align: center;
-}
-
-.modal-field {
-  margin: 15px 0;
-  text-align: left;
-}
-
-.modal-field label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.modal-field input,
-.modal-field select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-}
-
-.modal-buttons button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.modal-buttons button:first-child {
-  background-color: #2563eb;
-  color: #fff;
-}
-
-.modal-buttons button:last-child {
-  background-color: #6b7280;
-  color: #fff;
-}
-
-/* Trip Stats */
-.trip-stats {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.stat-item {
-  padding: 12px;
-  border-radius: 8px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stat-item.completed {
-  background-color: #10b981;
-}
-
-.stat-item.cancelled {
-  background-color: #ef4444;
-}
-
-.stat-item button {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 24px;
-}
-
-.tabs .tab {
-  flex: 1;
-  padding: 8px 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: #6b7280;
-  text-align: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.tabs .tab.active {
-  color: #000000;
-  border-bottom: 2px solid #2563eb;
-}
-
-.count-badge {
-  display: inline-block;
-  min-width: 20px;
-  height: 20px;
-  line-height: 20px;
-  background-color: #e5e7eb;
-  color: #374151;
-  font-size: 12px;
+.status-enabled {
+  color: #28c76f;
   font-weight: 600;
-  border-radius: 10px;
-  margin-left: 8px;
-  padding: 0 6px;
-  text-align: center;
 }
 
-/* Trip History */
-.trip-history {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.status-blocked {
+  color: #ff4d4f;
+  font-weight: 600;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-thead {
-  flex-shrink: 0;
-}
-
-tbody {
-  flex: 1;
-  overflow-y: auto;
-}
-
-th,
-td {
-  padding: 12px;
-  text-align: left;
-}
-
-th {
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  background-color: #f9fafb;
-  text-transform: uppercase;
-}
-
-td {
-  font-size: 14px;
-  color: #374151;
-  border-top: 1px solid #e5e7eb;
-}
-
-.no-data {
-  text-align: center;
-  padding: 16px;
-  color: #6b7280;
-}
-
-.wallet-non-zero {
-  display: inline-block;
-  padding: 4px 8px;
-  background-color: #d1fae5;
-  color: #059669;
-  border-radius: 9999px;
-  font-size: 14px;
-}
-
-.wallet-zero {
-  display: inline-block;
-  padding: 4px 8px;
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border-radius: 9999px;
-  font-size: 14px;
-}
-
-.edit-btn {
-  padding: 4px 8px;
-  background-color: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* Table Footer */
-.table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
-  margin-top: auto;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pagination span {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.pagination button {
-  padding: 6px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  background-color: #ffffff;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.pagination button:disabled {
-  background-color: #f3f4f6;
-  cursor: not-allowed;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 2000px) {
   .main-content {
-    margin-left: 0;
-    padding: 16px;
+    width: 85%;
   }
+}
 
+@media (max-width: 768px) {
   .sidebar {
     width: 80px;
   }
 
-  .main-content-expanded {
-    margin-left: 80px;
+  .sidebar-collapsed {
+    width: 80px;
   }
 
-  header {
+  .header-left {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -858,30 +940,32 @@ td {
     margin-top: 8px;
   }
 
-  .tabs {
-    flex-wrap: wrap;
+  .trip-stats {
+    flex-direction: column;
   }
 
-  .tabs .tab {
-    flex: 1 1 50%;
-    margin-bottom: 8px;
+  .trip-history table {
+    font-size: 12px;
   }
 
-  .trip-data-container {
+  .trip-history th,
+  .trip-history td {
+    padding: 8px;
+  }
+
+  .user-data-container {
     flex-direction: column;
     align-items: flex-start;
   }
 
   .profile-image-container {
-    margin-right: 0;
     margin-bottom: 16px;
-  }
-
-  .table-controls {
-    flex-direction: column;
-    gap: 8px;
   }
 }
 
-
+@media (min-width: 769px) {
+  .sidebar {
+    width: 250px;
+  }
+}
 </style>

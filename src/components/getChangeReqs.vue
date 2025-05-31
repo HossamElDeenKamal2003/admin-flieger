@@ -35,18 +35,39 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="request in paginatedRequests" :key="request._id">
-              <td><input type="checkbox" v-model="selectedRequests" :value="request._id" /></td>
+            <tr
+                v-for="request in paginatedRequests"
+                :key="request._id"
+                @click="navigateToDriverDetails(request.driverId)"
+                class="clickable-row"
+            >
+              <td>
+                <input
+                    type="checkbox"
+                    v-model="selectedRequests"
+                    :value="request._id"
+                    @click.stop
+                />
+              </td>
               <td>{{ request.status }}</td>
               <td>{{ request.driverId }}</td>
               <td>{{ request.text }}</td>
               <td>
-                <span v-if="request.file" class="file-link" @click="openFileOverlay(request.file)">View File</span>
+                  <span
+                      v-if="request.file"
+                      class="file-link"
+                      @click.stop="openFileOverlay(request.file)"
+                  >
+                    View File
+                  </span>
                 <span v-else>N/A</span>
               </td>
               <td>{{ formatDate(request.createdAt) }}</td>
               <td>
-                <button class="delete-button" @click="deleteRequest(request._id)">
+                <button
+                    class="delete-button"
+                    @click.stop="deleteRequest(request._id)"
+                >
                   Delete
                 </button>
               </td>
@@ -97,6 +118,10 @@ import WaitingDriversNumber from "@/components/waitingDriversNumber.vue";
 
 export default {
   name: "DriverRequestsComponent",
+  components: {
+    WaitingDriversNumber,
+    Sidebar,
+  },
   data() {
     return {
       isSidebarExpanded: true,
@@ -107,11 +132,8 @@ export default {
       itemsPerPage: 10,
       selectedFile: null,
       isOverlayVisible: false,
+      navigationDebounce: null, // For debouncing navigation
     };
-  },
-  components: {
-    WaitingDriversNumber,
-    Sidebar,
   },
   computed: {
     paginatedRequests() {
@@ -140,7 +162,7 @@ export default {
     async fetchRequests() {
       try {
         const response = await axios.get('https://backend.fego-rides.com/authdriver/getAllDataReqs');
-        this.requests = response.data.reqs;
+        this.requests = response.data.reqs || [];
       } catch (error) {
         console.error('Error fetching requests:', error);
         alert('Error fetching driver requests');
@@ -177,14 +199,10 @@ export default {
       });
     },
     prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-      }
+      if (this.currentPage > 1) this.currentPage--;
     },
     nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-      }
+      if (this.currentPage < this.totalPages) this.currentPage++;
     },
     goToPage(page) {
       this.currentPage = page;
@@ -197,6 +215,19 @@ export default {
       this.selectedFile = null;
       this.isOverlayVisible = false;
     },
+    navigateToDriverDetails(driverId) {
+      if (driverId) {
+        // Debounce navigation to prevent multiple rapid clicks
+        if (this.navigationDebounce) clearTimeout(this.navigationDebounce);
+        this.navigationDebounce = setTimeout(() => {
+          this.$router.push({ name: 'DriverDetails', params: { driverId } }).catch(err => {
+            console.error('Navigation error:', err);
+          });
+        }, 200); // 200ms debounce
+      } else {
+        console.warn('Driver ID is not available for this request');
+      }
+    },
   },
   watch: {
     selectedRequests() {
@@ -205,6 +236,9 @@ export default {
   },
   created() {
     this.fetchRequests();
+  },
+  beforeUnmount() {
+    if (this.navigationDebounce) clearTimeout(this.navigationDebounce); // Cleanup debounce
   },
 };
 </script>
@@ -307,6 +341,15 @@ td {
   font-size: 14px;
   color: #374151;
   border-top: 1px solid #e5e7eb;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clickable-row:hover {
+  background-color: #f1f5f9;
 }
 
 .file-link {

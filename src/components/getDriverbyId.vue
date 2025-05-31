@@ -167,10 +167,6 @@
             Cancelled Trips {{ lengthCanceled }}
           </div>
           <div class="stat-item">
-            <button class="icon cancelled" @click="filterTrips('cancelledByDriver')"></button>
-            Cancelled by Driver {{ cancelledTrips.length }}
-          </div>
-          <div class="stat-item">
             <span class="icon rating"></span>
             Rate
             <div class="field-container">
@@ -286,7 +282,7 @@
               <td :class="{'status-end': trip.status === 'end', 'status-cancelled': trip.status === 'cancelled'}">{{ trip.status || 'N/A' }}</td>
             </tr>
             <tr v-if="paginatedTrips.length === 0">
-              <td colspan="10" class="no-data">No trip history found</td>
+              <td colspan="9" class="no-data">No trip history found</td>
             </tr>
             </tbody>
           </table>
@@ -301,9 +297,9 @@
                 {{ paginationStartComputed }}-{{ paginationEndComputed }}
                 of {{ totalItemsComputed }} items
               </span>
-              <button :disabled="currentPage === 1" @click="currentPage--">prev</button>
+              <button :disabled="currentPage === 1" @click="goToPreviousPage">prev</button>
               <button>{{ currentPage }}</button>
-              <button :disabled="currentPage >= totalPages" @click="currentPage++">next</button>
+              <button :disabled="currentPage >= totalPages" @click="goToNextPage">next</button>
             </div>
           </div>
         </div>
@@ -390,7 +386,9 @@ export default {
       adminName: localStorage.getItem('username') || 'Admin',
       newRequestsCount: 0,
       currentPage: 1,
-      itemsPerPage: 10,
+      itemsPerPage: 20, // Updated to match API limit
+      totalTrips: 0,
+      totalPages: 1,
       loading: {
         driverData: false,
         trips: false,
@@ -421,10 +419,8 @@ export default {
         'Wallet Before',
         'Wallet After',
         'Trip State',
-        'Actions'
       ],
       tabLabels: ['Profile Image', 'Licence', 'National ID Front', 'National ID Back', 'Selfie With ID', 'Vehicle Number Image', 'Block'],
-      totalTrips: 0,
       paginationStart: 0,
       paginationEnd: 0,
       totalItems: 0,
@@ -460,39 +456,30 @@ export default {
   computed: {
     paginatedTrips() {
       let tripsToDisplay = this.trips;
-      if (this.filterStatus === 'cancelledByDriver') {
-        tripsToDisplay = this.cancelledTrips;
-      } else if (this.filterStatus) {
+      if (this.filterStatus) {
         if (Array.isArray(this.filterStatus)) {
           tripsToDisplay = this.trips.filter(trip => this.filterStatus.includes(trip.status));
         } else {
           tripsToDisplay = this.trips.filter(trip => trip.status === this.filterStatus);
         }
       }
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return tripsToDisplay.slice(start, end) || [];
+      return tripsToDisplay || [];
     },
     paginationStartComputed() {
       return (this.currentPage - 1) * this.itemsPerPage + 1;
     },
     paginationEndComputed() {
-      const end = (this.currentPage - 1) * this.itemsPerPage + this.itemsPerPage;
+      const end = this.currentPage * this.itemsPerPage;
       return Math.min(end, this.totalItemsComputed || 0);
     },
     totalItemsComputed() {
-      if (this.filterStatus === 'cancelledByDriver') {
-        return this.cancelledTrips.length;
-      } else if (this.filterStatus) {
+      if (this.filterStatus) {
         if (Array.isArray(this.filterStatus)) {
           return this.trips.filter(trip => this.filterStatus.includes(trip.status)).length;
         }
         return this.trips.filter(trip => trip.status === this.filterStatus).length;
       }
-      return this.trips.length || 0;
-    },
-    totalPages() {
-      return Math.ceil((this.totalItemsComputed || 0) / this.itemsPerPage);
+      return this.totalItems || 0;
     },
   },
   watch: {
@@ -505,6 +492,9 @@ export default {
     totalItemsComputed(newValue) {
       this.totalItems = newValue;
       this.totalTrips = newValue;
+    },
+    currentPage(newPage) {
+      this.getTrips(newPage);
     },
   },
   methods: {
@@ -575,68 +565,10 @@ export default {
           timeout: 10000,
         });
 
-        const { driver, moneyFlow } = response.data;
+        const { driver } = response.data;
         if (!driver) {
           throw new Error('Driver data not found');
         }
-
-        const tripsWithUserFlow = await Promise.all(
-            moneyFlow.map(async (flow) => {
-              let userMoneyFlow = { flow: [{ payCash: 'N/A', payWallet: 'N/A' }] };
-              let userInfo = { username: 'N/A' };
-              if (flow.flow[0]?.tripId?.userMoneyFlowId) {
-                try {
-                  const userFlowResponse = await axios.get(
-                      `${this.baseUrl}/wallet/moneyFlow/${flow.flow[0].tripId.userMoneyFlowId}`,
-                      { timeout: 5000 }
-                  );
-                  userMoneyFlow = userFlowResponse.data || { flow: [{ payCash: 'N/A', payWallet: 'N/A' }] };
-                } catch (error) {
-                  console.error(`Error fetching user money flow ${flow.flow[0].tripId.userMoneyFlowId}:`, error);
-                }
-              }
-              if (flow.flow[0]?.tripId?.userId) {
-                try {
-                  const userResponse = await axios.get(
-                      `${this.baseUrl}/admin/get-user/${flow.flow[0].tripId.userId}`,
-                      { timeout: 5000 }
-                  );
-                  userInfo = userResponse.data.user || { username: 'N/A' };
-                } catch (error) {
-                  console.error(`Error fetching user ${flow.flow[0].tripId.userId}:`, error);
-                }
-              }
-              return {
-                _id: flow._id,
-                date: flow.flow[0]?.tripId?.date || 'N/A',
-                uniqueId: flow.flow[0]?.tripId?.uniqueId || 'N/A',
-                comment: flow.flow[0]?.tripId?.comment || 'N/A',
-                cost: flow.flow[0]?.tripId?.cost || 0,
-                status: flow.flow[0]?.tripId?.status || 'N/A',
-                userId: {
-                  username: userInfo.username || 'N/A',
-                },
-                driverMoneyFlowId: {
-                  flow: [
-                    {
-                      payCash: flow.flow[0]?.payCash || 0,
-                      payWallet: flow.flow[0]?.payWallet || 0,
-                      walletBefore: flow.flow[0]?.walletBefore || 0,
-                      walletAfter: flow.flow[0]?.walletAfter || 0,
-                    },
-                  ],
-                },
-                userMoneyFlowId: {
-                  flow: [
-                    {
-                      payCash: userMoneyFlow.flow[0]?.payCash || 'N/A',
-                      payWallet: userMoneyFlow.flow[0]?.payWallet || 'N/A',
-                    },
-                  ],
-                },
-              };
-            })
-        );
 
         this.driverData = {
           username: driver.username || 'N/A',
@@ -648,7 +580,7 @@ export default {
           brand: driver.brand || 'N/A',
           model: driver.carModel || 'N/A',
           plate: driver.carNumber || 'N/A',
-          color: driver.carColor.color || 'N/A',
+          color: driver.carColor?.color || 'N/A',
           confirmedTrips: driver.ctr || 0,
           cancelledTrips: 0,
           rating: driver.rate || 0,
@@ -661,9 +593,7 @@ export default {
           national_back: driver.national_back || 'https://via.placeholder.com/150',
           national_selfie: driver.national_selfie || 'https://via.placeholder.com/150',
           vehicleNumberImage: driver.vehicleNumberImage || 'https://via.placeholder.com/150',
-          trips: tripsWithUserFlow,
         };
-        this.trips = this.driverData.trips;
       } catch (error) {
         console.error('Error fetching driver data:', error);
         this.errors.driverData = this.getErrorMessage(error, 'Failed to load driver data.');
@@ -672,7 +602,7 @@ export default {
         this.loading.driverData = false;
       }
     },
-    async getTrips() {
+    async getTrips(page = 1) {
       const driverId = this.$route.params.driverId;
       if (!driverId) {
         this.errors.trips = 'No driver ID provided.';
@@ -688,17 +618,94 @@ export default {
             {
               id: driverId,
               type: 'driver',
-              page: 1,
+              page: page,
+              limit: this.itemsPerPage,
             },
             { timeout: 10000 }
         );
 
-        const { trips, cancelledTrips } = response.data;
+        const { trips, cancelledTrips, pagination } = response.data;
         if (!Array.isArray(trips) || !Array.isArray(cancelledTrips)) {
           throw new Error('Invalid trips data structure');
         }
 
-        // Normalize cancelledTrips to match trips structure
+        // Normalize trips
+        this.trips = await Promise.all(
+            trips.map(async (trip) => {
+              let userMoneyFlow = { flow: [{ payCash: 'N/A', payWallet: 'N/A' }] };
+              let driverMoneyFlow = { flow: [{ payCash: 0, payWallet: 0, walletBefore: 'N/A', walletAfter: 'N/A' }] };
+              let userInfo = { username: 'N/A' };
+
+              // Check if trip is wrapped in a money flow object or is a raw trip
+              const isMoneyFlowTrip = trip.flow && Array.isArray(trip.flow) && trip.flow[0]?.tripId;
+              const tripData = isMoneyFlowTrip ? trip.flow[0].tripId : trip;
+
+              // Fetch user money flow if available
+              if (tripData.userMoneyFlowId) {
+                try {
+                  const userFlowResponse = await axios.get(
+                      `${this.baseUrl}/wallet/moneyFlow/${tripData.userMoneyFlowId}`,
+                      { timeout: 5000 }
+                  );
+                  userMoneyFlow = userFlowResponse.data || userMoneyFlow;
+                } catch (error) {
+                  console.error(`Error fetching user money flow ${tripData.userMoneyFlowId}:`, error);
+                }
+              }
+
+              // Fetch driver money flow if available
+              if (trip.driverMoneyFlowId) {
+                try {
+                  const driverFlowResponse = await axios.get(
+                      `${this.baseUrl}/wallet/moneyFlow/${trip.driverMoneyFlowId}`,
+                      { timeout: 5000 }
+                  );
+                  driverMoneyFlow = driverFlowResponse.data || driverMoneyFlow;
+                } catch (error) {
+                  console.error(`Error fetching driver money flow ${trip.driverMoneyFlowId}:`, error);
+                }
+              } else if (isMoneyFlowTrip) {
+                // Use flow data from money flow trip
+                driverMoneyFlow.flow[0] = {
+                  payCash: trip.flow[0]?.payCash || 0,
+                  payWallet: trip.flow[0]?.payWallet || 0,
+                  walletBefore: trip.flow[0]?.walletBefore || 'N/A',
+                  walletAfter: trip.flow[0]?.walletAfter || 'N/A',
+                };
+              }
+
+              // Fetch user info if userId is available
+              if (tripData.userId) {
+                try {
+                  const userResponse = await axios.get(
+                      `${this.baseUrl}/admin/get-user/${
+                          typeof tripData.userId === 'object' ? tripData.userId._id : tripData.userId
+                      }`,
+                      { timeout: 5000 }
+                  );
+                  userInfo = userResponse.data.user || userInfo;
+                } catch (error) {
+                  console.error(`Error fetching user ${tripData.userId}:`, error);
+                }
+              }
+
+              return {
+                _id: tripData._id || trip._id,
+                date: tripData.date || 'N/A',
+                uniqueId: tripData.uniqueId || 'N/A',
+                comment: tripData.comment || 'N/A',
+                cost: tripData.cost || 0,
+                status: tripData.status || 'N/A',
+                userId: {
+                  username: userInfo.username || 'N/A',
+                },
+                driverMoneyFlowId: driverMoneyFlow,
+                userMoneyFlowId: userMoneyFlow,
+              };
+            })
+        );
+
+        // Normalize cancelledTrips
         this.cancelledTrips = cancelledTrips.map(cTrip => ({
           _id: cTrip._id,
           date: cTrip.tripId?.date || 'N/A',
@@ -725,9 +732,11 @@ export default {
           },
         }));
 
-        this.trips = trips;
-        this.lengthCompleted = this.trips.filter(trip => trip.status === 'end').length;
-        this.lengthCanceled = this.trips.filter(trip => trip.status === 'cancelled').length;
+        this.lengthCompleted = response.data.endCount || 0;
+        this.lengthCanceled = pagination?.totalCancelledTrips || 0;
+        this.totalItems = pagination?.totalTrips || 0;
+        this.totalPages = pagination?.totalPagesTrips || 1;
+        this.currentPage = page;
       } catch (error) {
         console.error('Error fetching trips:', error);
         this.errors.trips = this.getErrorMessage(error, 'Failed to load trip history.');
@@ -735,8 +744,7 @@ export default {
       } finally {
         this.loading.trips = false;
       }
-    },
-    async toggleBlock() {
+    },    async toggleBlock() {
       try {
         this.loading.action = true;
         const driverId = this.$route.params.driverId;
@@ -973,6 +981,7 @@ export default {
     filterTrips(status) {
       this.filterStatus = status;
       this.currentPage = 1;
+      this.getTrips(1);
     },
     startEditing(field) {
       this.editingFieldName = field;
@@ -1058,6 +1067,16 @@ export default {
       this.sectionEditing = null;
       this.sectionEditValues = {};
     },
+    goToPreviousPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    goToNextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
   },
   created() {
     this.fetchDriverData();
@@ -1075,6 +1094,7 @@ export default {
 </script>
 
 <style scoped>
+/* Same styles as provided in the original code */
 .dashboard {
   display: flex;
   height: 100vh;
@@ -1350,8 +1370,6 @@ export default {
 .stat-item:nth-child(4) .icon { background-color: white; }
 .stat-item:nth-child(5) { background-color: #2ecc71; }
 .stat-item:nth-child(5) .icon { background-color: white; }
-.stat-item:nth-child(6) { background-color: #7f8c8d; }
-.stat-item:nth-child(6) .icon { background-color: white; }
 
 .trip-history {
   overflow-x: auto;
@@ -1361,7 +1379,7 @@ export default {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
-  min-width: 1100px; /* Adjusted for new column */
+  min-width: 1100px;
 }
 
 .trip-history th,
